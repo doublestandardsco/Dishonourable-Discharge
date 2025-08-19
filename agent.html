@@ -165,6 +165,170 @@
           <div class="small" style="margin-top:6px">Completed: <span id="missionCount">0</span></div>
         </div>
       </div>
+/* ===== characters (12) ===== */
+const CHARACTERS = [
+  { alias:"Valérie “Val” Marchand", codename:"LACEHUNTER", cover:"Luxury Skiwear Designer",
+    publicBio:"French AF comms → NATO PSYOPS ‘tactical glam’. Gives unsolicited runway checks.",
+    privateBio:"Trans man. Busted tailoring a general’s thermals. Can’t pass a mirror without preening.",
+    background:"Former French Air Force comms; reassigned to NATO PSYOPS for ‘morale optimization’.",
+    discharge:"Non-disciplinary separation after a glitter-related morale incident.",
+    secretMission:"Track down the mystery ghoster from a classified Alpine affair and collect 3 clues.",
+    perks:["Honorific Lock: others must call you “Monsieur Val”.","Style Verdict: on 'Runway check', target holds an awkward 10-sec pose."],
+    quirk:"Silk cravat; lip balm mid-sentence; says “Lieutenant Thirsttrap”.",
+    con:"If he catches his reflection he must stop & preen for 3s.",
+    ability:{ name:"Fashion Emergency", desc:"Force any two players to swap one visible clothing item immediately.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Kaimana “Kai” Savai'i", codename:"SNOWBLIND", cover:"Extreme Sports Photographer",
+    publicBio:"RFMF (Fiji) recon tracker; can find happy hour with GPS accuracy.",
+    privateBio:"Refused to hunt an innocent defector (his brother). Collects slang like shell casings.",
+    background:"Reconnaissance & tracking specialist; humanitarian ops liaison.",
+    discharge:"Honourable discharge after family conflict.",
+    secretMission:"Collect 3 strangers’ hometown slang and compile a 'tracking lexicon'.",
+    perks:["Breadcrumb Command: choose a trigger word; speakers owe a clue or take penalty for 10 min.",
+           "Switchback: say 'First tracks' → everyone rotates seats; last seated owes you a favour."],
+    quirk:"Whispers intel and ends with 'copy?'.",
+    con:"If someone says 'family'/'ohana', must deliver a 1-sentence heartfelt lesson.",
+    ability:{ name:"Hire a Tail", desc:"Recruit one player to shadow you 10–30 min; deliver intel every 5 min or take penalties.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Bartosz “Bas” Nowak", codename:"FROSTBITE", cover:"Adventure Safety Coordinator",
+    publicBio:"Polish GROM cold-weather specialist. Loves lists & laminated check cards.",
+    privateBio:"Interrogation ‘cultural differences’. Considers silence a confession.",
+    background:"SERE instructor, polar training cadre.",
+    discharge:"Honourable; opted out after ‘communication’ feedback.",
+    secretMission:"Convince a stranger to wear your gloves and pose like a crime-scene silhouette.",
+    perks:["Interrogator’s Pause: on 'Answer the question', target must reply in ≤5 words.",
+           "Cold Protocol: greetings become fist-bump only until cleared."],
+    quirk:"Over-enunciates like radio checks; NATO phonetic for numbers.",
+    con:"When asked 'what’s the plan?' must show a checklist or salute 'I am improvising.'",
+    ability:{ name:"Coerce an Asset", desc:"Designate a player your Asset for 15 min; complete 2 simple tasks or take penalties.", usesPerDay:1 },
+    role:"handler"
+  },
+  { alias:"Ira “Iris” Khatri", codename:"BLACKRUN", cover:"Avalanche Risk Specialist",
+    publicBio:"Para (SF) mountain warfare; predicts disasters in people as easily as in snow.",
+    privateBio:"Trans man. The avalanche that saved lives also hid sins; won’t say whose.",
+    background:"High-altitude demo team; SAR & explosives.",
+    discharge:"Medical after surviving a unit-ending avalanche.",
+    secretMission:"Run a spontaneous 'safety briefing' with strangers and redistribute props they must wear.",
+    perks:["Beacon Check: phones face-down 5 min; touching = penalty.",
+           "Disaster Brief: two table taps resets topic & assigns next speaker."],
+    quirk:"Adds 'allegedly' to claims if alcohol is present.",
+    con:"On triangles/angles must estimate degrees aloud; off by >10° → draw a napkin protractor.",
+    ability:{ name:"Avalanche Protocol", desc:"Clap twice: 30-sec evac drill. Everyone swaps seats & surrenders a small item; you redistribute.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Pilar “Pili” Castaño", codename:"POWDER KEG", cover:"Luxury Lodge Event Coordinator",
+    publicBio:"Spanish social engineer; diplomacy with a splash of chaos.",
+    privateBio:"Trans man. Ran weapons through receptions. Still RSVP’s 'maybe' to Interpol.",
+    background:"Human terrain ops; embassy events fixer.",
+    discharge:"Dishonourable (creative import/export).",
+    secretMission:"Get a stranger to announce you as 'His Excellency the Ambassador of Après'.",
+    perks:["VIP Gate: others must introduce you with a flamboyant invented title.",
+           "Guest List: 'You’re on the list' → 2-min private chat to assign a micro-task."],
+    quirk:"Refuses real names; assigns callsigns.",
+    con:"On any rumour he must add 'exclusive source' + wink; if asked later 'source?' must admit 'It was me.'",
+    ability:{ name:"Task the Mark", desc:"Nominate any player to get a phone #, key/card, or selfie with anyone within 20 min. Failure = penalty.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Dmitri “Dima” Volkov", codename:"ICEPICK", cover:"Artisanal Spirits Consultant",
+    publicBio:"Ex-Spetsnaz (allegedly). Measures every drink. Speaks in Celsius.",
+    privateBio:"Defected—or didn’t. Awaits a signal only he’d recognize.",
+    background:"Urban recon & counter-human intel.",
+    discharge:"‘Special transfer’ during the Sochi Olympics.",
+    secretMission:"Learn a new vodka toast and perform it with the group.",
+    perks:["Cold Stare: on eye contact the other must break first or penalty.",
+           "Vodka Toast Override: on 'Na zdorovye', all must toast; 30s to find alcohol or penalty."],
+    quirk:"Answers 'roger' instead of 'yes' and ends sentences with 'over.'",
+    con:"When a new person arrives, he must pat pockets: 'ID, keys, exit—roger'; if caught skipping → 10-sec bug sweep.",
+    ability:{ name:"Charm Offensive (vodka-only)", desc:"Before midnight compel 3 people to buy you vodka drinks. Refusal/wrong drink = penalty.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Rowan “Ro” Hart", codename:"WOLFTRAP", cover:"Night Security Analyst",
+    publicBio:"Ex-infantry turned nightclub perimeter whisperer. Hears bouncers before the bass.",
+    privateBio:"Trans man. Thinks velvet ropes are guidelines. Once dated a smoke machine.",
+    background:"Perimeter defense & crowd control.",
+    discharge:"Honourable.",
+    secretMission:"Convince a venue staffer to radio-check you using a callsign you invent.",
+    perks:["Line Cutter: may insert yourself into any group; someone must introduce you within 20s.",
+           "Bouncer’s Choice: point to the door; one person must accompany you for a 60s perimeter check."],
+    quirk:"Counts exits (quietly) when entering a room.",
+    con:"If music changes, must freeze for 3s like a motion sensor.",
+    ability:{ name:"Angle Check (10-sec hold)", desc:"Command a target to strike a dramatic pose facing a 'camera' for 10 seconds. Everyone must try not to laugh.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Asher “Ash” Del Mar", codename:"SEALEVEL", cover:"Hydro Logistics Planner",
+    publicBio:"Special forces boat guy who gets altitude sickness looking at menus.",
+    privateBio:"Smuggled a jet-ski into a hotel fountain. Twice.",
+    background:"Riverine logistics & insertions.",
+    discharge:"Honourable (but wet).",
+    secretMission:"Collect three coasters from different venues and arrange a 'map' on the table.",
+    perks:["High-Water Mark: pick a 'shoreline' on the table; items crossing it owe you a sip.",
+           "Docking Fee: anyone returning to the group pays you a one-word status update."],
+    quirk:"Adds boat metaphors to everything.",
+    con:"If someone says 'wave', must salute like a lifeguard.",
+    ability:{ name:"Harbour Master", desc:"Declare the current table 'Port'. Anyone joining owes you a status report + cheers.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Noah “Knox” Keegan", codename:"SWITCHBACK", cover:"Mountain Bike Guide",
+    publicBio:"Downhill brain, uphill charm. Always plotting the next corner.",
+    privateBio:"Claims a scar for each Greek letter he remembers. Many letters; suspicious count.",
+    background:"Bike-mounted patrol & courier.",
+    discharge:"Honourable.",
+    secretMission:"Borrow a helmet from someone not in your group and wear it for 2 minutes.",
+    perks:["Gear Check: on 'Drop a gear', everyone lowers voice one notch for 2 min.",
+           "Trail Marshal: you decide who speaks next for 60s."],
+    quirk:"Claps once when he stands up.",
+    con:"If someone says 'brake', must freeze mid-gesture for 2s.",
+    ability:{ name:"Trail Tax (chaos)", desc:"Pick two people to swap seats & share a 'route apology'.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Jamie “Harrow” Quinn", codename:"BONESAW", cover:"Field Medic (Former)",
+    publicBio:"Good with stitches; terrible with boundaries. Brings tape to conversations.",
+    privateBio:"Kept a toe tag as a bookmark. It fell out at a funeral.",
+    background:"Combat medic; mass-casualty triage.",
+    discharge:"Honourable; 'bedside manner incompatible with brass'.",
+    secretMission:"Bandage (real or improvised) a non-player and get them to rate your care /10.",
+    perks:["Triage: you may interrupt any chat to ask 'Vitals?'—answer must be a number.",
+           "Sterile Field: designate a 30 cm zone around your drink; violators owe an apology shot."],
+    quirk:"Calls snacks 'oral medication'.",
+    con:"If someone says 'owie', must produce a bandage (real or improvised).",
+    ability:{ name:"Scrub In", desc:"Declare an emergency consult; target must whisper their last snack & biggest fear.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Elliot “Ledger” Vance", codename:"COUNTERSIGN", cover:"Casino Surveillance",
+    publicBio:"Counts cards, people, and regrets. Mostly people.",
+    privateBio:"Wears mirrored sunglasses at night because 'math is bright'.",
+    background:"Surveillance, pattern analysis.",
+    discharge:"Honourable; immediately banned from three casinos.",
+    secretMission:"Convince someone to speak only in numbers with you for 30 seconds.",
+    perks:["Tell Read: you may ask someone to repeat a sentence slower.",
+           "Double Down: once, force a yes/no commitment from the table."],
+    quirk:"Murmurs odds to himself.",
+    con:"If anyone says a number >10, must whisper a different random number.",
+    ability:{ name:"Background Count", desc:"Ask the GM for a one-line statistical hint about any player.", usesPerDay:1 },
+    role:"handler"
+  },
+  { alias:"Rafe “Static” Moretti", codename:"JAMMER", cover:"RF Tech",
+    publicBio:"Carries more antennas than personality. Still… weirdly charming.",
+    privateBio:"Blocked a wedding livestream so the bride’s ex couldn’t watch. She thanked him.",
+    background:"Signals intelligence & EW.",
+    discharge:"Honourable; requested more batteries than the army owned.",
+    secretMission:"Get a stranger to say 'Say again?' twice in one conversation.",
+    perks:["Signal Check: say 'Bars?' → everyone must show phone lock screen for 3s.",
+           "Dead Zone: pick a corner where nobody may use phones for 5 min."],
+    quirk:"Says 'Copy' to compliments.",
+    con:"If someone says 'loud', must turn an imaginary knob.",
+    ability:{ name:"Static Burst", desc:"Declare a 30-sec 'comms outage': everyone speaks in whispers only.", usesPerDay:1 },
+    role:"innocent"
+  }
+];
+
+function pickCharacterForSeat(seatKey){
+  let h = 0; for(const c of seatKey) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  const base = CHARACTERS[h % CHARACTERS.length];
+  return JSON.parse(JSON.stringify(base));
+}
 
       <!-- Actions -->
       <div class="section" style="border-left-color:var(--blue)">
@@ -491,7 +655,44 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await refresh();
   if(pollHandle) clearInterval(pollHandle);
   pollHandle = setInterval(refresh, 4000);
+
+  async function backfillFromSeatIfMissing(){
+  if(!me) return;
+  const needs =
+    !me.codename || !me.alias || !me.cover || me.cover === 'Cover Identity' ||
+    !me.background || !me.discharge || !me.secretMission ||
+    !(me.perks && me.perks.length) || !me.ability;
+async function refresh(){
+  if(!sessionId) return;
+  const res = await api('get', { id: sessionId });
+  if(!res?.ok) return;
+  gameState = res.session;
+  me = (gameState.players||[]).find(p=>p.id===playerId) || me;
+
+  await backfillFromSeatIfMissing();   // <— add this line
+  renderAll();
+}
+
+  if(!needs) return;
+
+    
+
+  const seatToken = localStorage.getItem('seatToken') || '';
+  if(!seatToken) return;
+
+  const c = pickCharacterForSeat(seatToken);
+  const patch = {
+    ...c,
+    adoptedName: c.alias,                 // what the player sees as their character name
+  };
+
+  // merge into local and persist to KV
+  me = { ...me, ...patch };
+  await patchMe(patch);
+}
+
 });
+  
 </script>
 </body>
 </html>
