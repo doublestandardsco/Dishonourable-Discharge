@@ -1,16 +1,293 @@
 <!doctype html>
-<html>
-  <head><meta charset="utf-8"><title>DD Smoke Test</title></head>
-  <body style="font-family:monospace;padding:24px">
-    <h1>Dishonourable Discharge</h1>
-    <button id="ping">Ping API</button>
-    <pre id="out"></pre>
-    <script>
-      const out = document.getElementById('out');
-      document.getElementById('ping').onclick = async () => {
-        const res = await fetch('/api/game?op=ping');
-        out.textContent = await res.text();
-      };
-    </script>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dishonourable Discharge</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Courier New',monospace;background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh;padding:10px}
+    .container{max-width:960px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid #ff4757;border-radius:14px;padding:20px;box-shadow:0 0 40px rgba(255,71,87,.3);position:relative}
+    .title{color:#ff4757;text-align:center;font-size:2.1rem;margin:10px 0 6px}
+    .subtitle{text-align:center;color:#8ea6ff;margin-bottom:18px}
+    .grid{display:grid;gap:12px}
+    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .panel{background:rgba(255,255,255,.03);border-left:4px solid #5f27cd;border-radius:10px;padding:14px;margin:10px 0}
+    .h{color:#ff4757;text-transform:uppercase;font-size:1rem;margin-bottom:8px}
+    label{display:block;color:#5f27cd;font-weight:bold;margin:6px 0 4px;text-transform:uppercase;font-size:.85rem}
+    input,select{width:100%;padding:10px;border:2px solid #5f27cd;border-radius:8px;background:rgba(0,0,0,.7);color:#e0e0e0}
+    .btn{background:linear-gradient(45deg,#ff4757,#ff6b7a);color:#000;border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:linear-gradient(45deg,#5f27cd,#7c3aed);color:#fff}
+    .btn.danger{background:linear-gradient(45deg,#ff3838,#ff6b6b)}
+    .muted{opacity:.75}
+    .log{background:rgba(0,0,0,.5);border:2px solid #5f27cd;border-radius:10px;padding:12px;max-height:260px;overflow:auto}
+    .log div{padding:6px;border-left:3px solid #5f27cd;background:rgba(95,39,205,.12);margin:8px 0;border-radius:4px}
+    .roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+    .card{border:1px dashed #5f27cd;border-radius:10px;padding:10px}
+    .small{font-size:.85rem}
+    @media(max-width:720px){.g2,.g3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 class="title">DISHONOURABLE DISCHARGE</h1>
+  <div class="subtitle">Operation: Alpine Debrief</div>
+
+  <!-- GM -->
+  <div class="panel" id="gmPanel">
+    <div class="h">🎮 Game Master</div>
+    <div class="grid g3">
+      <div><label>Game Key</label><input id="gmSession" placeholder="e.g. ALPINE23"></div>
+      <div><label>Player Limit</label>
+        <select id="gmLimit">
+          <option>3</option><option>4</option><option>5</option><option selected>6</option><option>12</option>
+        </select>
+      </div>
+      <div><label>Final Night (unlocks scans/accusations)</label><input id="gmFinalNight" type="datetime-local"></div>
+    </div>
+    <div style="margin-top:10px" class="grid g2">
+      <button class="btn" onclick="gmCreate()">Create Game</button>
+      <button class="btn secondary" onclick="reloadState()">Refresh State</button>
+    </div>
+    <div id="gmMsg" class="small muted" style="margin-top:8px"></div>
+  </div>
+
+  <!-- Player Login -->
+  <div class="panel" id="loginPanel">
+    <div class="h">🔐 Player Login</div>
+    <div class="grid g2">
+      <div><label>Your Name</label><input id="loginName" placeholder="Agent real name"></div>
+      <div><label>Game Key</label><input id="loginSession" placeholder="Same key from GM"></div>
+    </div>
+    <div style="margin-top:10px"><button class="btn" onclick="playerJoin()">Join Game</button></div>
+    <div id="loginMsg" class="small muted" style="margin-top:8px"></div>
+  </div>
+
+  <!-- Player Profile -->
+  <div class="panel" id="profilePanel" style="display:none">
+    <div class="h">🗂️ Your Dossier</div>
+    <div class="grid g2">
+      <div><strong id="pCodename">-</strong> <span class="muted">(<span id="pName">-</span>)</span><br/>
+        <span class="small muted">ID: <span id="pId">-</span></span><br/>
+        <div class="small" id="pCover"></div>
+      </div>
+      <div class="small">
+        <div><strong>Background:</strong> <span id="pBg"></span></div>
+        <div><strong>Discharge:</strong> <span id="pDis"></span></div>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:8px">
+      <div class="small"><strong>Perks:</strong><ul id="pPerks" style="margin-left:18px"></ul></div>
+      <div class="small"><strong>Con:</strong> <span id="pCon"></span></div>
+    </div>
+    <div class="panel" style="margin-top:10px">
+      <div class="h">⚡ Special Ability</div>
+      <div class="small" id="pAbility">—</div>
+      <div class="grid g3" style="margin-top:8px">
+        <div>
+          <label class="small">Target</label>
+          <select id="abilityTarget"></select>
+        </div>
+        <div style="align-self:end"><button class="btn" onclick="useAbility()">Use Ability</button></div>
+      </div>
+      <div class="small muted" id="abilityStatus" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- Public Roster -->
+  <div class="panel" id="rosterPanel" style="display:none">
+    <div class="h">📒 Public Roster</div>
+    <div id="gate" class="small muted"></div>
+    <div id="roster" class="roster" style="margin-top:8px"></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="panel" id="actionsPanel" style="display:none">
+    <div class="h">📝 Submit Action / Penalty</div>
+    <div class="grid g3">
+      <div>
+        <label>Action Type</label>
+        <select id="actionType">
+          <option value="penalty">Penalty</option>
+          <option value="task_complete">Task Complete</option>
+          <option value="note">Note</option>
+        </select>
+      </div>
+      <div>
+        <label>Target</label>
+        <select id="actionTarget"></select>
+      </div>
+      <div>
+        <label>Details</label>
+        <input id="actionDetails" placeholder="What happened / instructions">
+      </div>
+    </div>
+    <div style="margin-top:10px"><button class="btn" onclick="submitAction()">Submit</button></div>
+  </div>
+
+  <!-- Log -->
+  <div class="panel" id="logPanel" style="display:none">
+    <div class="h">📡 Operation Log</div>
+    <div id="log" class="log"></div>
+  </div>
+</div>
+
+<script>
+const api = (op, method='GET', body=null, qs={})=>{
+  const q = new URLSearchParams({op, ...qs}).toString();
+  return fetch(`/api/game?${q}`, {
+    method,
+    headers: body ? {'content-type':'application/json'} : undefined,
+    body: body ? JSON.stringify(body) : undefined
+  }).then(r=>r.json());
+};
+
+let sessionId = localStorage.getItem('dd_session') || '';
+let playerId  = localStorage.getItem('dd_player') || '';
+let state     = null;
+let me        = null;
+let pollTimer = null;
+
+const el = id => document.getElementById(id);
+
+function setStatus(id, msg){ const e=el(id); if(e) e.textContent=msg||''; }
+
+async function gmCreate(){
+  const key = el('gmSession').value.trim();
+  const limit = parseInt(el('gmLimit').value,10)||6;
+  const finalNight = el('gmFinalNight').value ? new Date(el('gmFinalNight').value).getTime() : null;
+  if(!key){ setStatus('gmMsg','Enter a Game Key'); return; }
+  const res = await api('create','POST',{ sessionId:key, playerLimit:limit, finalNightAt:finalNight });
+  if(res.ok){
+    sessionId = key; localStorage.setItem('dd_session', sessionId);
+    setStatus('gmMsg', `Game created. Share key: ${sessionId}`);
+    await reloadState();
+  }else setStatus('gmMsg', res.error||'Error');
+}
+
+async function playerJoin(){
+  const key  = el('loginSession').value.trim();
+  const name = el('loginName').value.trim();
+  if(!key || !name){ setStatus('loginMsg','Enter name and game key'); return; }
+  const res = await api('join','POST',{ sessionId:key, name });
+  if(res.ok){
+    sessionId = key; playerId = res.player.id;
+    localStorage.setItem('dd_session', sessionId);
+    localStorage.setItem('dd_player', playerId);
+    await reloadState();
+    setStatus('loginMsg','Joined.');
+  }else setStatus('loginMsg', res.error||'Error');
+}
+
+async function reloadState(){
+  const key = sessionId || el('gmSession').value.trim() || el('loginSession').value.trim();
+  if(!key){ setStatus('gmMsg','Set a Game Key, or join first.'); return; }
+  const res = await api('get','GET',null,{ sessionId:key, playerId });
+  if(!res.ok){ setStatus('gmMsg', res.error||'Not found'); return; }
+  state = res.state;
+  sessionId = state.sessionId;
+  localStorage.setItem('dd_session', sessionId);
+
+  me = (playerId && state.players.find(p=>p.id===playerId)) || null;
+
+  // UI gates
+  el('rosterPanel').style.display = 'block';
+  el('logPanel').style.display = 'block';
+  el('actionsPanel').style.display = me ? 'block' : 'none';
+  el('profilePanel').style.display = me ? 'block' : 'none';
+
+  renderRoster();
+  renderLog();
+  renderMe();
+  fillTargets();
+
+  // show final-night gate text
+  const gate = el('gate');
+  if(state.finalNightAt){
+    const open = Date.now() >= state.finalNightAt;
+    gate.textContent = open ? '✅ Final Night is active.' : `🔒 Scans/accusations locked until ${new Date(state.finalNightAt).toLocaleString()}`;
+  } else {
+    gate.textContent = 'Set Final Night time in GM panel to enable endgame gating.';
+  }
+
+  // poll
+  clearInterval(pollTimer);
+  pollTimer = setInterval(reloadState, 7000);
+}
+
+function renderLog(){
+  const box = el('log');
+  if(!state?.gameLog){ box.innerHTML = '<div class="muted">No log yet.</div>'; return; }
+  box.innerHTML = state.gameLog.slice().reverse().map(x=>{
+    const t = new Date(x.ts).toLocaleTimeString();
+    return `<div><strong>[${t}]</strong> ${x.msg}</div>`;
+  }).join('');
+}
+
+function renderRoster(){
+  const r = el('roster');
+  if(!state?.players?.length){ r.innerHTML = '<div class="muted">No players yet.</div>'; return; }
+  r.innerHTML = state.players.map(p=>{
+    const perkHtml = (p.perks||[]).map(s=>`<li>${s}</li>`).join('');
+    return `
+      <div class="card small">
+        <div><strong>${p.codeName}</strong> — ${p.realName}</div>
+        <div class="muted">${p.cover}</div>
+        <div style="margin-top:6px"><strong>Background:</strong> ${p.background}</div>
+        <div><strong>Discharge:</strong> ${p.discharge}</div>
+        <div><strong>Quirk/Perks/Con</strong></div>
+        <ul style="margin-left:18px">${perkHtml || '<li>—</li>'}</ul>
+        <div><em>Con:</em> ${p.con || '—'}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderMe(){
+  if(!me) return;
+  el('pCodename').textContent = me.codeName;
+  el('pName').textContent = me.realName;
+  el('pId').textContent = me.id;
+  el('pCover').textContent = me.cover;
+  el('pBg').textContent = me.background;
+  el('pDis').textContent = me.discharge;
+  el('pCon').textContent = me.con || '—';
+  el('pPerks').innerHTML = (me.perks||[]).map(s=>`<li>${s}</li>`).join('');
+  const used = me.ability?.used ? 'USED' : 'READY';
+  el('pAbility').textContent = `${me.ability?.name || '—'} — ${me.ability?.desc || ''}`;
+  el('abilityStatus').textContent = `Status: ${used}`;
+}
+
+function fillTargets(){
+  const opts = (state.players || []).filter(p=>!me || p.id !== me.id)
+    .map(p=>`<option value="${p.id}">${p.codeName} (${p.realName})</option>`).join('');
+  el('abilityTarget').innerHTML = `<option value="">— Select —</option>${opts}`;
+  el('actionTarget').innerHTML  = `<option value="">— Select —</option>${opts}`;
+}
+
+async function useAbility(){
+  if(!me){ alert('Join first'); return; }
+  if(me.ability?.used){ alert('Already used'); return; }
+  const targetId = el('abilityTarget').value || '';
+  const res = await api('ability','POST',{ sessionId, playerId: me.id, targetId });
+  if(res.ok){ await reloadState(); } else alert(res.error||'Ability error');
+}
+
+async function submitAction(){
+  if(!me){ alert('Join first'); return; }
+  const type = el('actionType').value;
+  const targetId = el('actionTarget').value || '';
+  const details = el('actionDetails').value.trim();
+  const res = await api('action','POST',{ sessionId, playerId: me.id, type, targetId, details });
+  if(res.ok){ el('actionDetails').value=''; await reloadState(); } else alert(res.error||'Error');
+}
+
+// boot: auto-load if we already have ids
+window.addEventListener('DOMContentLoaded', ()=>{
+  const ss = localStorage.getItem('dd_session'); if(ss) el('gmSession').value = ss;
+  const nm = localStorage.getItem('dd_name'); if(nm) el('loginName').value = nm;
+  if(sessionId){ el('loginSession').value = sessionId; reloadState(); }
+});
+</script>
+</body>
 </html>
