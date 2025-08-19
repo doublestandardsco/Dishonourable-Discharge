@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Murder Mystery</title>
+    <title>Dishonourable Discharge</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -192,8 +192,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>DIGITAL MURDER MYSTERY</h1>
-            <div style="color: #5f27cd; font-size: 1.2em;">Operation: Digital Deduction</div>
+            <h1>DISHONOURABLE DISCHARGE</h1>
+            <div style="color: #5f27cd; font-size: 1.2em;">Operation: Alpine Debrief</div>
         </div>
 
         <!-- Configuration Panel -->
@@ -311,9 +311,9 @@
     </div>
 
     <script>
-        // Configuration
-        let supabaseUrl = '';
-        let supabaseKey = '';
+        // Configuration - Pre-filled with your credentials
+        let supabaseUrl = 'https://bhmzwrtigwvuwuraxlwa.supabase.co';
+        let supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJobXp3cnRpZ3d2dXd1cmF4bHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjkxMTksImV4cCI6MjA3MTE0NTExOX0.Til_AT9BT_7D_VZugsP0DmmY_PzOycQU34CxVlF91ls';
         let currentPlayer = null;
         let currentGame = null;
 
@@ -431,16 +431,8 @@
         }
 
         function loadConfig() {
-            const savedUrl = sessionStorage.getItem('supabase-url');
-            const savedKey = sessionStorage.getItem('supabase-key');
-            
-            if (savedUrl && savedKey) {
-                supabaseUrl = savedUrl;
-                supabaseKey = savedKey;
-                document.getElementById('supabase-url').value = savedUrl;
-                document.getElementById('supabase-key').value = savedKey;
-                document.getElementById('config-panel').classList.add('hidden');
-            }
+            // Configuration is pre-filled, hide the config panel
+            document.getElementById('config-panel').classList.add('hidden');
         }
 
         // Game Functions
