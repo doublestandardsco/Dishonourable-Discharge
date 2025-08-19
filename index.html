@@ -1,567 +1,499 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dishonourable Discharge</title>
-<style>
-  :root{
-    --bg:#0a0a0f; --panel:#0e0e18; --fg:#e7e7ff; --p:#ff4757; --s:#6b4eff; --b:#5f27cd; --mut:#9bbcff;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, rgba(255,71,87,.18), transparent),linear-gradient(135deg,#0a0a0f,#10102a 50%,#0f1330);color:var(--fg);font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;padding:24px}
-  .frame{max-width:1000px;margin:0 auto;border-radius:16px;border:1px solid #ff475733;box-shadow:0 0 50px #ff475722;padding:24px;background:rgba(0,0,0,.55)}
-  h1{letter-spacing:.12em;text-align:center;margin:0 0 6px;color:#ff4757;text-shadow:0 0 20px #ff475777}
-  .sub{color:#9bbcff;text-align:center;margin-bottom:22px}
-  .panel{background:var(--panel);border:1px solid #5f27cd44;border-left:4px solid var(--b);border-radius:12px;padding:16px;margin:16px 0}
-  .grid{display:grid;gap:10px}
-  .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
-  label{font-size:.8rem;color:#9bbcff;margin-bottom:4px;display:block;letter-spacing:.06em}
-  input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #5f27cd99;background:#0b0b1a;color:var(--fg)}
-  .btn{background:linear-gradient(45deg,#ff4757,#ff6980);border:none;color:#000;font-weight:700;border-radius:10px;padding:10px 14px;cursor:pointer}
-  .btn.s{background:linear-gradient(45deg,#6b4eff,#8a6bff);color:#fff}
-  .btn.d{background:linear-gradient(45deg,#ff3838,#ff6b6b);color:#fff}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .muted{color:#9bbcff99}
-  .badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:.75rem;background:#1a143a;border:1px solid #6b4eff55;color:#c4b6ff;margin-left:6px}
-  .hr{height:1px;background:#5f27cd40;margin:10px 0}
-  .log{max-height:260px;overflow:auto;padding:8px;background:#0b0b17;border:1px solid #5f27cd55;border-radius:10px}
-  .log .e{padding:6px 8px;border-left:3px solid var(--b);margin:6px 0;background:#5f27cd11;border-radius:6px}
-  .roster-card{border:1px dashed #5f27cd88;border-radius:12px;padding:12px}
-  @media(max-width:800px){.g2,.g3{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dishonourable Discharge</title>
+  <style>
+    :root{
+      --bg:#0a0a0a; --bg2:#1a1a2e; --bg3:#16213e;
+      --red:#ff4757; --vio:#5f27cd; --vio2:#7c3aed; --ora:#ffa500; --blue:#3498db;
+      --fg:#e0e0e0; --muted:#9bbcff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:'Courier New',monospace; color:var(--fg);
+      min-height:100vh; background:linear-gradient(135deg,var(--bg),var(--bg2),var(--bg3));
+      padding:18px;
+    }
+    .wrap{max-width:980px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid var(--red);
+      border-radius:16px; padding:22px; box-shadow:0 0 40px rgba(255,71,87,.25); position:relative}
+    .stamp{position:absolute;top:20px;right:20px;background:var(--red);color:#000;
+      padding:7px 14px;border:3px solid #000;transform:rotate(10deg);font-weight:bold}
+    h1{margin:0 0 6px;color:var(--red);text-shadow:0 0 18px rgba(255,71,87,.7);letter-spacing:3px;text-align:center}
+    .sub{color:var(--vio);text-align:center;margin-bottom:20px}
+    .section{background:rgba(255,255,255,.03);border-left:4px solid var(--vio);border-radius:10px;padding:18px;margin:14px 0}
+    .title{color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+    .grid{display:grid;gap:12px}
+    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+    label{display:block;margin-bottom:6px;color:var(--vio);font-weight:bold;font-size:.88em;letter-spacing:.5px}
+    input,select,textarea{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid var(--vio);border-radius:8px;color:var(--fg)}
+    .btn{background:linear-gradient(45deg,var(--red),#ff6b7a);color:#000;border:none;padding:12px 16px;border-radius:8px;
+      font-weight:bold;cursor:pointer;transition:.15s;text-transform:uppercase;letter-spacing:1px}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(255,71,87,.45)}
+    .btn.sec{background:linear-gradient(45deg,var(--vio),var(--vio2));color:#fff}
+    .btn.out{background:transparent;border:2px dashed var(--vio);color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .small{font-size:.85em;color:var(--muted)}
+    .muted{opacity:.75}
+    .card{border:1px dashed var(--vio);border-radius:10px;padding:10px}
+    .good{color:#8ef08e}.bad{color:#ff9aa2}
+    .dossier{border:2px solid var(--red);border-radius:12px;background:linear-gradient(135deg,rgba(255,71,87,.1),rgba(95,39,205,.1));padding:16px;margin:12px 0;position:relative}
+    .dossier:before{content:"CLASSIFIED";position:absolute;top:-10px;left:18px;background:var(--red);color:#000;padding:3px 10px;font-size:.72em;font-weight:bold}
+    .code{color:var(--red);font-weight:bold}
+    .log{max-height:260px;overflow:auto;background:rgba(0,0,0,.45);border:2px solid var(--vio);border-radius:10px;padding:12px}
+    .line{border-left:3px solid var(--vio);padding-left:10px;margin:8px 0;background:rgba(95,39,205,.12);border-radius:4px}
+    .hidden{display:none}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,var(--vio),transparent);margin:12px 0}
+  </style>
 </head>
 <body>
-  <div class="frame">
+  <div class="wrap">
+    <div class="stamp">TOP SECRET</div>
     <h1>DISHONOURABLE DISCHARGE</h1>
     <div class="sub">Operation: Alpine Debrief</div>
 
-    <!-- GM -->
-    <div class="panel" id="gmPanel">
-      <div style="font-weight:700;margin-bottom:10px">🎮 GAME MASTER</div>
+    <!-- GM PANEL -->
+    <div id="gmPanel" class="section">
+      <div class="title">🎮 Game Master Control</div>
       <div class="grid g3">
         <div>
-          <label>GAME KEY</label>
-          <input id="gmKey" placeholder="e.g. QT1" />
+          <label>Game Key</label>
+          <input id="sessionId" placeholder="e.g. QT1" />
         </div>
         <div>
-          <label>PLAYER LIMIT</label>
-          <select id="gmLimit">
+          <label>Player Limit</label>
+          <select id="playerCount">
             <option>3</option><option>4</option><option>5</option>
             <option selected>6</option><option>8</option><option>12</option>
           </select>
         </div>
         <div>
-          <label>FINAL NIGHT (unlocks scan/accuse)</label>
-          <input type="datetime-local" id="gmFinal"/>
+          <label>Final Night (unlocks scans/accusations)</label>
+          <input type="datetime-local" id="finalNightAt"/>
         </div>
       </div>
       <div class="row" style="margin-top:10px">
-        <button class="btn" id="btnCreate">Create Game</button>
-        <button class="btn s" id="btnRefresh">Refresh State</button>
+        <button class="btn" onclick="createGame()">Create Game</button>
+        <button class="btn sec" onclick="refreshState()">Refresh State</button>
+        <button class="btn out" onclick="copyGameLink()">Copy Join Link (Key Only)</button>
       </div>
-      <div id="gmMsg" class="muted" style="margin-top:6px"></div>
+      <div id="gmMsg" class="small" style="margin-top:8px"></div>
+      <div id="seatList" class="grid g3" style="margin-top:10px"></div>
     </div>
 
-    <!-- Login -->
-    <div class="panel" id="loginPanel">
-      <div style="font-weight:700;margin-bottom:10px">🔐 PLAYER LOGIN</div>
-      <div class="grid g2">
+    <!-- LOGIN PANEL -->
+    <div id="loginPanel" class="section">
+      <div class="title">🔐 Player Login</div>
+      <div class="grid g3">
         <div>
-          <label>YOUR NAME</label>
-          <input id="loginName" placeholder="Real first name"/>
+          <label>Your Name</label>
+          <input id="playerName" placeholder="e.g. Kaleb"/>
         </div>
         <div>
-          <label>GAME KEY</label>
-          <input id="loginKey" placeholder="QT1"/>
+          <label>Game Key</label>
+          <input id="gameKeyLogin" placeholder="e.g. QT1"/>
+        </div>
+        <div>
+          <label>Seat Key</label>
+          <input id="seatKey" placeholder="e.g. AB1C-9XYZ"/>
         </div>
       </div>
       <div class="row" style="margin-top:10px">
-        <button class="btn" id="btnJoin">Join Game</button>
+        <button class="btn" onclick="joinGame()">Join Game</button>
+        <button class="btn sec" onclick="refreshState()">Refresh State</button>
       </div>
-      <div id="loginMsg" class="muted" style="margin-top:6px"></div>
+      <div id="loginMsg" class="small" style="margin-top:8px"></div>
     </div>
 
-    <!-- Player -->
-    <div id="playerPanel" class="panel" style="display:none">
-      <div class="row" style="align-items:center;justify-content:space-between">
-        <div style="font-weight:700">🧾 AGENT DOSSIER</div>
-        <div class="muted">Session: <span id="sessBadge" class="badge">—</span></div>
-      </div>
-      <div class="grid g2">
-        <div>
-          <div class="row" style="align-items:center;gap:10px">
-            <div style="font-size:1.3rem;color:#ff6a76;font-weight:900" id="codename">—</div>
-            <div class="badge" id="agentId">—</div>
-          </div>
-          <div class="hr"></div>
-          <div class="muted">Operative: <span id="realName">—</span></div>
-          <div>Adopted Name: <b id="adopted">—</b></div>
-          <div>Cover: <span id="cover">—</span></div>
-          <div class="hr"></div>
-          <div><b>Quirk:</b> <span id="quirk">—</span></div>
-          <div><b>Con:</b> <span id="con">—</span></div>
-          <div><b>Perks:</b> <ul id="perks" style="margin:6px 0 0 18px"></ul></div>
+    <!-- DASHBOARD -->
+    <div id="dashPanel" class="section hidden">
+      <div class="title">🧾 Agent Dashboard</div>
+
+      <div class="dossier">
+        <div class="row" style="justify-content:space-between">
+          <div><span class="code" id="codenameText">—</span> <span class="small muted">(Agent ID <span id="agentIdText">—</span>)</span></div>
+          <div class="small">Game: <span id="gameKeyText">—</span></div>
         </div>
-        <div>
-          <div class="panel" style="background:#0b0b18;border-left-color:#ffa94d">
-            <div style="font-weight:700">🎯 Role</div>
-            <div id="roleDesc" class="muted">Innocent Operative</div>
-            <div class="hr"></div>
-            <div style="font-weight:700">⚡ Special Ability <span id="abilityState" class="badge">READY</span></div>
-            <div id="abilityText" style="margin:4px 0 8px">—</div>
-            <div class="grid g3">
-              <div>
-                <label>Target</label>
-                <select id="abilityTarget"></select>
-              </div>
-              <div>
-                <label>&nbsp;</label>
-                <button class="btn" id="btnUseAbility">Use Ability</button>
-              </div>
-              <div class="muted" id="finalGateNote"></div>
-            </div>
+        <div class="hr"></div>
+        <div class="grid g2">
+          <div class="card">
+            <div class="small muted">Your Name</div>
+            <div id="realNameText">—</div>
+            <div class="small muted" style="margin-top:6px">Adopted Name</div>
+            <div id="aliasText">—</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Cover Identity</div>
+            <div id="coverText">—</div>
+            <div class="small muted" style="margin-top:6px">Role</div>
+            <div id="roleText">—</div>
           </div>
         </div>
-      </div>
-
-      <!-- Secret + Murderer -->
-      <div class="panel" id="secretPanel" style="background:#130c14;border-left-color:#ff4757">
-        <div style="font-weight:700">🔒 PRIVATE BIO</div>
-        <div id="privateBio" class="muted">—</div>
-        <div id="murdererBox" class="badge" style="display:none;margin-top:8px"></div>
-      </div>
-
-      <!-- Actions / Missions -->
-      <div class="panel">
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <div style="font-weight:700">📝 Actions</div>
-          <button class="btn s" id="btnRoster">Refresh Roster</button>
-        </div>
-        <div class="grid g3" style="margin-top:8px">
-          <div>
-            <label>Action Type</label>
-            <select id="actionType">
-              <option value="penalty">Report Penalty</option>
-              <option value="task_complete">Complete Task</option>
-              <option value="murderer_act">Report Murderer Act</option>
-              <option value="note">Note to Log</option>
-            </select>
+        <div class="grid g2" style="margin-top:10px">
+          <div class="card">
+            <div class="small muted">Public Bio</div>
+            <div id="publicBioText">—</div>
           </div>
-          <div>
-            <label>Target Player</label>
-            <select id="actionTarget"></select>
-          </div>
-          <div>
-            <label>Details</label>
-            <input id="actionDetails" placeholder="What happened / instructions"/>
+          <div class="card">
+            <div class="small muted">Private Bio (you only)</div>
+            <div id="privateBioText">—</div>
           </div>
         </div>
-        <div class="row" style="margin-top:8px"><button class="btn" id="btnSubmit">Submit</button></div>
-      </div>
-
-      <!-- Missions -->
-      <div class="panel">
-        <div style="font-weight:700">📋 Active Mission</div>
-        <div id="missionText" class="muted">No active mission.</div>
-        <div class="row" style="margin-top:8px">
-          <button class="btn s" id="btnDraw">Request Mission</button>
-          <button class="btn" id="btnComplete" disabled>Complete Mission</button>
+        <div id="murdererCard" class="card" style="margin-top:10px; display:none">
+          <div class="small good">☠️ Secret Directive (Murderer)</div>
+          <div id="murdererDirective">—</div>
         </div>
       </div>
 
-      <!-- Scanner -->
-      <div class="panel">
-        <div style="font-weight:700">🔍 Scanner (Final Night only)</div>
-        <div id="scanGate" class="muted" style="margin:4px 0 8px">Set Final Night in GM panel to enable.</div>
-        <div class="row">
-          <select id="scanSelect"></select>
-          <button class="btn s" id="btnScan">Scan Target</button>
-          <button class="btn d" id="btnAccuse">Accuse</button>
-        </div>
+      <div class="section" style="border-left-color:var(--blue)">
+        <div class="title">🗂️ Public Roster</div>
+        <div id="rosterList"></div>
       </div>
 
-      <!-- Roster -->
-      <div class="panel">
-        <div style="font-weight:700">🗂️ Public Roster</div>
-        <div id="roster"></div>
+      <div class="section" style="border-left-color:var(--ora)">
+        <div class="title">📡 Operation Log</div>
+        <div id="logView" class="log"></div>
       </div>
 
-      <!-- Vote -->
-      <div class="panel" id="votePanel" style="display:none">
-        <div style="font-weight:700">🗳️ Final Vote</div>
-        <div class="row">
-          <select id="voteSelect"></select>
-          <button class="btn d" id="btnVote">Cast Vote</button>
-        </div>
-      </div>
-
-      <!-- Logs -->
-      <div class="panel">
-        <div style="font-weight:700">📡 Operation Log</div>
-        <div id="log" class="log"></div>
+      <div class="row">
+        <button class="btn sec" onclick="refreshState()">Refresh</button>
+        <button class="btn out" onclick="leaveSeat()">Leave Seat (Clear Local)</button>
       </div>
     </div>
   </div>
 
 <script>
-/* ========================== DATA ========================== */
-const roles = {
-  innocent:{ name:'Innocent Operative', desc:'Identify the traitor and survive.' },
-  handler:{ name:'Handler', desc:'Investigate and expose the traitor.' },
-  wildcard:{ name:'Wildcard', desc:'Flex—ally with any side to win.' },
-  flipped_agent:{ name:'Flipped Agent', desc:'Sow chaos and avoid detection.' }
-};
-
-// 12 characters (adoptedName = in-world name they go by). Public vs private bios.
-const CHARACTERS = [
-  {id:'lacehunter', codename:'LACEHUNTER', adoptedName:'Val Méridien', cover:'Luxury Skiwear Designer',
-   publicBio:'Tactical glam tech turned couture whisperer.',
-   privateBio:'Left NATO PSYOPS after a glitter-and-thermals scandal. In Queenstown to hunt the ghoster from a classified alpine affair.',
-   perks:['Honorific Lock: must be addressed as “Monsieur Val”.','Style Verdict: call “Runway check” → 10-sec pose.'],
-   con:'If he sees a reflection he must stop & preen for 3s.',
-   quirk:'Silk cravat; lip balm mid-sentence; nicknames everyone.',
-   ability:{name:'Fashion Emergency', desc:'Force two players to swap a visible clothing item immediately.'}},
-  {id:'snowblind', codename:'SNOWBLIND', adoptedName:'Tevita Leone', cover:'Extreme Sports Photographer',
-   publicBio:'Fijian recon tracker who finds rumour and happy hour with equal skill.',
-   privateBio:'Refused to track his defecting brother; now collects strangers’ slang to “map the human terrain”.',
-   perks:['Breadcrumb Command: choose a trigger word; speakers owe a clue or penalty for 10 min.',
-          'Switchback: say “First tracks” → everyone rotates seats; last seated owes a favour.'],
-   con:'If someone says “family/ohana” he must deliver a one-sentence heartfelt lesson.',
-   quirk:'Whispers intel like classified comms; ends with “copy?”',
-   ability:{name:'Hire a Tail', desc:'Recruit a player to shadow you 10–30 min and report every 5 min or take penalties.'}},
-  {id:'frostbite', codename:'FROSTBITE', adoptedName:'Marek Biel', cover:'Adventure Safety Coordinator',
-   publicBio:'Polish cold-weather specialist with a laminated checklist for everything.',
-   privateBio:'Interrogation methods “culturally incompatible”. Collects strangers’ glove sizes for art.',
-   perks:['Interrogator’s Pause: on “Answer the question,” target must reply in ≤5 words.',
-          'Cold Protocol: greetings become fist-bump only until cleared.'],
-   con:'When asked “What’s the plan?” must either present a checklist or salute and declare “I am improvising.”',
-   quirk:'Over-enunciates like a radio check; numbers in NATO phonetic.',
-   ability:{name:'Coerce an Asset', desc:'Designate a player your Asset for 15 min; they must complete two simple tasks or take penalties.'}},
-  {id:'blackrun', codename:'BLACKRUN', adoptedName:'Anaya Rao', cover:'Avalanche Risk Specialist',
-   publicBio:'Predicts social disasters the way others predict weather.',
-   privateBio:'Survived an avalanche—allegedly caused it. Runs impromptu “safety briefings” on strangers.',
-   perks:['Beacon Check: call it → all phones face-down 5 min; touching = penalty.',
-          'Disaster Brief: two table taps resets topic & picks next speaker.'],
-   con:'On triangles/angles must estimate degrees aloud; off by >10° draws a napkin protractor.',
-   quirk:'Adds “allegedly” to any claim when alcohol is present.',
-   ability:{name:'Avalanche Protocol', desc:'30-sec evac drill. Everyone swaps seats & surrenders a small item; you redistribute.'}},
-  {id:'powderkeg', codename:'POWDER KEG', adoptedName:'Lola “Lo” Serrano', cover:'Luxury Lodge Event Coordinator',
-   publicBio:'Throws parties like operations; carries clipboards and secrets.',
-   privateBio:'Ran weapons through receptions. In QT to crown themself Ambassador of Après.',
-   perks:['VIP Gate: others must introduce you with a grand invented title (miss = penalty).',
-          'Guest List: say “You’re on the list” → 2-min private chat to assign a micro-task.'],
-   con:'On any rumour she must add “exclusive source” + wink; if asked “source?” later she must confess “It was me.”',
-   quirk:'Refuses real names; assigns callsigns on sight.',
-   ability:{name:'Task the Mark', desc:'Nominate any player to get a phone number, key/card, or selfie with anyone within 20 min. Failure = penalty.'}},
-  {id:'icepick', codename:'ICEPICK', adoptedName:'Dmitri Volkov', cover:'Artisanal Spirits Consultant',
-   publicBio:'Only drinks vodka; measures temperatures; speaks in Celsius.',
-   privateBio:'“Defected” during Sochi—maybe not. Hunting a perfect toast.',
-   perks:['Cold Stare: on eye contact the other must break first or penalty.',
-          'Vodka Toast Override: on your toast everyone has 30s to get alcohol or take penalty.'],
-   con:'On greeting new people he must pat pockets and mutter “ID, keys, exit—roger” then 10-sec bug sweep if called out.',
-   quirk:'Answers “roger” instead of “yes”; ends sentences with “over.”',
-   ability:{name:'Charm Offensive (vodka only)', desc:'Before midnight compel three people to buy you vodka drinks; refusal/wrong drink = penalty.'}},
-  // +6 more compact profiles
-  {id:'switchback', codename:'SWITCHBACK', adoptedName:'Noa Arad', cover:'Lift Operations Analyst',
-   publicBio:'Knows every queue, shortcut, and gossip line on the mountain.',
-   privateBio:'Once rerouted a presidential convoy for fun. Here to optimize après migration.',
-   perks:['Queue Cut Protocol: on “priority evac” you and one ally jump any line once.',
-          'Lost & Found Law: declare any item “found evidence” and hold it for 5 minutes.'],
-   con:'Must check every door handle they pass; caught skipping = 10-sec lock-pick mime.',
-   quirk:'Narrates movement like an air-traffic controller.',
-   ability:{name:'Traffic Shaper', desc:'Force the group to relocate (new table/bar) within 60s; last to move takes penalty.'}},
-  {id:'glacier', codename:'GLACIER', adoptedName:'Artemis King', cover:'Cryo Logistics Tech',
-   publicBio:'Emotionally subzero, sartorially maximal.',
-   privateBio:'Smuggled a freezer to a desert op. In QT to test “mobile chill zones.”',
-   perks:['Icebreaker Clause: your first question must be answered before any new topic.',
-          'Coaster Treaty: declare a coaster sacred—anyone touching it buys you a drink.'],
-   con:'If someone says “hot”, must fan self and say “untenable.”',
-   quirk:'Speaks in procurement acronyms.',
-   ability:{name:'Freeze Frame', desc:'Call “10-second statue” and pick a pose; everyone holds it. Last to freeze = penalty.'}},
-  {id:'nightbus', codename:'NIGHTBUS', adoptedName:'Rafi Cole', cover:'After-hours Transport Fixer',
-   publicBio:'Knows every driver and every back route.',
-   privateBio:'Once evacuated a wedding and a cartel meeting simultaneously.',
-   perks:['Exact Fare: if you guess a bill total within $2, someone else pays.',
-          'Last Stop: say it to force the next drink to be water for everyone (once).'],
-   con:'Must tap surfaces twice before sitting; caught skipping = stand for 1 minute.',
-   quirk:'Calls rooms by route numbers.',
-   ability:{name:'Detour', desc:'Privately redirect one player to fetch an item/person; if they refuse, they log a penalty.'}},
-  {id:'mirage', codename:'MIRAGE', adoptedName:'Kai Navarro', cover:'Influence Countermeasure Lead',
-   publicBio:'Weaponizes compliments and misdirection.',
-   privateBio:'Faked three brand deals and one coup. Here to chase a rumor of a cursed jacket.',
-   perks:['Compliment Trap: if someone thanks you, they owe you a small favor.',
-          'Double Take: you may pretend not to recognize someone once and force a re-introduction ritual.'],
-   con:'Must wear sunglasses indoors on first entry; forgetting = dramatic re-entry.',
-   quirk:'Repeats last word of any sentence for emphasis. Sentence.',
-   ability:{name:'Social Fog', desc:'For 5 min, any info attributed to you is officially “unverifiable”; accusations against you require two witnesses.'}},
-  {id:'sleddog', codename:'SLEDDOG', adoptedName:'Odin Hale', cover:'K9 Search Instructor',
-   publicBio:'Doesn’t have a dog. Still throws treats.',
-   privateBio:'Banned from three kennels (paperwork). Practicing silent whistle social commands.',
-   perks:['Heel!: chosen target must walk beside you to the next location.',
-          'Good Boy Rule: anyone receiving a treat from you must tell a wholesome secret.'],
-   con:'If someone whistles, he must “sit” for 3 seconds.',
-   quirk:'Greets friends with “who’s a good operative?”',
-   ability:{name:'Pack Order', desc:'Rearrange the seating order entirely; last seated owes you a dare.'}},
-  {id:'heli', codename:'HELI-LIFT', adoptedName:'Rune Madsen', cover:'Rotorcraft Liaison',
-   publicBio:'Speaks in checklists and wind vectors.',
-   privateBio:'Did airdrops for popstars. Here to “extract vibes.”',
-   perks:['Safety Card: on announcement, everyone demonstrates seat-belt mime.',
-          'Rotor Wash: fan menu pages—whoever grabs first must order what they touch.'],
-   con:'On hearing “clear”, must yell “rotors turning!”',
-   quirk:'Ends plans with “wheels up in five.”',
-   ability:{name:'Hot LZ', desc:'Call a 30-sec “extraction”—only three people allowed to stay at the table; others scatter or take penalty.'}}
-];
-
-// fun challenge deck
-const CHALLENGES = [
-  {id:'goggles', text:'Wear ski goggles to dinner; never explain why', reward:'Perk refresh + intel'},
-  {id:'cia', text:'Ask 3 strangers where the CIA safehouse is', reward:'Learn a role type'},
-  {id:'artifact', text:'Bring a random item to the bar and convince a stranger it’s priceless', reward:'Bonus ability usage'},
-  {id:'snowball', text:'Challenge someone to a snowball duel—loser does shoey', reward:'Force challenge redraw'},
-  {id:'recon', text:'Gain legitimate access to someone else’s room for 15 min', reward:'Deep scan'},
-  {id:'fashion', text:'Critique outfits using military terminology', reward:'Intel fragment'}
-];
-
-/* ========================== STATE ========================== */
-const LS = {
-  sess: 'dd_sessionId',
-  me:   'dd_playerId'
-};
-let SESSION = null;   // full session object from API
-let ME = null;        // my player object
-
-/* ========================== API ========================== */
-const api = {
-  async getState(id){ const r=await fetch(`/api/game?op=state&id=${encodeURIComponent(id)}`); return r.json(); },
-  async ping(){ const r=await fetch('/api/game?op=ping'); return r.json(); },
-  async create({id,playerLimit,finalNightAt}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'create',id,playerLimit,finalNightAt})}); return r.json(); },
-  async setFinal({sessionId,finalNightAt}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'setfinal',sessionId,finalNightAt})}); return r.json(); },
-  async join({sessionId,playerName,character}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'join',sessionId,playerName,character})}); return r.json(); },
-  async submit({sessionId,playerId,type,targetId,details}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'submit',sessionId,playerId,type,targetId,details})}); return r.json(); },
-  async ability({sessionId,playerId,targetId}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'ability',sessionId,playerId,targetId})}); return r.json(); },
-  async draw({sessionId,playerId,challenge}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'draw',sessionId,playerId,challenge})}); return r.json(); },
-  async complete({sessionId,playerId}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'complete',sessionId,playerId})}); return r.json(); },
-  async scan({sessionId,playerId,targetId}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'scan',sessionId,playerId,targetId})}); return r.json(); },
-  async accuse({sessionId,playerId,targetId}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'accuse',sessionId,playerId,targetId})}); return r.json(); },
-  async vote({sessionId,playerId,suspectId}){ const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'vote',sessionId,playerId,suspectId})}); return r.json(); }
-};
-
-/* ========================== UI HELPERS ========================== */
+/* ======== helpers ======== */
 const $ = id => document.getElementById(id);
-const set = (id, val) => { const el=$(id); if(el) el.textContent = val; };
+const now = () => Date.now();
+const fmt = ts => new Date(ts).toLocaleString();
+function logLocal(msg){ console.log(msg); }
+function uiMsg(id, text){ const el=$(id); if(el) el.textContent = text||''; }
 
-function logRender(){
-  const box = $('log');
-  box.innerHTML = (SESSION?.logs||[]).slice(-120).map(e => {
-    const t = new Date(e.ts).toLocaleTimeString();
-    return `<div class="e"><b>[${t}]</b> ${e.msg}</div>`;
-  }).join('');
-  box.scrollTop = box.scrollHeight;
+/* ======== character pack (12) ======== */
+/* deterministic assignment from Seat Key (to reduce dupes) */
+const CHARACTERS = [
+  { alias:"Valérie 'Val' Marchand", codename:"LACEHUNTER",
+    cover:"Luxury Skiwear Designer",
+    publicBio:"French AF comms → NATO PSYOPS ‘tactical glam’. Gives unsolicited ‘runway checks’.",
+    privateBio:"Got busted tailoring a general’s thermals. Can’t pass a mirror without preening.",
+    perks:["Honorific Lock: others must call you “Monsieur Val”.","Style Verdict: on 'Runway check', target holds an awkward 10-sec pose."],
+    quirk:"Wears a silk cravat. Applies lip balm mid-sentence.",
+    con:"If he catches his reflection he must stop & preen for 3s.",
+    role:"wildcard"
+  },
+  { alias:"Kaimana 'Kai' Savai'i", codename:"SNOWBLIND",
+    cover:"Extreme Sports Photographer",
+    publicBio:"RFMF (Fiji) recon tracker; can find happy hour with GPS accuracy.",
+    privateBio:"Refused to hunt an innocent defector (his brother). Collects slang like shell casings.",
+    perks:["Breadcrumb Command: choose a trigger word; speakers owe a clue or take penalty for 10 min.",
+           "Switchback: say 'First tracks' → everyone rotates seats; last seated owes you a favour."],
+    quirk:"Whispers intel and ends with 'copy?'",
+    con:"If someone says 'family'/'ohana', must deliver a 1-sentence heartfelt lesson.",
+    role:"innocent"
+  },
+  { alias:"Basia 'Bas' Nowak", codename:"FROSTBITE",
+    cover:"Adventure Safety Coordinator",
+    publicBio:"Polish GROM cold-weather specialist. Loves lists & laminated check cards.",
+    privateBio:"Interrogation ‘cultural differences’. Considers silence a confession.",
+    perks:["Interrogator’s Pause: on 'Answer the question', target must reply in ≤5 words.",
+           "Cold Protocol: greetings become fist-bump only until cleared."],
+    quirk:"Over-enunciates like radio checks; NATO phonetic for numbers.",
+    con:"When asked 'what’s the plan?' must present a checklist or salute & claim 'I am improvising.'",
+    role:"handler"
+  },
+  { alias:"Ira 'Iris' Khatri", codename:"BLACKRUN",
+    cover:"Avalanche Risk Specialist",
+    publicBio:"Para (SF) mountain warfare; predicts disasters in people as easily as in snow.",
+    privateBio:"The avalanche that saved lives also hid sins; she’ll never tell whose.",
+    perks:["Beacon Check: phones face-down 5 min; touching = penalty.",
+           "Disaster Brief: two table taps resets topic & assigns next speaker."],
+    quirk:"Adds 'allegedly' to claims if alcohol is present.",
+    con:"On triangles/angles she estimates degrees aloud; if off by >10° must sketch a napkin protractor.",
+    role:"wildcard"
+  },
+  { alias:"Pilar 'Pili' Castaño", codename:"POWDER KEG",
+    cover:"Luxury Lodge Event Coordinator",
+    publicBio:"Spanish social engineer; diplomacy with a splash of chaos.",
+    privateBio:"Ran weapons through receptions. Still RSVP’s 'maybe' to Interpol.",
+    perks:["VIP Gate: others must introduce you with a flamboyant invented title.",
+           "Guest List: 'You’re on the list' → 2-min private chat to assign a micro-task."],
+    quirk:"Refuses real names; assigns callsigns.",
+    con:"On any rumour she must add 'exclusive source' + wink; if asked later 'source?' she must admit 'It was me.'",
+    role:"wildcard"
+  },
+  { alias:"Dmitri 'Dima' Volkov", codename:"ICEPICK",
+    cover:"Artisanal Spirits Consultant",
+    publicBio:"Ex-Spetsnaz (allegedly). Measures every drink’s temperature. Speaks in Celsius.",
+    privateBio:"Defected— or didn’t. Awaits a signal only he would recognize.",
+    perks:["Cold Stare: on eye contact the other must break first or penalty.",
+           "Vodka Toast Override: on 'Na zdorovye', all must toast; 30s to find alcohol or penalty."],
+    quirk:"Answers 'roger' instead of 'yes' and ends sentences with 'over.'",
+    con:"When a new person arrives, he must pat pockets: 'ID, keys, exit—roger'; if caught skipping → 10-sec bug sweep.",
+    role:"innocent"
+  },
+  { alias:"Rowan 'Ro' Hart", codename:"WOLFTRAP",
+    cover:"Night Security Analyst",
+    publicBio:"Ex-infantry turned nightclub perimeter whisperer. Hears bouncers before the bass.",
+    privateBio:"Thinks velvet ropes are guidelines. Once dated a smoke machine.",
+    perks:["Line Cutter: may insert yourself into any group; someone must introduce you within 20s.",
+           "Bouncer’s Choice: point to the door; one person must accompany you for a 60s 'perimeter check'."],
+    quirk:"Counts exits out loud (quietly) when entering a room.",
+    con:"If music changes, must freeze for 3s like a motion sensor.",
+    role:"innocent"
+  },
+  { alias:"Asher 'Ash' Del Mar", codename:"SEALEVEL",
+    cover:"Hydro Logistics Planner",
+    publicBio:"Special forces boat guy who gets altitude sickness looking at menus.",
+    privateBio:"Smuggled a jet-ski into a hotel fountain. Twice.",
+    perks:["High-Water Mark: pick a 'shoreline' on the table; items crossing it owe you a sip.",
+           "Docking Fee: anyone returning to the group pays you a one-word status update."],
+    quirk:"Adds boat metaphors to everything.",
+    con:"If someone says 'wave', must salute like a lifeguard.",
+    role:"wildcard"
+  },
+  { alias:"Noah 'Knox' Keegan", codename:"SWITCHBACK",
+    cover:"Mountain Bike Guide",
+    publicBio:"Downhill brain, uphill charm. Always plotting the next corner.",
+    privateBio:"Claims a scar for each Greek letter he can remember. That’s… many.",
+    perks:["Gear Check: on 'Drop a gear', everyone lowers voice one notch for 2 min.",
+           "Trail Marshal: you decide who speaks next for 60s."],
+    quirk:"Claps once when he stands up.",
+    con:"If someone says 'brake', must freeze mid-gesture for 2s.",
+    role:"innocent"
+  },
+  { alias:"Jamie 'Harrow' Quinn", codename:"BONESAW",
+    cover:"Field Medic (Former)",
+    publicBio:"Good with stitches; terrible with boundaries. Brings tape to conversations.",
+    privateBio:"Kept a toe tag as a bookmark. It fell out at a funeral.",
+    perks:["Triage: you may interrupt any chat to ask 'Vitals?'—answer must be a number.",
+           "Sterile Field: designate a 30cm zone around your drink; violators owe an apology shot."],
+    quirk:"Calls snacks 'oral medication'.",
+    con:"If someone says 'owie', must produce a bandage (real or improvised).",
+    role:"wildcard"
+  },
+  { alias:"Elliot 'Ledger' Vance", codename:"COUNTERSIGN",
+    cover:"Casino Surveillance",
+    publicBio:"Counts cards, people, and regrets. Mostly people.",
+    privateBio:"Wears mirrored sunglasses at night because 'math is bright'.",
+    perks:["Tell Read: you may ask someone to repeat a sentence slower.",
+           "Double Down: once, force a yes/no commitment from the table."],
+    quirk:"Murmurs odds to himself.",
+    con:"If anyone says a number >10, must whisper a different random number.",
+    role:"handler"
+  },
+  { alias:"Rafe 'Static' Moretti", codename:"JAMMER",
+    cover:"RF Tech",
+    publicBio:"Carries more antennas than personality. Still… weirdly charming.",
+    privateBio:"Blocked a wedding livestream so the bride’s ex couldn’t watch. She thanked him.",
+    perks:["Signal Check: say 'Bars?' and everyone must show phone lock screen for 3s.",
+           "Dead Zone: pick a corner where nobody may use phones for 5 min."],
+    quirk:"Says 'Copy' to compliments.",
+    con:"If someone says 'loud', must turn an imaginary knob.",
+    role:"innocent"
+  }
+];
+
+function pickCharacterForSeat(seatKey){
+  // hash seat key -> index
+  let h = 0; for(const c of seatKey) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  const base = CHARACTERS[h % CHARACTERS.length];
+  // shallow clone
+  return JSON.parse(JSON.stringify(base));
 }
 
-function rosterRender(){
-  const meId = ME?.id;
-  $('roster').innerHTML = (SESSION?.players||[]).map(p=>{
-    const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('');
+/* ======== state ======== */
+let gameState = {};          // full session from server
+let currentPlayer = null;    // my player object
+
+/* ======== API ======== */
+async function api(op, body={}){
+  if(op==='get'){
+    const id = body.id;
+    const r = await fetch(`/api/game?id=${encodeURIComponent(id)}`);
+    return r.json();
+  }
+  const r = await fetch('/api/game', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({op, ...body}) });
+  return r.json();
+}
+
+/* ======== GM actions ======== */
+async function createGame(){
+  const sessionId = ($('sessionId').value||'').toUpperCase().trim();
+  const playerLimit = Number($('playerCount').value||6);
+  const finalNightAt = $('finalNightAt').value ? new Date($('finalNightAt').value).getTime() : null;
+
+  const res = await api('create', { sessionId, playerLimit, finalNightAt });
+  if(!res.ok){ uiMsg('gmMsg', '❌ '+(res.error||'Create failed')); return; }
+
+  localStorage.setItem('gm_session', res.session.id);
+  uiMsg('gmMsg', `✅ Game ${res.session.id} created (limit ${res.session.playerLimit})`);
+  $('gameKeyLogin').value = res.session.id;
+  renderSeats(res.seats);
+  await refreshState();
+}
+
+function renderSeats(seats){
+  $('seatList').innerHTML = seats.map(s=>`
+    <div class="card">
+      <div><strong>${s.token}</strong></div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn sec" style="padding:6px 10px" onclick="copyText('${s.token}')">Copy</button>
+      </div>
+    </div>
+  `).join('');
+}
+function copyText(t){ navigator.clipboard.writeText(t); }
+function copyGameLink(){
+  const id = $('sessionId').value || localStorage.getItem('gm_session') || '';
+  if(!id){ uiMsg('gmMsg','No game key yet.'); return; }
+  const url = `${location.origin}${location.pathname}?session=${encodeURIComponent(id)}`;
+  copyText(url);
+  uiMsg('gmMsg','Copied join link (key only).');
+}
+
+/* ======== Player actions ======== */
+async function joinGame(){
+  const sessionId = ($('gameKeyLogin').value||'').toUpperCase().trim();
+  const seatToken = ($('seatKey').value||'').toUpperCase().trim();
+  const playerName = ($('playerName').value||'').trim();
+  if(!sessionId || !seatToken){ uiMsg('loginMsg','Enter game key and seat key'); return; }
+
+  const character = pickCharacterForSeat(seatToken);
+  // also store alias on dossier explicitly
+  character.adoptedName = character.alias;
+
+  const res = await api('join', { sessionId, seatToken, playerName, character });
+  if(!res.ok){ uiMsg('loginMsg', '❌ '+(res.error||'Join failed')); return; }
+
+  localStorage.setItem('session', res.session.id);
+  localStorage.setItem('seatToken', seatToken);
+  localStorage.setItem('playerId', res.player.id);
+
+  currentPlayer = res.player;
+  await refreshState();
+  showDashboard();
+}
+
+async function refreshState(){
+  const id = localStorage.getItem('session') || localStorage.getItem('gm_session') || ($('sessionId').value||'').toUpperCase();
+  if(!id) return;
+
+  const res = await api('get', { id });
+  if(!res.ok){ return; }
+  gameState = res.session;
+
+  // if I'm logged in, refresh my player record
+  const myId = localStorage.getItem('playerId');
+  if(myId){
+    const me = (gameState.players||[]).find(p=>p.id===myId);
+    if(me) currentPlayer = me;
+  }
+
+  // render UI bits if dashboard visible
+  renderRoster();
+  renderLog();
+  renderDossier();
+}
+
+function showDashboard(){
+  $('gmPanel').classList.add('hidden');
+  $('loginPanel').classList.add('hidden');
+  $('dashPanel').classList.remove('hidden');
+  $('gameKeyText').textContent = gameState.id || localStorage.getItem('session') || '—';
+  renderDossier();
+  renderRoster();
+  renderLog();
+}
+
+function leaveSeat(){
+  localStorage.removeItem('session');
+  localStorage.removeItem('seatToken');
+  localStorage.removeItem('playerId');
+  location.href = location.pathname; // reload to login
+}
+
+/* ======== Rendering ======== */
+function renderDossier(){
+  if(!currentPlayer) return;
+  $('codenameText').textContent = currentPlayer.codename || 'OPERATIVE';
+  $('agentIdText').textContent = currentPlayer.id || '—';
+  $('realNameText').textContent = currentPlayer.realName || '—';
+  $('aliasText').textContent = currentPlayer.adoptedName || currentPlayer.alias || '—';
+  $('coverText').textContent = currentPlayer.cover || '—';
+  $('roleText').textContent = currentPlayer.role || '—';
+  $('publicBioText').textContent = currentPlayer.publicBio || '—';
+  $('privateBioText').textContent = currentPlayer.privateBio || '—';
+
+  // murderer directive (if me)
+  const panel = $('murdererCard');
+  if(gameState.murderer && gameState.murderer.id === currentPlayer.id){
+    panel.style.display = 'block';
+    $('murdererDirective').textContent = gameState.murderer.act || '—';
+  }else{
+    panel.style.display = 'none';
+  }
+}
+
+function renderRoster(){
+  const list = gameState.players || [];
+  if(!list.length){ $('rosterList').innerHTML = '<div class="muted">No agents yet.</div>'; return; }
+  $('rosterList').innerHTML = list.map(p=>{
+    const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+    const me = (currentPlayer && p.id===currentPlayer.id) ? ' (you)' : '';
     return `
-      <div class="roster-card">
-        <div><b>${p.codename}</b> — ${p.adoptedName} <span class="muted">(${p.realName})</span> <span class="badge">${p.id}</span></div>
-        <div class="muted">${p.cover}</div>
-        <div style="margin-top:6px">${p.publicBio||''}</div>
-        <div class="grid g3" style="margin-top:6px">
-          <div><b>Quirk:</b><br>${p.quirk||'—'}</div>
-          <div><b>Con:</b><br>${p.con||'—'}</div>
-          <div><b>Perks:</b><ul style="margin:0 0 0 18px">${perks||'<li>—</li>'}</ul></div>
+      <div class="card" style="margin:8px 0">
+        <div class="row" style="justify-content:space-between">
+          <div><strong class="code">${p.codename}</strong> — ${p.realName}${me}</div>
+          <div class="small muted">${p.id}</div>
         </div>
-      </div>`;
+        <div class="small">${p.cover||''}</div>
+        <div class="grid g3" style="margin-top:8px">
+          <div><div class="small muted">Public Bio</div>${p.publicBio||'—'}</div>
+          <div><div class="small muted">Quirk</div>${p.quirk||'—'}</div>
+          <div><div class="small muted">Con</div>${p.con||'—'}</div>
+        </div>
+        <div style="margin-top:6px"><div class="small muted">Perks</div><ul style="margin:6px 0 0 18px">${perks}</ul></div>
+      </div>
+    `;
   }).join('');
 }
 
-function fillSelectors(){
-  const others = (SESSION?.players||[]).filter(p=> p.id !== ME?.id);
-  const fills = [ 'abilityTarget','actionTarget','scanSelect','voteSelect' ];
-  fills.forEach(id=>{
-    const el=$(id); if(!el) return;
-    el.innerHTML = `<option value="">— Select —</option>` + others.map(p=>`<option value="${p.id}">${p.codename} (${p.realName})</option>`).join('');
-  });
+function renderLog(){
+  const log = gameState.gameLog || [];
+  $('logView').innerHTML = log.slice(-200).map(l=>`<div class="line"><strong>[${new Date(l.ts).toLocaleTimeString()}]</strong> ${l.msg}</div>`).join('') || '<div class="muted">No events yet.</div>';
+  const el = $('logView'); el.scrollTop = el.scrollHeight;
 }
 
-function gateUpdate(){
-  const gate = SESSION?.finalNightAt ? Number(SESSION.finalNightAt) : null;
-  const open = !!(gate && Date.now() >= gate);
-  $('scanGate').textContent = gate ? (open ? '✅ Unlocked.' : '🔒 Locked until ' + new Date(gate).toLocaleString()) : 'Set Final Night in GM panel to enable.';
-  $('finalGateNote').textContent = gate ? 'Final Night: ' + new Date(gate).toLocaleString() : 'Final Night not set.';
-  $('votePanel').style.display = open ? '' : 'none';
-}
-
-function showPlayer(){
-  $('loginPanel').style.display = 'none';
-  $('playerPanel').style.display = '';
-  $('sessBadge').textContent = SESSION?.id || '—';
-
-  set('codename', ME.codename);
-  set('agentId', ME.id);
-  set('realName', ME.realName);
-  set('adopted', ME.adoptedName);
-  set('cover', ME.cover);
-  set('quirk', ME.quirk);
-  set('con', ME.con);
-  $('perks').innerHTML = (ME.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
-  $('abilityText').textContent = ME.ability?.desc || '—';
-  $('abilityState').textContent = ME.abilityUsed ? 'USED' : 'READY';
-
-  $('privateBio').textContent = ME.privateBio || '—';
-  if (SESSION?.murderer?.id === ME.id) {
-    $('murdererBox').style.display='inline-block';
-    $('murdererBox').textContent = '☠️ SECRET DIRECTIVE: ' + (SESSION.murderer.act || '');
-  } else {
-    $('murdererBox').style.display='none';
+/* ======== boot / auto-rejoin ======== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // if URL has ?session=... prefill GM + login key
+  const qs = new URLSearchParams(location.search);
+  const urlSession = (qs.get('session')||'').toUpperCase();
+  if(urlSession){
+    $('sessionId').value = urlSession;
+    $('gameKeyLogin').value = urlSession;
+    localStorage.setItem('gm_session', urlSession);
   }
 
-  const role = roles[ME.role] || roles.innocent;
-  $('roleDesc').innerHTML = `<b>${role.name}</b> — ${role.desc}`;
-
-  const active = ME.activeChallenge;
-  $('missionText').textContent = active ? active.text : 'No active mission.';
-  $('btnComplete').disabled = !active;
-
-  rosterRender();
-  fillSelectors();
-  logRender();
-  gateUpdate();
-}
-
-/* ========================== GM FLOW ========================== */
-$('btnCreate').onclick = async ()=>{
-  const id = $('gmKey').value.trim();
-  const limit = parseInt($('gmLimit').value,10)||6;
-  const dt = $('gmFinal').value ? Date.parse($('gmFinal').value) : null;
-  if(!id){ $('gmMsg').textContent='Enter a game key.'; return; }
-  const r = await api.create({id,playerLimit:limit,finalNightAt:dt});
-  if(r.ok===false && r.error){ $('gmMsg').textContent = r.error; return; }
-  $('gmMsg').textContent = `Game ready. Share key ${id}.`;
-  SESSION = r; // create returns full session
-};
-
-$('btnRefresh').onclick = async ()=>{
-  const id = $('gmKey').value.trim() || $('loginKey').value.trim();
-  if(!id){ $('gmMsg').textContent='Enter a game key.'; return; }
-  const s = await api.getState(id);
-  if(s?.id){ SESSION = s; $('gmMsg').textContent = `Loaded ${s.id}. Players: ${s.players.length}/${s.playerLimit}`; logRender(); gateUpdate(); rosterRender(); }
-  else { $('gmMsg').textContent = 'Not found.'; }
-};
-
-/* ========================== LOGIN / JOIN ========================== */
-function pickAvailableCharacter(sess){
-  const taken = new Set(sess.usedCharacterIds || []);
-  const pool = CHARACTERS.filter(c=> !taken.has(c.id));
-  return pool.length ? pool[Math.floor(Math.random()*pool.length)] : null;
-}
-
-$('btnJoin').onclick = async ()=>{
-  const sessionId = $('loginKey').value.trim();
-  const name = $('loginName').value.trim();
-  if(!sessionId || !name){ $('loginMsg').textContent='Enter name and game key.'; return; }
-  const state = await api.getState(sessionId);
-  if(!state?.id){ $('loginMsg').textContent='Game not found.'; return; }
-  const character = pickAvailableCharacter(state);
-  if(!character){ $('loginMsg').textContent='No characters left.'; return; }
-
-  const r = await api.join({sessionId,playerName:name,character});
-  if(r.ok===false){ $('loginMsg').textContent = r.error; return; }
-
-  localStorage.setItem(LS.sess, sessionId);
-  localStorage.setItem(LS.me, r.player.id);
-
-  SESSION = await api.getState(sessionId);
-  ME = (SESSION.players||[]).find(p=>p.id===r.player.id);
-  $('gmPanel').style.display='none';  // keep GM separate
-  showPlayer();
-};
-
-/* ========================== PLAYER ACTIONS ========================== */
-$('btnSubmit').onclick = async ()=>{
-  const type = $('actionType').value;
-  const targetId = $('actionTarget').value || '';
-  const details = $('actionDetails').value.trim();
-  await api.submit({sessionId:SESSION.id,playerId:ME.id,type,targetId,details});
-  SESSION = await api.getState(SESSION.id);
-  logRender(); $('actionDetails').value='';
-};
-
-$('btnUseAbility').onclick = async ()=>{
-  const tid = $('abilityTarget').value || '';
-  const r = await api.ability({sessionId:SESSION.id,playerId:ME.id,targetId:tid});
-  if(r.ok===false){ alert(r.error); return; }
-  SESSION = await api.getState(SESSION.id);
-  ME = SESSION.players.find(p=>p.id===ME.id);
-  showPlayer();
-};
-
-$('btnDraw').onclick = async ()=>{
-  const ch = CHALLENGES[Math.floor(Math.random()*CHALLENGES.length)];
-  await api.draw({sessionId:SESSION.id,playerId:ME.id,challenge:ch});
-  SESSION = await api.getState(SESSION.id);
-  ME = SESSION.players.find(p=>p.id===ME.id);
-  showPlayer();
-};
-
-$('btnComplete').onclick = async ()=>{
-  const r = await api.complete({sessionId:SESSION.id,playerId:ME.id});
-  if(r.ok===false){ alert(r.error); return; }
-  SESSION = await api.getState(SESSION.id);
-  ME = SESSION.players.find(p=>p.id===ME.id);
-  showPlayer();
-};
-
-$('btnScan').onclick = async ()=>{
-  const t = $('scanSelect').value;
-  if(!t){ alert('Pick a target'); return; }
-  const r = await api.scan({sessionId:SESSION.id,playerId:ME.id,targetId:t});
-  if(r.ok===false){ alert(r.error); return; }
-  SESSION = await api.getState(SESSION.id);
-  logRender();
-};
-
-$('btnAccuse').onclick = async ()=>{
-  const t = $('scanSelect').value;
-  if(!t){ alert('Pick a target'); return; }
-  const r = await api.accuse({sessionId:SESSION.id,playerId:ME.id,targetId:t});
-  if(r.ok===false){ alert(r.error); return; }
-  SESSION = await api.getState(SESSION.id);
-  logRender();
-};
-
-$('btnVote').onclick = async ()=>{
-  const s = $('voteSelect').value;
-  if(!s){ alert('Pick a suspect'); return; }
-  await api.vote({sessionId:SESSION.id,playerId:ME.id,suspectId:s});
-  SESSION = await api.getState(SESSION.id);
-  logRender();
-};
-
-$('btnRoster').onclick = ()=>{ rosterRender(); fillSelectors(); };
-
-/* ========================== BOOT ========================== */
-(async function boot(){
-  // auto-resume if we have ids
-  const sessId = localStorage.getItem(LS.sess);
-  const meId = localStorage.getItem(LS.me);
-  if(sessId && meId){
-    const s = await api.getState(sessId);
-    if(s?.id){
-      SESSION = s;
-      ME = (s.players||[]).find(p=>p.id===meId) || null;
-      if(ME){
-        $('gmPanel').style.display='none';
-        $('loginPanel').style.display='none';
-        showPlayer();
-      }
-    }
+  // Auto-rejoin if we have a seat
+  const session = localStorage.getItem('session');
+  const seatToken = localStorage.getItem('seatToken');
+  if(session && seatToken){
+    try{
+      await api('join', { sessionId: session, seatToken, playerName:'' });
+      await refreshState();
+      showDashboard();
+    }catch(e){ /* ignore */ }
+  }else{
+    // Otherwise just load any GM session info to show logs/roster
+    const gm = localStorage.getItem('gm_session');
+    if(gm){ $('sessionId').value = gm; $('gameKeyLogin').value = gm; await refreshState(); }
   }
-})();
+});
 </script>
 </body>
 </html>
