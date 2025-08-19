@@ -1,109 +1,158 @@
-// pages/api/game.js
+// /api/game.js
 import { kv } from '@vercel/kv';
 
-const KEY = id => `game:${id}`;
+const KEY = (id) => `game:${id}`;
+
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const genId = (p='game_') => (p + Math.random().toString(36).slice(2, 10)).toUpperCase();
+const genSeatToken = () => {
+  // human-friendly 4+4 pattern: ABCD-1234
+  const A = () => Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(2, 6);
+  return `${A()}-${A()}`;
+};
+
+async function getSession(id) { return id ? await kv.get(KEY(id)) : null; }
+async function putSession(sess) {
+  sess.updatedAt = Date.now();
+  await kv.set(KEY(sess.id), sess);
+}
+async function recordLog(sess, msg) {
+  sess.gameLog = sess.gameLog || [];
+  sess.gameLog.push({ ts: Date.now(), msg });
+}
 
 export default async function handler(req, res) {
-  res.setHeader('Content-Type', 'application/json');
   try {
     if (req.method === 'GET') {
       const id = (req.query.id || '').toUpperCase();
-      if (!id) return res.status(400).json({ ok: false, error: 'Missing id' });
-      const sessionJ = await kv.get(KEY(id));
-      if (!sessionJ) return res.status(404).json({ ok: false, error: 'Session not found' });
-      const seats = (sessionJ.seats || []).map(s => ({ token: s.token, claimed: !!s.playerId }));
-      return res.status(200).json({ ok: true, session: sessionJ, seats });
+      const sess = await getSession(id);
+      if (!sess) return res.status(404).json({ ok: false, error: 'not found' });
+      return res.json({ ok: true, session: sess });
     }
 
-    const body = req.body || {};
-    const op = body.op;
+    if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'method' });
+
+    const { op } = req.body || {};
+    if (op === 'ping') return res.json({ ok: true, ts: Date.now() });
 
     if (op === 'create') {
-      const id = (body.sessionId || randKey(3)).toUpperCase();
-      const exists = await kv.get(KEY(id));
-      if (exists) return res.status(400).json({ ok: false, error: 'Session already exists' });
+      const sessionId = (req.body.sessionId || genId()).toUpperCase();
+      const limit = Math.max(1, Math.min(24, Number(req.body.playerLimit) || 6));
+      const finalNightAt = Number(req.body.finalNightAt) || null;
 
-      const playerLimit = Number(body.playerLimit || 6);
-      const seats = Array.from({ length: playerLimit }, () => ({ token: genToken(), playerId: null }));
-
-      const sessionJ = {
-        id,
-        playerLimit,
-        finalNightAt: body.finalNightAt || null,
+      const seats = Array.from({ length: limit }, () => ({ token: genSeatToken(), playerId: null }));
+      const sess = {
+        id: sessionId,
+        playerLimit: limit,
+        finalNightAt,
         players: [],
-        gameLog: [{ ts: Date.now(), msg: `🎮 Game ${id} created (limit ${playerLimit})` }],
-        seats
+        seats,
+        gameLog: [],
+        accusations: [],
+        votes: {},
+        murderer: null,
+        playerMessages: {},
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       };
-
-      await kv.set(KEY(id), sessionJ);
-      return res.status(200).json({
-        ok: true,
-        session: sessionJ,
-        seats: seats.map(s => ({ token: s.token, claimed: false }))
-      });
+      await recordLog(sess, `🎮 Game created (limit ${limit})`);
+      await putSession(sess);
+      return res.json({ ok: true, session: { id: sess.id, playerLimit: sess.playerLimit, finalNightAt: sess.finalNightAt }, seats });
     }
 
     if (op === 'join') {
-      const id = (body.sessionId || '').toUpperCase();
-      const seatToken = (body.seatToken || '').toUpperCase();
-      const playerName = (body.playerName || '').trim();
+      const sessionId = (req.body.sessionId || '').toUpperCase();
+      const seatTokenRaw = (req.body.seatToken || '').toUpperCase().trim();
+      const playerName = (req.body.playerName || '').trim();
+      const character = req.body.character || null; // client can pass the full character pack
 
-      if (!id || !seatToken) return res.status(400).json({ ok: false, error: 'Missing session or seat' });
+      const sess = await getSession(sessionId);
+      if (!sess) return res.status(404).json({ ok: false, error: 'session not found' });
 
-      let sessionJ = await kv.get(KEY(id));
-      if (!sessionJ) return res.status(404).json({ ok: false, error: 'Session not found' });
+      // find the seat by token
+      const seat = (sess.seats || []).find(s => (s.token || '').toUpperCase() === seatTokenRaw);
+      if (!seat) return res.status(400).json({ ok: false, error: 'invalid seat key' });
 
-      const seat = (sessionJ.seats || []).find(s => s.token === seatToken);
-      if (!seat) return res.status(400).json({ ok: false, error: 'Seat key invalid' });
-
-      let player = seat.playerId ? (sessionJ.players || []).find(p => p.id === seat.playerId) : null;
-
-      // If seat unclaimed or player record missing, create player
-      if (!player) {
-        const newId = 'agent_' + Math.random().toString(36).slice(2, 11);
-        const character = body.character || pickCharacterForSeat(seatToken); // server assigns if not provided
-        player = {
-          id: newId,
-          realName: playerName,
-          ...character,
-          abilityState: body.abilityState || { usesLeft: character.ability?.usesPerDay ?? 1, lastResetDay: dayKey() },
-          missions: { active: null, count: 0 }
-        };
-        sessionJ.players = sessionJ.players || [];
-        sessionJ.players.push(player);
-        seat.playerId = player.id;
-
-        sessionJ.gameLog = sessionJ.gameLog || [];
-        sessionJ.gameLog.push({ ts: Date.now(), msg: `🚁 ${player.codename} (${player.realName || 'Unknown'}) joined` });
-      } else {
-        if (playerName) player.realName = playerName; // allow name update
+      // Seat already claimed → rejoin (ignore provided name to prevent hijack)
+      if (seat.playerId) {
+        const existing = (sess.players || []).find(p => p.id === seat.playerId);
+        if (existing) {
+          await recordLog(sess, `🔁 ${existing.codename || 'OPERATIVE'} (${existing.realName}) rejoined`);
+          await putSession(sess);
+          return res.json({ ok: true, session: { id: sess.id, playerLimit: sess.playerLimit, finalNightAt: sess.finalNightAt }, player: existing, rejoined: true });
+        }
+        // stray binding? free the seat
+        seat.playerId = null;
       }
 
-      // Ensure exactly one murderer (idempotent)
-      if (!sessionJ.murdererId && (sessionJ.players || []).length > 0) {
-        const chosen = sessionJ.players[Math.floor(Math.random() * sessionJ.players.length)];
-        sessionJ.murdererId = chosen.id;
-        sessionJ.murdererAct = pick(MURDERER_ACTS);
-        sessionJ.gameLog = sessionJ.gameLog || [];
-        sessionJ.gameLog.push({ ts: Date.now(), msg: '☠️ A secret murderer has been assigned.' });
+      // Seat unclaimed → create the player and bind this seat (capacity is enforced by seats, not count)
+      const player = {
+        id: 'agent_' + Math.random().toString(36).slice(2, 8),
+        realName: playerName || 'Agent',
+        // store whatever the frontend sends for the character pack
+        ...(character || {}),
+        challengesCompleted: 0,
+        completedChallenges: [],
+        activeChallenge: null,
+        abilityUsed: false,
+        scanImmunityUntil: 0
+      };
+
+      // if client didn't send a character, make a tiny placeholder
+      player.codename = player.codename || 'OPERATIVE';
+      player.cover = player.cover || 'Cover Identity';
+      player.publicBio = player.publicBio || '';
+      player.privateBio = player.privateBio || '';
+      player.perks = player.perks || [];
+      player.con = player.con || '';
+      player.quirk = player.quirk || '';
+      player.role = player.role || 'wildcard';
+
+      sess.players.push(player);
+      seat.playerId = player.id;
+
+      // assign murderer when 3+ players exist (once)
+      if (!sess.murderer && sess.players.length >= 3) {
+        const acts = [
+          'Leave one coaster upside-down at a table you visit.',
+          'Say the word "almond" twice in different conversations.',
+          'Tap the table twice before any drink.',
+          'Hum two short notes before speaking (3+ times).',
+          'Place a triangle-folded napkin somewhere conspicuous.'
+        ];
+        const picked = pick(sess.players);
+        sess.murderer = { id: picked.id, act: pick(acts), performedDates: [] };
+        await recordLog(sess, '☠️ A secret murderer has been assigned.');
       }
 
-      await kv.set(KEY(id), sessionJ);
-      return res.status(200).json({ ok: true, session: sessionJ, player });
+      await recordLog(sess, `🚁 ${player.codename} (${player.realName}) deployed on seat ${seat.token}`);
+      await putSession(sess);
+      return res.json({ ok: true, session: { id: sess.id, playerLimit: sess.playerLimit, finalNightAt: sess.finalNightAt }, player });
     }
 
-    if (op === 'update_player') {
-      const id = (body.sessionId || '').toUpperCase();
-      let sessionJ = await kv.get(KEY(id));
-      if (!sessionJ) return res.status(404).json({ ok: false, error: 'Session not found' });
+    if (op === 'kick') {
+      // Optional GM tool: free a seat
+      const sessionId = (req.body.sessionId || '').toUpperCase();
+      const seatToken = (req.body.seatToken || '').toUpperCase();
+      const sess = await getSession(sessionId);
+      if (!sess) return res.status(404).json({ ok: false, error: 'session not found' });
 
-      const idx = (sessionJ.players || []).findIndex(p => p.id === body.playerId);
-      if (idx < 0) return res.status(404).json({ ok: false, error: 'Player not found' });
+      const seat = (sess.seats || []).find(s => (s.token || '').toUpperCase() === seatToken);
+      if (!seat) return res.status(400).json({ ok: false, error: 'invalid seat key' });
 
-      sessionJ.players[idx] = { ...sessionJ.players[idx], ...body.patch };
-      await kv.set(KEY(id), sessionJ);
-      return res.status(200).json({ ok: true, session: sessionJ, player: sessionJ.players[idx] });
+      if (seat.playerId) {
+        const idx = sess.players.findIndex(p => p.id === seat.playerId);
+        if (idx >= 0) sess.players.splice(idx, 1);
+        seat.playerId = null;
+        await recordLog(sess, `🪑 Seat ${seat.token} freed by GM`);
+        await putSession(sess);
+      }
+      return res.json({ ok: true, session: sess });
     }
 
-    if (op === 'event') {
-      const id = (body.s
+    return res.status(400).json({ ok: false, error: 'unknown op' });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ ok: false, error: e.message || 'server error' });
+  }
+}
