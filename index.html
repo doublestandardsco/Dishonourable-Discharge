@@ -182,22 +182,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     await refreshState();
   }
 });
-
-  // index.html -> inside joinGame()
-const char = pickCharacterForSeat(seatToken);
-char.adoptedName = char.alias;                      // player-facing name
-
-const abilityState = { usesLeft: char.ability?.usesPerDay ?? 1, lastResetDay: dayKey() };
-
-const res = await api('join', {
-  sessionId,
-  seatToken,
-  playerName,
-  character: char,                                  // <— THIS IS REQUIRED
-  abilityState
-});
-
 </script>
 </body>
 </html>
-
