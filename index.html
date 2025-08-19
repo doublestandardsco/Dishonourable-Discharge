@@ -7,7 +7,7 @@
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Courier New',monospace;background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh;padding:10px;overflow-x:hidden}
-    .container{max-width:950px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid #ff4757;border-radius:15px;padding:25px;box-shadow:0 0 40px rgba(255,71,87,.3);backdrop-filter:blur(10px);position:relative}
+    .container{max-width:980px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid #ff4757;border-radius:15px;padding:25px;box-shadow:0 0 40px rgba(255,71,87,.3);backdrop-filter:blur(10px);position:relative}
     .classified-stamp{position:absolute;top:20px;right:20px;background:#ff4757;color:#000;padding:8px 15px;transform:rotate(15deg);font-weight:bold;font-size:.9em;border:3px solid #000}
     .header{text-align:center;margin-bottom:22px;border-bottom:3px solid #ff4757;padding-bottom:16px}
     .header h1{color:#ff4757;font-size:2.2em;text-shadow:0 0 20px rgba(255,71,87,.8);margin-bottom:8px;letter-spacing:3px}
@@ -81,19 +81,22 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Final Night (unlock scans/accusations)</label>
+            <label>Final Night / Game Ends</label>
             <input type="datetime-local" id="gmFinalNight"/>
           </div>
         </div>
-        <div class="form-group">
-          <label>Game Ends</label>
-          <input type="datetime-local" id="gmEndsAt"/>
-        </div>
-        <div class="grid grid-2" style="margin-top:8px">
+        <div class="grid grid-3" style="margin-top:8px">
           <button class="btn" id="btnStart">Start / Overwrite Active Game</button>
           <button class="btn btn-secondary" id="btnResume">Resume Active Game</button>
+          <button class="btn btn-secondary" id="btnExport">Export Game JSON</button>
         </div>
-        <div class="small muted" id="gmNote" style="margin-top:8px">Share the Game Key with players. Only one active game is stored on this device.</div>
+        <div class="grid grid-2" style="margin-top:8px">
+          <button class="btn" id="btnImport">Import Game JSON</button>
+          <button class="btn" id="btnCopyJoin">Copy Join Hint (key)</button>
+        </div>
+        <div class="small muted" id="gmNote" style="margin-top:8px">
+          This is 100% browser-side. For multiple devices, either run from one tablet, or use Export/Import to copy the state.
+        </div>
       </div>
 
       <div>
@@ -170,10 +173,10 @@
         </div>
       </div>
 
-      <!-- Public Roster -->
+      <!-- Public Roster (now full bios) -->
       <div class="intel-panel">
         <div class="flex">
-          <h4>🗂️ Public Roster (Basic bios + perks/quirks/cons)</h4>
+          <h4>🗂️ Public Roster (Full bios + quirks/cons/perks)</h4>
           <button class="btn btn-secondary" id="btnRefreshRoster" onclick="renderRoster()">Refresh</button>
         </div>
         <div id="rosterList"></div>
@@ -217,7 +220,7 @@
           <button class="btn" id="completeBtn" onclick="completeChallenge()" disabled>Complete Mission</button>
           <button class="btn btn-danger" id="failBtn" onclick="failChallenge()" disabled>Fail Mission</button>
         </div>
-        <div class="small muted" id="missionHint" style="margin-top:6px">You cannot draw a new mission while one is active. Use <em>Fail Mission</em> to abandon it (penalty decided by group).</div>
+        <div class="small muted" id="missionHint" style="margin-top:6px">You can’t redraw while one is active. “Fail Mission” logs a group-penalty decision and frees you to draw again.</div>
       </div>
 
       <!-- Scanner (Final Night Only) -->
@@ -314,8 +317,7 @@ let gameState = {
   votes:{},
   gameLog:[],
   accusations:[],
-  finalNightAt:null,
-  gameEndsAt:null,
+  finalNightAt:null,             // single date
   murderer:null,
   playerMessages:{},
   lastPlayerId:null,
@@ -471,15 +473,14 @@ function startOrOverwriteGame(){
   gameState = {
     gameKey:key, players:[], currentPlayer:null, maxPlayers:max,
     gamePhase:'setup', rolePool:[], scanHistory:[], votes:{}, gameLog:[], accusations:[],
-    finalNightAt: toTs(byId('gmFinalNight').value), gameEndsAt: toTs(byId('gmEndsAt').value),
+    finalNightAt: toTs(byId('gmFinalNight').value),
     murderer:null, playerMessages:{}, lastPlayerId:null
   };
   assignRoles(max);
   localStorage.setItem(ACTIVE_KEY, key);
   saveGameState();
   addToLog(`🎮 Game ${key} started for up to ${max} players`);
-  if(gameState.finalNightAt) addToLog(`🕛 Final Night: ${fmtTime(gameState.finalNightAt)}`);
-  if(gameState.gameEndsAt) addToLog(`🏁 Ends: ${fmtTime(gameState.gameEndsAt)}`);
+  if(gameState.finalNightAt) addToLog(`🕛 Final Night / Ends: ${fmtTime(gameState.finalNightAt)}`);
   alert(`Active Game Key: ${key}`);
 }
 
@@ -488,13 +489,41 @@ function resumeActiveGame(){
   alert(`Resumed game ${gameState.gameKey}. Players: ${gameState.players.length}/${gameState.maxPlayers}`);
 }
 
+function exportGame(){
+  if(!gameState.gameKey){ alert('No active game'); return; }
+  const json = JSON.stringify(gameState);
+  navigator.clipboard.writeText(json).then(()=> alert('Game JSON copied to clipboard.'));
+}
+function importGame(){
+  const pasted = prompt('Paste game JSON here:');
+  if(!pasted) return;
+  try{
+    const st = JSON.parse(pasted);
+    if(!st.gameKey) throw new Error('Invalid JSON');
+    gameState = st;
+    localStorage.setItem(ACTIVE_KEY, gameState.gameKey);
+    saveGameState();
+    alert(`Imported game ${gameState.gameKey}. You can now Login/Create Agent.`);
+    // Prefill GM fields
+    byId('gmGameKey').value = gameState.gameKey;
+    byId('gmMaxPlayers').value = String(gameState.maxPlayers||6);
+    if(gameState.finalNightAt) byId('gmFinalNight').value = new Date(gameState.finalNightAt).toISOString().slice(0,16);
+    byId('loginKey').value = gameState.gameKey;
+  }catch(e){ alert('Import failed. Invalid JSON.'); }
+}
+function copyJoinHint(){
+  const key = safe(byId('gmGameKey').value).trim() || gameState.gameKey || '';
+  if(!key){ alert('No key'); return; }
+  navigator.clipboard.writeText(`Game Key: ${key}`).then(()=> alert('Join hint copied.'));
+}
+
 /* ===================== PLAYER LOGIN/JOIN ===================== */
 function loginExisting(){
   const name = safe(byId('loginName').value).trim();
   const key  = safe(byId('loginKey').value).trim() || localStorage.getItem(ACTIVE_KEY) || '';
   if(!name || !key){ alert('Enter your name and the game key'); return; }
   const state = loadGame(key);
-  if(!state){ alert('Game not found'); return; }
+  if(!state){ alert('Game not found on this device. Ask GM to Export → Import here, or use the same device.'); return; }
   gameState = state;
   const existing = gameState.players.find(p=> p.realName.toLowerCase()===name.toLowerCase());
   if(!existing){ alert('No agent with that name in this game. Try Create Agent.'); return; }
@@ -510,10 +539,9 @@ function joinCreate(){
   const key  = safe(byId('loginKey').value).trim() || localStorage.getItem(ACTIVE_KEY) || '';
   if(!name || !key){ alert('Enter your name and the game key'); return; }
   const state = loadGame(key);
-  if(!state){ alert('Game not found'); return; }
+  if(!state){ alert('Game not found on this device. Ask GM to Export → Import here, or use the same device.'); return; }
   gameState = state;
 
-  // If already exists with that name, just log them in
   const existing = gameState.players.find(p=> p.realName.toLowerCase()===name.toLowerCase());
   if(existing){
     gameState.currentPlayer = existing;
@@ -632,13 +660,21 @@ function renderRoster(){
   if(!gameState.players.length){ container.innerHTML = '<div class="muted">No agents yet.</div>'; return; }
   container.innerHTML = gameState.players.map(p=>{
     const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+    const background = p.background || '—';
+    const discharge = p.discharge || '—';
+    const cover = p.cover || '—';
+    const bio = `
+      <div class="small"><strong>Cover:</strong> ${cover}</div>
+      <div class="small"><strong>Background:</strong> ${background}</div>
+      <div class="small"><strong>Discharge:</strong> ${discharge}</div>
+    `;
     return `
       <div class="roster-card">
         <div class="flex">
           <div><strong>${p.codename}</strong> — ${p.realName}</div>
           <div class="small muted">${p.id}</div>
         </div>
-        <div class="small">${p.cover}</div>
+        ${bio}
         <div class="grid grid-3" style="margin-top:8px">
           <div><strong>Quirk:</strong><br>${p.oddity}</div>
           <div><strong>Con:</strong><br>${p.con||'—'}</div>
@@ -733,7 +769,7 @@ function drawChallenge(){
 function completeChallenge(){
   const me = gameState.currentPlayer; if(!me?.activeChallenge) return;
   const ch = me.activeChallenge;
-  me.challengesCompleted++;
+  me.challengesCompleted = (me.challengesCompleted||0)+1;
   if(!me.completedChallenges) me.completedChallenges=[];
   me.completedChallenges.push(ch.id);
   me.activeChallenge = null;
@@ -760,7 +796,7 @@ function failChallenge(){
 }
 
 function processReward(ch){
-  const count = gameState.currentPlayer.challengesCompleted;
+  const count = gameState.currentPlayer.challengesCompleted||0;
   let reward = ch.reward;
   if(count===1) reward='Intel: "Someone is not who they claim to be"';
   else if(count===3){ reward='Scan immunity for 24h'; gameState.currentPlayer.scanImmunity = now()+24*60*60*1000; }
@@ -862,13 +898,13 @@ function castFinalVote(){
   saveGameState();
 }
 
-/* ===================== TIME GATES ===================== */
+/* ===================== TIME GATES (Single date) ===================== */
 function updateFinalNightGate(){
   const gate = byId('scannerBlock'), note = byId('scanGateNotice');
   if(!gate || !note) return;
   if(!gameState.finalNightAt){
     gate.classList.remove('hidden');
-    note.textContent='Set Final Night in GM console to gate scanning/accusations.';
+    note.textContent='Set Final Night/Ends in GM console to gate scanning/accusations.';
     Array.from(gate.querySelectorAll('button,input,select')).forEach(el=> el.disabled = true);
     return;
   }
@@ -877,8 +913,7 @@ function updateFinalNightGate(){
   Array.from(gate.querySelectorAll('button,input,select')).forEach(el=> el.disabled = !open);
   note.textContent = open ? '✅ Scans & accusations are UNLOCKED.' : `🔒 Locked until Final Night: ${fmtTime(gameState.finalNightAt)}`;
   const tDiv = byId('timers');
-  const ends = gameState.gameEndsAt ? ` | Ends: ${fmtTime(gameState.gameEndsAt)}` : '';
-  if(tDiv) tDiv.textContent = `Final Night: ${fmtTime(gameState.finalNightAt)}${ends}`;
+  if(tDiv) tDiv.textContent = `Final Night / Ends: ${fmtTime(gameState.finalNightAt)}`;
 }
 let tickerHandle=null;
 function startTickers(){
@@ -898,6 +933,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   byId('btnGenKey').addEventListener('click', ()=>{ byId('gmGameKey').value = generateKey(); });
   byId('btnStart').addEventListener('click', startOrOverwriteGame);
   byId('btnResume').addEventListener('click', resumeActiveGame);
+  byId('btnExport').addEventListener('click', exportGame);
+  byId('btnImport').addEventListener('click', importGame);
+  byId('btnCopyJoin').addEventListener('click', copyJoinHint);
 
   // Player buttons
   byId('btnLogin').addEventListener('click', loginExisting);
@@ -907,17 +945,16 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(useActiveGame()){
     const last = localStorage.getItem(`current_${gameState.gameKey}`) || gameState.lastPlayerId;
     const existing = gameState.players.find(p=>p.id===last);
+    // Prefill GM & Login with active details
+    byId('loginKey').value = gameState.gameKey;
+    byId('gmGameKey').value = gameState.gameKey;
+    byId('gmMaxPlayers').value = String(gameState.maxPlayers||6);
+    if(gameState.finalNightAt) byId('gmFinalNight').value = new Date(gameState.finalNightAt).toISOString().slice(0,16);
     if(existing){
       gameState.currentPlayer = existing;
       enterProfile();
       return;
     }
-    // prefill login key
-    byId('loginKey').value = gameState.gameKey;
-    byId('gmGameKey').value = gameState.gameKey;
-    byId('gmMaxPlayers').value = String(gameState.maxPlayers||6);
-    if(gameState.finalNightAt) byId('gmFinalNight').value = new Date(gameState.finalNightAt).toISOString().slice(0,16);
-    if(gameState.gameEndsAt) byId('gmEndsAt').value = new Date(gameState.gameEndsAt).toISOString().slice(0,16);
   }
   console.log('DOM ready.');
 });
