@@ -7,15 +7,15 @@
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Courier New',monospace;background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh;padding:10px;overflow-x:hidden}
-    .container{max-width:900px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid #ff4757;border-radius:15px;padding:25px;box-shadow:0 0 40px rgba(255,71,87,.3);backdrop-filter:blur(10px);position:relative}
+    .container{max-width:950px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid #ff4757;border-radius:15px;padding:25px;box-shadow:0 0 40px rgba(255,71,87,.3);backdrop-filter:blur(10px);position:relative}
     .classified-stamp{position:absolute;top:20px;right:20px;background:#ff4757;color:#000;padding:8px 15px;transform:rotate(15deg);font-weight:bold;font-size:.9em;border:3px solid #000}
-    .header{text-align:center;margin-bottom:30px;border-bottom:3px solid #ff4757;padding-bottom:20px}
-    .header h1{color:#ff4757;font-size:2.4em;text-shadow:0 0 20px rgba(255,71,87,.8);margin-bottom:10px;letter-spacing:3px}
-    .subtitle{color:#5f27cd;font-size:1.1em;font-style:italic;text-transform:uppercase;letter-spacing:1px}
-    .section{margin-bottom:24px;padding:18px;background:rgba(255,255,255,.03);border-radius:10px;border-left:4px solid #5f27cd}
-    .section-title{color:#ff4757;font-size:1.2em;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+    .header{text-align:center;margin-bottom:22px;border-bottom:3px solid #ff4757;padding-bottom:16px}
+    .header h1{color:#ff4757;font-size:2.2em;text-shadow:0 0 20px rgba(255,71,87,.8);margin-bottom:8px;letter-spacing:3px}
+    .subtitle{color:#5f27cd;font-size:1em;font-style:italic;text-transform:uppercase;letter-spacing:1px}
+    .section{margin-bottom:18px;padding:16px;background:rgba(255,255,255,.03);border-radius:10px;border-left:4px solid #5f27cd}
+    .section-title{color:#ff4757;font-size:1.1em;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
     .form-group{margin-bottom:12px}
-    label{display:block;margin-bottom:6px;color:#5f27cd;font-weight:bold;text-transform:uppercase;font-size:.85em}
+    label{display:block;margin-bottom:6px;color:#5f27cd;font-weight:bold;text-transform:uppercase;font-size:.8em}
     input[type="text"],input[type="datetime-local"],select,textarea{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid #5f27cd;border-radius:8px;color:#e0e0e0;font-family:'Courier New',monospace;font-size:.95em}
     .btn{background:linear-gradient(45deg,#ff4757,#ff6b7a);color:#000;border:none;padding:12px 16px;border-radius:8px;font-size:1em;font-weight:bold;cursor:pointer;transition:.2s;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px}
     .btn.full{width:100%}
@@ -33,20 +33,23 @@
     .field-value{color:#e0e0e0;flex:1;line-height:1.4}
     .secret-section{background:rgba(255,71,87,.1);border:2px solid #ff4757;border-radius:8px;padding:12px;margin:12px 0;position:relative}
     .secret-section::before{content:"🔒 EYES ONLY";position:absolute;top:-10px;left:12px;background:#ff4757;color:#000;padding:3px 8px;font-size:.7em;font-weight:bold}
-    .perk-box{background:linear-gradient(135deg,rgba(95,39,205,.2),rgba(116,185,255,.1));border:2px solid #5f27cd;border-radius:10px;padding:14px;margin:14px 0;text-align:center}
+    .perk-box{background:linear-gradient(135deg,rgba(95,39,205,.2),rgba(116,185,255,.1));border:2px solid #5f27cd;border-radius:10px;padding:14px;margin:14px 0}
     .quirk-box{background:linear-gradient(135deg,rgba(255,71,87,.2),rgba(255,107,122,.1));border:2px solid #ff4757;border-radius:10px;padding:14px;margin:14px 0}
+    .intel-panel{background:rgba(52,152,219,.1);border:2px solid #3498db;border-radius:10px;padding:14px;margin:14px 0}
     .scanner-section{background:rgba(0,0,0,.7);padding:16px;border-radius:12px;margin:16px 0;border:2px solid #5f27cd}
     .game-log{background:rgba(0,0,0,.5);border:2px solid #5f27cd;border-radius:10px;padding:14px;margin:16px 0;max-height:320px;overflow-y:auto}
     .log-entry{margin-bottom:10px;font-size:.9em;padding:8px;border-left:3px solid #5f27cd;padding-left:12px;background:rgba(95,39,205,.1);border-radius:5px}
     .vote-section{background:linear-gradient(135deg,rgba(231,76,60,.3),rgba(192,57,43,.2));border:3px solid #e74c3c;border-radius:15px;padding:16px;margin:18px 0;text-align:center}
-    .intel-panel{background:rgba(52,152,219,.1);border:2px solid #3498db;border-radius:10px;padding:14px;margin:14px 0}
     .hidden{display:none}
     .progress-bar{width:100%;height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin:10px 0}
     .progress-fill{height:100%;background:linear-gradient(90deg,#5f27cd,#ff4757);border-radius:5px;transition:width .3s}
     .roster-card{border:1px dashed #5f27cd;border-radius:10px;padding:10px;margin:8px 0}
     .small{font-size:.85em;color:#9bbcff}
     .muted{opacity:.7}
-    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+    .status-badge{display:inline-block;padding:6px 10px;border-radius:12px;font-weight:800;font-size:.75em;margin-left:8px}
+    .status-ready{background:#27ae60;color:#fff}
+    .status-used{background:#e74c3c;color:#fff}
     @media(max-width:720px){.grid-2,.grid-3{grid-template-columns:1fr}}
   </style>
 </head>
@@ -58,58 +61,56 @@
       <div class="subtitle">Operation: Alpine Debrief</div>
     </div>
 
-    <!-- Game Master Setup -->
-    <div id="gameSetup" class="section">
-      <div class="section-title">🎮 Game Master Control</div>
-      <div class="grid grid-2">
+    <!-- Landing: GM or Player -->
+    <div id="landing" class="grid grid-2 section">
+      <div>
+        <div class="section-title">🛠️ Game Master Console</div>
         <div class="form-group">
-          <label>Game Session ID</label>
-          <input type="text" id="sessionId" placeholder="Unique session ID">
+          <label>Game Key</label>
+          <div class="flex" style="gap:8px">
+            <input type="text" id="gmGameKey" placeholder="e.g. ALPINE6"/>
+            <button class="btn btn-secondary" id="btnGenKey">Generate</button>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Number of Players</label>
-          <select id="playerCount">
-            <option value="3">3 Players</option>
-            <option value="4">4 Players</option>
-            <option value="5">5 Players</option>
-            <option value="6" selected>6 Players</option>
-            <option value="12">12 Players (expanded)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Final Night Starts (Scans/Accusations unlock)</label>
-          <input type="datetime-local" id="finalNightAt">
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label>Max Players</label>
+            <select id="gmMaxPlayers">
+              <option>3</option><option>4</option><option>5</option>
+              <option selected>6</option><option>8</option><option>12</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Final Night (unlock scans/accusations)</label>
+            <input type="datetime-local" id="gmFinalNight"/>
+          </div>
         </div>
         <div class="form-group">
           <label>Game Ends</label>
-          <input type="datetime-local" id="gameEndsAt">
+          <input type="datetime-local" id="gmEndsAt"/>
         </div>
+        <div class="grid grid-2" style="margin-top:8px">
+          <button class="btn" id="btnStart">Start / Overwrite Active Game</button>
+          <button class="btn btn-secondary" id="btnResume">Resume Active Game</button>
+        </div>
+        <div class="small muted" id="gmNote" style="margin-top:8px">Share the Game Key with players. Only one active game is stored on this device.</div>
       </div>
-      <div class="grid grid-2" style="margin-top:10px">
-        <button id="btnInit" class="btn" onclick="initializeGame()">Initialize New Game</button>
-        <button id="btnLoad" class="btn btn-secondary" onclick="loadExistingGame()">Load Existing Session</button>
-      </div>
-      <div id="gmHelp" class="small muted" style="margin-top:8px">
-        Share links look like <em>?session=ABC123&player=agent_xxx</em>. Final-night gating updates automatically.
-      </div>
-    </div>
 
-    <!-- Player Onboarding -->
-    <div id="onboarding" class="hidden">
-      <div class="section">
-        <div class="section-title">🔐 Agent Recruitment</div>
-        <div style="background:#ff4757;color:#000;padding:12px;margin:14px 0;text-align:center;font-weight:bold;transform:rotate(-1deg);">
-          ⚠️ CLASSIFIED OPERATION - AUTHORIZED PERSONNEL ONLY ⚠️
+      <div>
+        <div class="section-title">🧑‍🚀 Player Login</div>
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="loginName" placeholder="Real name">
         </div>
         <div class="form-group">
-          <label>Agent Name</label>
-          <input type="text" id="playerName" placeholder="Enter your real name" required>
+          <label>Game Key</label>
+          <input type="text" id="loginKey" placeholder="Provided by GM">
         </div>
-        <div class="form-group">
-          <label>Session Code</label>
-          <input type="text" id="joinSessionId" placeholder="Enter session ID from Game Master">
+        <div class="grid grid-2" style="margin-top:8px">
+          <button class="btn" id="btnLogin">Login (existing)</button>
+          <button class="btn btn-secondary" id="btnJoin">Create Agent (if slots)</button>
         </div>
-        <button class="btn full" id="btnDeploy" onclick="registerPlayer()">Deploy Agent</button>
+        <div class="small muted" style="margin-top:8px">If you’ve already joined, use <em>Login</em>. Otherwise use <em>Create Agent</em> to take a slot.</div>
       </div>
     </div>
 
@@ -150,11 +151,10 @@
         <div id="murdererDirective"></div>
       </div>
 
-      <!-- Ability (always visible now) -->
+      <!-- Ability (always visible) -->
       <div class="perk-box" id="abilityBox">
-        <h4>⚡ SPECIAL ABILITY</h4>
+        <h4>⚡ SPECIAL ABILITY <span id="abilityStatus" class="status-badge status-ready">READY</span></h4>
         <div id="abilityDescription">—</div>
-        <span id="abilityStatus" class="status-badge status-ready">READY</span>
         <div class="grid grid-3" style="margin-top:10px">
           <div>
             <label class="small">Target (optional)</label>
@@ -172,7 +172,7 @@
 
       <!-- Public Roster -->
       <div class="intel-panel">
-        <div class="flex" style="justify-content:space-between;align-items:center">
+        <div class="flex">
           <h4>🗂️ Public Roster (Basic bios + perks/quirks/cons)</h4>
           <button class="btn btn-secondary" id="btnRefreshRoster" onclick="renderRoster()">Refresh</button>
         </div>
@@ -208,14 +208,16 @@
 
       <!-- Challenge System -->
       <div class="intel-panel">
-        <div class="challenge-header" style="color:#ffa500;font-weight:bold;margin-bottom:8px">📋 ACTIVE MISSION</div>
+        <div class="section-title" style="margin:0 0 6px;color:#ffa500">📋 ACTIVE MISSION</div>
         <div id="challengeText">No active mission. Request new assignment below.</div>
         <div class="progress-bar"><div class="progress-fill" id="challengeProgress" style="width: 0%"></div></div>
         <div id="challengeReward" class="intel-panel hidden" style="margin-top:10px"><strong>Mission Reward:</strong> <span id="rewardText"></span></div>
-        <div class="grid grid-2" style="margin-top:10px">
+        <div class="grid grid-3" style="margin-top:10px">
           <button class="btn btn-secondary" id="btnDrawChallenge" onclick="drawChallenge()">Request Mission</button>
           <button class="btn" id="completeBtn" onclick="completeChallenge()" disabled>Complete Mission</button>
+          <button class="btn btn-danger" id="failBtn" onclick="failChallenge()" disabled>Fail Mission</button>
         </div>
+        <div class="small muted" id="missionHint" style="margin-top:6px">You cannot draw a new mission while one is active. Use <em>Fail Mission</em> to abandon it (penalty decided by group).</div>
       </div>
 
       <!-- Scanner (Final Night Only) -->
@@ -241,7 +243,7 @@
       <!-- Final Vote -->
       <div class="vote-section" id="finalVote" style="display:none;">
         <h3>🗳️ FINAL JUDGMENT</h3>
-        <p>The moment of truth has arrived. Who is the traitor among us?</p>
+        <p>Select the traitor among you.</p>
         <select id="suspectSelect"><option value="">Select your suspect...</option></select>
         <div class="grid" style="margin-top:10px"><button class="btn btn-danger" id="btnVote" onclick="castFinalVote()">Cast Vote</button></div>
       </div>
@@ -272,6 +274,7 @@ const now = ()=>Date.now();
 const safe = v => (v===undefined||v===null)?'':String(v);
 const toTs = v => { if(!v) return null; const t=new Date(v); const n=t.getTime(); return Number.isFinite(n)?n:null; };
 const fmtTime = ts => ts? new Date(ts).toLocaleString() : '—';
+const ACTIVE_KEY = 'active_game_id';
 
 function addToLog(message){
   const timestamp = new Date().toLocaleTimeString();
@@ -302,13 +305,11 @@ function renderInbox(){
 
 /* ===================== STATE ===================== */
 let gameState = {
-  sessionId:'',
+  gameKey:'',
   players:[],
   currentPlayer:null,
   gamePhase:'setup',
-  masterPlayer:null,
   rolePool:[],
-  challengesCompleted:{},
   scanHistory:[],
   votes:{},
   gameLog:[],
@@ -317,42 +318,32 @@ let gameState = {
   gameEndsAt:null,
   murderer:null,
   playerMessages:{},
-  lastPlayerId:null
+  lastPlayerId:null,
+  maxPlayers:6
 };
 
 function saveGameState(){
-  if(gameState.sessionId){
-    try{
-      localStorage.setItem(`game_${gameState.sessionId}`, JSON.stringify(gameState));
-      localStorage.setItem(`current_${gameState.sessionId}`, gameState.currentPlayer?.id || '');
-    }catch(e){ console.warn('Save error:', e); }
-  }
+  if(!gameState.gameKey) return;
+  try{
+    localStorage.setItem(`game_${gameState.gameKey}`, JSON.stringify(gameState));
+    localStorage.setItem(`current_${gameState.gameKey}`, gameState.currentPlayer?.id || '');
+    localStorage.setItem(ACTIVE_KEY, gameState.gameKey);
+  }catch(e){ console.warn('Save error:', e); }
 }
 
-function loadGameState(){
-  const params = new URLSearchParams(location.search);
-  const sessionId = params.get('session');
-  const playerParam = params.get('player');
-  if(!sessionId) return;
-  try{
-    const saved = localStorage.getItem(`game_${sessionId}`);
-    if(saved){
-      gameState = JSON.parse(saved);
-      // choose player: URL param first, else lastPlayerId
-      const last = playerParam || localStorage.getItem(`current_${sessionId}`) || gameState.lastPlayerId;
-      const player = (last && gameState.players.find(p=>p.id===last)) || null;
-      if(player){
-        gameState.currentPlayer = player;
-        showProfile();
-      }else{
-        byId('onboarding').classList.remove('hidden');
-        byId('gameSetup').classList.add('hidden');
-        byId('joinSessionId').value = sessionId;
-      }
-      updateFinalNightGate();
-      startTickers();
-    }
-  }catch(e){ console.warn('Load error:', e); }
+function loadGame(gameKey){
+  const saved = localStorage.getItem(`game_${gameKey}`);
+  if(!saved) return null;
+  try{ return JSON.parse(saved); }catch{ return null; }
+}
+
+function useActiveGame(){
+  const key = localStorage.getItem(ACTIVE_KEY);
+  if(!key) return false;
+  const st = loadGame(key);
+  if(!st) return false;
+  gameState = st;
+  return true;
 }
 
 /* ===================== ROLES & DATA ===================== */
@@ -447,14 +438,16 @@ const murdererActs = [
   "Tap the table twice with your index finger before drinking."
 ];
 
-/* ===================== INIT / GM ===================== */
+/* ===================== ROLE ASSIGNMENT ===================== */
 function assignRoles(playerCount){
   let pool=[];
   if(playerCount<=3) pool=['flipped_agent','handler','wildcard'];
   else if(playerCount===4) pool=['flipped_agent','handler','wildcard','wildcard'];
   else if(playerCount===5) pool=['flipped_agent','handler','wildcard','wildcard','innocent'];
   else if(playerCount===6) pool=['flipped_agent','handler','wildcard','wildcard','innocent','innocent'];
-  else pool = Array.from({length:playerCount}, (_,i)=> i===0?'flipped_agent': (i%3?'wildcard':'innocent'));
+  else {
+    pool = Array.from({length:playerCount}, (_,i)=> i===0?'flipped_agent': (i%3?'wildcard':'innocent'));
+  }
   gameState.rolePool = pool.sort(()=>Math.random()-0.5);
   addToLog(`🎯 Roles prepared for ${pool.length} operatives`);
 }
@@ -468,88 +461,97 @@ function maybeAssignMurderer(){
   saveGameState();
 }
 
-function initializeGame(){
-  try{
-    const sessionId = safe(byId('sessionId').value).trim();
-    const playerCount = parseInt(byId('playerCount').value,10)||3;
-    if(!sessionId){ alert('Please enter a session ID'); return; }
-    gameState.sessionId = sessionId;
-    gameState.gamePhase = 'setup';
-    gameState.masterPlayer = 'gm_' + Math.random().toString(36).slice(2,11);
-    gameState.players = [];
-    gameState.playerMessages = {};
-    gameState.murderer = null;
-    gameState.lastPlayerId = null;
-    gameState.finalNightAt = toTs(byId('finalNightAt').value);
-    gameState.gameEndsAt   = toTs(byId('gameEndsAt').value);
-    assignRoles(playerCount);
-    byId('gameSetup').classList.add('hidden');
-    byId('onboarding').classList.remove('hidden');
+/* ===================== GM FLOW ===================== */
+function generateKey(){
+  return Array.from({length:7}, _=> "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)]).join('');
+}
+function startOrOverwriteGame(){
+  const key = safe(byId('gmGameKey').value).trim() || generateKey();
+  const max = parseInt(byId('gmMaxPlayers').value,10)||6;
+  gameState = {
+    gameKey:key, players:[], currentPlayer:null, maxPlayers:max,
+    gamePhase:'setup', rolePool:[], scanHistory:[], votes:{}, gameLog:[], accusations:[],
+    finalNightAt: toTs(byId('gmFinalNight').value), gameEndsAt: toTs(byId('gmEndsAt').value),
+    murderer:null, playerMessages:{}, lastPlayerId:null
+  };
+  assignRoles(max);
+  localStorage.setItem(ACTIVE_KEY, key);
+  saveGameState();
+  addToLog(`🎮 Game ${key} started for up to ${max} players`);
+  if(gameState.finalNightAt) addToLog(`🕛 Final Night: ${fmtTime(gameState.finalNightAt)}`);
+  if(gameState.gameEndsAt) addToLog(`🏁 Ends: ${fmtTime(gameState.gameEndsAt)}`);
+  alert(`Active Game Key: ${key}`);
+}
+
+function resumeActiveGame(){
+  if(!useActiveGame()){ alert('No active game found'); return; }
+  alert(`Resumed game ${gameState.gameKey}. Players: ${gameState.players.length}/${gameState.maxPlayers}`);
+}
+
+/* ===================== PLAYER LOGIN/JOIN ===================== */
+function loginExisting(){
+  const name = safe(byId('loginName').value).trim();
+  const key  = safe(byId('loginKey').value).trim() || localStorage.getItem(ACTIVE_KEY) || '';
+  if(!name || !key){ alert('Enter your name and the game key'); return; }
+  const state = loadGame(key);
+  if(!state){ alert('Game not found'); return; }
+  gameState = state;
+  const existing = gameState.players.find(p=> p.realName.toLowerCase()===name.toLowerCase());
+  if(!existing){ alert('No agent with that name in this game. Try Create Agent.'); return; }
+  gameState.currentPlayer = existing;
+  gameState.lastPlayerId = existing.id;
+  localStorage.setItem(ACTIVE_KEY, key);
+  saveGameState();
+  enterProfile();
+}
+
+function joinCreate(){
+  const name = safe(byId('loginName').value).trim();
+  const key  = safe(byId('loginKey').value).trim() || localStorage.getItem(ACTIVE_KEY) || '';
+  if(!name || !key){ alert('Enter your name and the game key'); return; }
+  const state = loadGame(key);
+  if(!state){ alert('Game not found'); return; }
+  gameState = state;
+
+  // If already exists with that name, just log them in
+  const existing = gameState.players.find(p=> p.realName.toLowerCase()===name.toLowerCase());
+  if(existing){
+    gameState.currentPlayer = existing;
+    gameState.lastPlayerId = existing.id;
     saveGameState();
-    addToLog(`🎮 New game ${sessionId} for up to ${playerCount} players`);
-    if(gameState.finalNightAt) addToLog(`🕛 Final Night: ${fmtTime(gameState.finalNightAt)}`);
-    if(gameState.gameEndsAt) addToLog(`🏁 Ends: ${fmtTime(gameState.gameEndsAt)}`);
-    updateFinalNightGate(); startTickers();
-  }catch(err){ addToLog(`❌ Init error: ${err.message||err}`); }
-}
+    enterProfile();
+    return;
+  }
 
-function loadExistingGame(){
-  const sessionId = safe(byId('sessionId').value).trim();
-  if(!sessionId){ alert('Please enter a session ID'); return; }
-  const saved = localStorage.getItem(`game_${sessionId}`);
-  if(!saved){ alert('Session not found'); return; }
-  gameState = JSON.parse(saved);
-  byId('gameSetup').classList.add('hidden');
-  byId('onboarding').classList.remove('hidden');
-  addToLog(`📡 Loaded session ${sessionId}`);
-  updateFinalNightGate(); startTickers();
-}
+  if(gameState.players.length >= gameState.maxPlayers){ alert('Session is full'); return; }
 
-/* ===================== PLAYER JOIN ===================== */
-function registerPlayer(){
-  try{
-    const playerName = safe(byId('playerName').value).trim();
-    const sessionId = safe(byId('joinSessionId').value).trim();
-    if(!playerName || !sessionId){ alert('Enter your name and session ID'); return; }
-    if(!gameState.sessionId || gameState.sessionId!==sessionId){
-      const saved = localStorage.getItem(`game_${sessionId}`);
-      if(saved) gameState = JSON.parse(saved);
-      else { alert('Session not found. Initialize first.'); return; }
-    }
-    if(gameState.players.length >= gameState.rolePool.length){ alert('Session is full'); return; }
-    const playerId = 'agent_' + Math.random().toString(36).slice(2,11);
-    const available = characterDatabase.filter(c=> !gameState.players.some(p=>p.characterId===c.id));
-    if(!available.length){ alert('No more characters available'); return; }
-    const character = available[Math.floor(Math.random()*available.length)];
-    const roleIndex = gameState.players.length;
-    const assignedRole = gameState.rolePool[roleIndex] || 'innocent';
-    const player = {
-      id: playerId, realName: playerName, characterId: character.id,
-      codename: character.codename, cover: character.cover,
-      background: character.background, discharge: character.discharge,
-      secret: character.secret, oddity: character.oddity,
-      perks: character.perks||[], con: character.con||'',
-      role: assignedRole, ability: {...character.ability},
-      challengesCompleted:0, completedChallenges:[], activeChallenge:null,
-      abilityUsed:false, scanCount:0, isRevealed:false
-    };
-    deployPlayer(player);
-  }catch(err){ addToLog(`❌ Register error: ${err.message||err}`); }
-}
-
-function deployPlayer(player){
-  gameState.currentPlayer = player;
+  const playerId = 'agent_' + Math.random().toString(36).slice(2,11);
+  const available = characterDatabase.filter(c=> !gameState.players.some(p=>p.characterId===c.id));
+  const character = (available.length? available[Math.floor(Math.random()*available.length)] : characterDatabase[Math.floor(Math.random()*characterDatabase.length)]);
+  const roleIndex = gameState.players.length;
+  const assignedRole = gameState.rolePool[roleIndex] || 'innocent';
+  const player = {
+    id: playerId, realName: name, characterId: character.id,
+    codename: character.codename, cover: character.cover,
+    background: character.background, discharge: character.discharge,
+    secret: character.secret, oddity: character.oddity,
+    perks: character.perks||[], con: character.con||'',
+    role: assignedRole, ability: {...character.ability},
+    challengesCompleted:0, completedChallenges:[], activeChallenge:null,
+    abilityUsed:false, scanCount:0, isRevealed:false
+  };
   gameState.players.push(player);
-  if(!gameState.playerMessages[player.id]) gameState.playerMessages[player.id]=[];
+  gameState.currentPlayer = player;
   gameState.lastPlayerId = player.id;
   saveGameState();
-  showProfile();
   maybeAssignMurderer();
   addToLog(`🚁 Agent ${player.codename} (${player.realName}) deployed`);
+  enterProfile();
 }
 
-function showProfile(){
-  byId('onboarding').classList.add('hidden');
+/* ===================== PROFILE RENDER ===================== */
+function enterProfile(){
+  byId('landing').classList.add('hidden');
   byId('playerProfile').classList.remove('hidden');
   displayPlayerProfile(gameState.currentPlayer);
   populateSelectors();
@@ -561,7 +563,6 @@ function showProfile(){
 }
 
 function displayPlayerProfile(player){
-  // Guard all DOM references to avoid null crashes
   const set = (id, val)=>{ const el=byId(id); if(el) el.textContent = val; };
   set('playerCodename', player.codename);
   set('realName', player.realName);
@@ -580,7 +581,6 @@ function displayPlayerProfile(player){
 
   const ad = byId('abilityDescription'); if(ad) ad.textContent = player.ability?.desc || '—';
 
-  // Ability status
   const as = byId('abilityStatus');
   if(as){ as.className = 'status-badge ' + (player.abilityUsed?'status-used':'status-ready'); as.textContent = player.abilityUsed?'USED':'READY'; }
 
@@ -612,9 +612,10 @@ function populateSelectors(){
       sel.appendChild(o);
     });
   };
-  fill('abilityTargetSelect');      // others
-  fill('actionTarget');             // others
-  fill('scanSelect');               // others
+  fill('abilityTargetSelect');
+  fill('actionTarget');
+  fill('scanSelect');
+
   const sus = byId('suspectSelect');
   if(sus){
     sus.innerHTML = '<option value="">Select your suspect...</option>';
@@ -633,7 +634,7 @@ function renderRoster(){
     const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
     return `
       <div class="roster-card">
-        <div class="flex" style="justify-content:space-between">
+        <div class="flex">
           <div><strong>${p.codename}</strong> — ${p.realName}</div>
           <div class="small muted">${p.id}</div>
         </div>
@@ -646,6 +647,7 @@ function renderRoster(){
       </div>
     `;
   }).join('');
+  populateSelectors(); // keep selects fresh
 }
 
 /* ===================== ABILITY & ACTIONS ===================== */
@@ -713,6 +715,7 @@ const challenges = [
 function drawChallenge(){
   const me = gameState.currentPlayer;
   if(!me){ alert('No player active'); return; }
+  if(me.activeChallenge){ addToLog('⚠️ You already have an active mission. Complete or fail it first.'); return; }
   if(me.challengesCompleted>=10){ alert('Max 10/10'); return; }
   const available = challenges.filter(c=> !(me.completedChallenges||[]).includes(c.id));
   if(!available.length){ alert('No more challenges'); return; }
@@ -722,6 +725,7 @@ function drawChallenge(){
   byId('rewardText').textContent = ch.reward;
   byId('challengeReward').classList.remove('hidden');
   byId('completeBtn').disabled = false;
+  byId('failBtn').disabled = false;
   saveGameState();
   addToLog(`📋 New mission: "${ch.text.substring(0,60)}..."`);
 }
@@ -736,10 +740,23 @@ function completeChallenge(){
   processReward(ch);
   byId('challengeText').textContent = 'Mission completed! Request new assignment when ready.';
   byId('completeBtn').disabled = true;
+  byId('failBtn').disabled = true;
   byId('challengeReward').classList.add('hidden');
   updateChallengeProgress();
   saveGameState();
   addToLog(`✅ Mission "${ch.text.substring(0,40)}..." completed`);
+}
+
+function failChallenge(){
+  const me = gameState.currentPlayer; if(!me?.activeChallenge) return;
+  const ch = me.activeChallenge;
+  me.activeChallenge = null;
+  byId('challengeText').textContent = 'Mission abandoned. Group decides penalty. You may request a new mission.';
+  byId('completeBtn').disabled = true;
+  byId('failBtn').disabled = true;
+  byId('challengeReward').classList.add('hidden');
+  saveGameState();
+  addToLog(`❌ Mission failed: "${ch.text}". Group to decide penalty.`);
 }
 
 function processReward(ch){
@@ -754,13 +771,11 @@ function processReward(ch){
 
 function updateChallengeProgress(){
   const me = gameState.currentPlayer; if(!me) return;
-  const count = me.challengesCompleted;
-  byId('challengeCount').textContent = count;
-  byId('challengeProgress').style.width = `${(count/10)*100}%`;
-  let level='Basic'; if(count>=7) level='Maximum'; else if(count>=5) level='Advanced'; else if(count>=3) level='Intermediate';
-  byId('intelLevel').textContent = level;
+  const count = me.challengesCompleted||0;
+  const bar = byId('challengeProgress'); if(bar) bar.style.width = `${(count/10)*100}%`;
 }
 
+/* ===================== ROLE DISTRIBUTION ===================== */
 function showRoleDistribution(){
   const roleCount = {};
   gameState.rolePool.forEach(r=> roleCount[r]=(roleCount[r]||0)+1 );
@@ -786,6 +801,8 @@ function performScan(target){
   ];
   return lines[Math.floor(Math.random()*lines.length)];
 }
+
+function finalNightOpen(){ return gameState.finalNightAt && now() >= gameState.finalNightAt; }
 
 function scanAgent(){
   if(!finalNightOpen()){ addToLog('⛔ Scans locked until Final Night'); return; }
@@ -846,13 +863,12 @@ function castFinalVote(){
 }
 
 /* ===================== TIME GATES ===================== */
-function finalNightOpen(){ return gameState.finalNightAt && now() >= gameState.finalNightAt; }
 function updateFinalNightGate(){
   const gate = byId('scannerBlock'), note = byId('scanGateNotice');
   if(!gate || !note) return;
   if(!gameState.finalNightAt){
     gate.classList.remove('hidden');
-    note.textContent='Set a Final Night time in GM controls to gate scanning/accusations.';
+    note.textContent='Set Final Night in GM console to gate scanning/accusations.';
     Array.from(gate.querySelectorAll('button,input,select')).forEach(el=> el.disabled = true);
     return;
   }
@@ -867,7 +883,7 @@ function updateFinalNightGate(){
 let tickerHandle=null;
 function startTickers(){
   if(tickerHandle) clearInterval(tickerHandle);
-  tickerHandle = setInterval(()=>{ updateFinalNightGate(); renderInbox(); }, 15000);
+  tickerHandle = setInterval(()=>{ updateFinalNightGate(); renderInbox(); populateSelectors(); }, 15000);
 }
 
 /* ===================== MISC ===================== */
@@ -876,36 +892,32 @@ function copyPlayerId(){
   navigator.clipboard.writeText(id).then(()=>addToLog('📋 Player ID copied'));
 }
 
-/* ===================== DEBUG & EXPOSE ===================== */
-function debugGameState(){ console.log('Game State:', gameState); return gameState; }
-function resetGame(){
-  if(confirm('Reset the entire game?')){
-    const sid = gameState.sessionId;
-    if(sid) localStorage.removeItem(`game_${sid}`);
-    location.href = location.pathname;
-  }
-}
-window.gameDebug = { state:()=>gameState, reset:resetGame, addLog:addToLog, triggerVote:triggerFinalVote };
-
-Object.assign(window, {
-  initializeGame, loadExistingGame, registerPlayer,
-  drawChallenge, completeChallenge,
-  useAbility, submitAction,
-  scanAgent, accuseAgent, castFinalVote,
-  renderRoster, debugGameState, copyPlayerId
-});
-
-/* ===================== BOOT ===================== */
+/* ===================== BOOT & BINDINGS ===================== */
 document.addEventListener('DOMContentLoaded', ()=>{
-  const bind = (id, fn)=>{ const el = byId(id); if(el) el.addEventListener('click', (e)=>{ e.preventDefault?.(); fn(); }); };
-  bind('btnInit', initializeGame);
-  bind('btnLoad', loadExistingGame);
-  // URL-based autoload
-  loadGameState();
-  // Demo helper
-  if(!gameState.sessionId && location.search.includes('demo')){
-    byId('sessionId').value = 'DEMO_' + Math.random().toString(36).slice(2,8);
-    byId('playerCount').value = '6';
+  // GM buttons
+  byId('btnGenKey').addEventListener('click', ()=>{ byId('gmGameKey').value = generateKey(); });
+  byId('btnStart').addEventListener('click', startOrOverwriteGame);
+  byId('btnResume').addEventListener('click', resumeActiveGame);
+
+  // Player buttons
+  byId('btnLogin').addEventListener('click', loginExisting);
+  byId('btnJoin').addEventListener('click', joinCreate);
+
+  // Autoload active game & auto-login previous player
+  if(useActiveGame()){
+    const last = localStorage.getItem(`current_${gameState.gameKey}`) || gameState.lastPlayerId;
+    const existing = gameState.players.find(p=>p.id===last);
+    if(existing){
+      gameState.currentPlayer = existing;
+      enterProfile();
+      return;
+    }
+    // prefill login key
+    byId('loginKey').value = gameState.gameKey;
+    byId('gmGameKey').value = gameState.gameKey;
+    byId('gmMaxPlayers').value = String(gameState.maxPlayers||6);
+    if(gameState.finalNightAt) byId('gmFinalNight').value = new Date(gameState.finalNightAt).toISOString().slice(0,16);
+    if(gameState.gameEndsAt) byId('gmEndsAt').value = new Date(gameState.gameEndsAt).toISOString().slice(0,16);
   }
   console.log('DOM ready.');
 });
