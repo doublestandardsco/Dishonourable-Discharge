@@ -100,12 +100,12 @@
           <input type="datetime-local" id="gameEndsAt">
         </div>
       </div>
-      <div class="grid grid-2">
-        <button class="btn" onclick="initializeGame()">Initialize New Game</button>
-        <button class="btn btn-secondary" onclick="loadExistingGame()">Load Existing Session</button>
+      <div class="grid grid-2" style="margin-top:10px">
+        <button id="btnInit" class="btn" onclick="initializeGame()">Initialize New Game</button>
+        <button id="btnLoad" class="btn btn-secondary" onclick="loadExistingGame()">Load Existing Session</button>
       </div>
       <div id="gmHelp" class="small muted" style="margin-top:8px">
-        Tip: Share links will look like <em>?session=ABC123&player=agent_xxx</em>. Final-night gating updates automatically.
+        Tip: Share links look like <em>?session=ABC123&player=agent_xxx</em>. Final-night gating updates automatically.
       </div>
     </div>
 
@@ -129,7 +129,7 @@
           <label>Session Code</label>
           <input type="text" id="joinSessionId" placeholder="Enter session ID from Game Master">
         </div>
-        <button class="btn full" onclick="registerPlayer()">Deploy Agent</button>
+        <button class="btn full" id="btnDeploy" onclick="registerPlayer()">Deploy Agent</button>
       </div>
     </div>
 
@@ -188,7 +188,7 @@
             <input type="text" id="abilityTargetQr" placeholder='{"id":"agent_xxx","session":"..."}'>
           </div>
           <div style="align-self:end">
-            <button class="btn" onclick="useAbility()">Use Ability</button>
+            <button class="btn" id="btnUseAbility" onclick="useAbility()">Use Ability</button>
           </div>
         </div>
       </div>
@@ -199,8 +199,8 @@
         <p>Others can scan this code or use your ID.</p>
         <div id="playerQR" class="qr-code"></div>
         <div class="flex" style="justify-content:center;margin-top:6px">
-          <button class="btn btn-secondary" onclick="refreshQR()">Refresh QR</button>
-          <button class="btn btn-secondary" onclick="copyQrPayload()">Copy QR Payload</button>
+          <button class="btn btn-secondary" id="btnRefreshQR" onclick="refreshQR()">Refresh QR</button>
+          <button class="btn btn-secondary" id="btnCopyQR" onclick="copyQrPayload()">Copy QR Payload</button>
         </div>
         <div id="shareLink" style="margin-top:10px;word-break:break-all;font-size:.9em;color:#5f27cd;"></div>
       </div>
@@ -209,7 +209,7 @@
       <div class="intel-panel">
         <div class="flex" style="justify-content:space-between;align-items:center">
           <h4>🗂️ Public Roster (Basic Bios + Rules)</h4>
-          <button class="btn btn-secondary" onclick="renderRoster()">Refresh</button>
+          <button class="btn btn-secondary" id="btnRefreshRoster" onclick="renderRoster()">Refresh</button>
         </div>
         <div id="rosterList"></div>
       </div>
@@ -237,7 +237,7 @@
           </div>
         </div>
         <div class="grid" style="margin-top:10px">
-          <button class="btn" onclick="submitAction()">Submit</button>
+          <button class="btn" id="btnSubmitAction" onclick="submitAction()">Submit</button>
         </div>
       </div>
 
@@ -248,7 +248,7 @@
         <div class="progress-bar"><div class="progress-fill" id="challengeProgress" style="width: 0%"></div></div>
         <div id="challengeReward" class="intel-panel hidden"><strong>Mission Reward:</strong> <span id="rewardText"></span></div>
         <div class="grid grid-2" style="margin-top:10px">
-          <button class="btn btn-secondary" onclick="drawChallenge()">Request Mission</button>
+          <button class="btn btn-secondary" id="btnDrawChallenge" onclick="drawChallenge()">Request Mission</button>
           <button class="btn" id="completeBtn" onclick="completeChallenge()" disabled>Complete Mission</button>
         </div>
       </div>
@@ -267,8 +267,8 @@
             <input type="text" id="scanInput" placeholder='{"id":"agent_xxx","session":"..."}'>
           </div>
           <div style="align-self:end" class="grid">
-            <button class="btn btn-secondary" onclick="scanAgent()">Scan Target</button>
-            <button class="btn btn-danger" onclick="accuseAgent()">Make Accusation</button>
+            <button class="btn btn-secondary" id="btnScan" onclick="scanAgent()">Scan Target</button>
+            <button class="btn btn-danger" id="btnAccuse" onclick="accuseAgent()">Make Accusation</button>
           </div>
         </div>
       </div>
@@ -278,7 +278,7 @@
         <h3>🗳️ FINAL JUDGMENT</h3>
         <p>The moment of truth has arrived. Who is the traitor among us?</p>
         <select id="suspectSelect"><option value="">Select your suspect...</option></select>
-        <div class="grid" style="margin-top:10px"><button class="btn btn-danger" onclick="castFinalVote()">Cast Vote</button></div>
+        <div class="grid" style="margin-top:10px"><button class="btn btn-danger" id="btnVote" onclick="castFinalVote()">Cast Vote</button></div>
       </div>
 
       <!-- Inbox for targeted actions -->
@@ -301,14 +301,117 @@
   </div>
 
 <script>
-// ===================== DATA =====================
-// (Keep your themed characters – you can expand to 12+; this demo shows 6)
+// ===================== UTIL =====================
+const byId = (id)=>document.getElementById(id);
+const now = ()=>Date.now();
+function safeGet(val){ return (val===undefined||val===null)?'':String(val); }
+function toTs(v){
+  if(!v) return null;
+  const t = new Date(v);
+  const n = t.getTime();
+  return Number.isFinite(n)? n : null;
+}
+function fmtTime(ts){ if(!ts) return '—'; const d=new Date(ts); return d.toLocaleString(); }
+
+function addToLog(message){
+  const timestamp = new Date().toLocaleTimeString();
+  const logEntry = document.createElement('div');
+  logEntry.className = 'log-entry';
+  logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+  const gameLog = byId('gameLog');
+  gameLog.appendChild(logEntry);
+  gameLog.scrollTop = gameLog.scrollHeight;
+  if(!gameState.gameLog) gameState.gameLog=[];
+  gameState.gameLog.push({ timestamp, message });
+  saveGameState();
+}
+
+function pushInbox(playerId, msg){
+  if(!gameState.playerMessages[playerId]) gameState.playerMessages[playerId]=[];
+  gameState.playerMessages[playerId].push({...msg, ts: now()});
+}
+
+function renderInbox(){
+  const list = byId('inboxList');
+  const cp = gameState.currentPlayer?.id;
+  const msgs = cp ? (gameState.playerMessages[cp]||[]) : [];
+  if(!msgs.length){ list.innerHTML = '<div class="muted">No messages yet.</div>'; return; }
+  list.innerHTML = msgs.slice().reverse().map(m=>{
+    const when = new Date(m.ts).toLocaleTimeString();
+    return `<div class="roster-card"><div class="small">${when} — <strong>${m.type}</strong> from ${m.from}</div><div>${m.text}</div></div>`;
+  }).join('');
+}
+
+function saveGameState(){
+  if(gameState.sessionId){
+    try{ localStorage.setItem(`game_${gameState.sessionId}`, JSON.stringify(gameState)); }
+    catch(e){ console.warn('Could not save to localStorage:', e); }
+  }
+}
+
+function loadGameState(){
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session');
+  const playerId = params.get('player');
+  if(!sessionId) return;
+  try{
+    const saved = localStorage.getItem(`game_${sessionId}`);
+    if(saved){
+      gameState = JSON.parse(saved);
+      if(playerId){
+        const player = gameState.players.find(p=>p.id===playerId);
+        if(player){
+          gameState.currentPlayer = player;
+          byId('gameSetup').classList.add('hidden');
+          byId('onboarding').classList.add('hidden');
+          byId('playerProfile').classList.remove('hidden');
+          displayPlayerProfile(player);
+          generatePlayerQR(player);
+          populateSelectors();
+          renderRoster();
+          renderInbox();
+          updateFinalNightGate();
+          startTickers();
+        }
+      }
+    }
+  }catch(e){ console.warn('Load error:', e); }
+}
+
+// ===================== STATE =====================
+let gameState = {
+  sessionId:'',
+  players:[],
+  currentPlayer:null,
+  gamePhase:'setup',
+  masterPlayer:null,
+  rolePool:[],
+  challengesCompleted:{},
+  scanHistory:[],
+  votes:{},
+  gameLog:[],
+  accusations:[],
+  finalNightAt:null,
+  gameEndsAt:null,
+  murderer:null,
+  playerMessages:{}
+};
+
+// ===================== ROLES META =====================
+const roles = {
+  flipped_agent:{ name:"The Flipped Agent", objective:"Stay hidden while sowing chaos. Frame others or recruit allies.", winCondition:"Survive final vote OR successfully flip another player", abilities:["sabotage","frame_player","recruitment"] },
+  handler:{ name:"The Handler", objective:"Identify the traitor through investigation and deduction.", winCondition:"Correctly identify Flipped Agent in final vote", abilities:["deep_scan","interrogation","intel_access"] },
+  wildcard:{ name:"The Wildcard", objective:"Survive and adapt. Can align with either side.", winCondition:"Align with winning side OR complete solo objectives", abilities:["side_switch","bonus_challenges","flexible_loyalty"] },
+  innocent:{ name:"Innocent Operative", objective:"Identify the traitor and survive the final vote.", winCondition:"Vote out the Flipped Agent OR survive to the end", abilities:["teamwork","information_sharing","loyalty_bonds"] }
+};
+
+// ===================== DATA (6 demo chars; expand to 12 as needed) =====================
 const characterDatabase = [
   { id:"lacehunter", codename:"LACEHUNTER", cover:"Luxury Skiwear Designer",
-    background:"Former French AF comms tech → NATO PSYOPS 'tactical glam technician'",
+    background:"Former French AF comms → NATO PSYOPS 'tactical glam technician'",
     discharge:"Non-disciplinary separation after morale incident involving glitter & thermals",
     secret:"Hunting a ghoster from a classified Alpine affair—suspects it's one of you",
-    oddity:"Wears silk cravat under everything; lip balm mid-sentence; calls everyone 'Lieutenant Thirsttrap'",
+    oddity:"Silk cravat; lip balm mid-sentence; calls everyone 'Lieutenant Thirsttrap'",
     perks:[
       "Honorific Lock: must be addressed as “Monsieur Val” (slip = penalty).",
       "Style Verdict: on “Runway check,” target holds a 10-sec pose."
@@ -317,5 +420,630 @@ const characterDatabase = [
     ability:{ id:"fashion_emergency", name:"Fashion Emergency", desc:"Force any two players to swap one visible clothing item immediately.", uses:1 }
   },
   { id:"snowblind", codename:"SNOWBLIND", cover:"Extreme Sports Photographer",
-    background:"RFMF Recon tracker (Fiji) who can find rumour and happy hour with equal precision",
-    discharge:"Honourable; refused to track an innocent defector (who was his brother)",
+    background:"RFMF Recon tracker (Fiji). Finds rumour and happy hour with equal precision.",
+    discharge:"Honourable; refused to track an innocent defector (his brother)",
+    secret:"Collect 3 strangers’ hometown slang; compile a 'tracking lexicon'",
+    oddity:"Whispers intel like classified comms; ends with “copy?”",
+    perks:[
+      "Breadcrumb Command: name a trigger word; 10 min window—speakers owe a clue or take a penalty.",
+      "Switchback: once/hour say “First tracks” → everyone rotates seats; last seated owes you a favour."
+    ],
+    con:"If someone says family/ohana, he must pause and give a 1-sentence heartfelt lesson.",
+    ability:{ id:"hire_tail", name:"Hire a Tail", desc:"Recruit one player to shadow you 10–30 min; deliver intel every 5 min or take penalties.", uses:1 }
+  },
+  { id:"frostbite", codename:"FROSTBITE", cover:"Adventure Safety Coordinator",
+    background:"Polish GROM cold-weather & interrogation expert; confesses people with silence & pierogi.",
+    discharge:"Honourable; 'cultural differences' with interrogation methods",
+    secret:"Convince a stranger to wear your spare gloves 'for evidence preservation' & pose like a crime scene silhouette",
+    oddity:"Over-enunciates like a radio check; numbers in NATO phonetic",
+    perks:[
+      "Interrogator’s Pause: on “Answer the question,” target must reply in ≤5 words.",
+      "Cold Protocol: greetings become fist-bump only until cleared."
+    ],
+    con:"When asked 'what's the plan?' must produce a checklist; if none, declare 'I am improvising' and salute herself.",
+    ability:{ id:"coerce_asset", name:"Coerce an Asset", desc:"Designate a player your Asset for 15 min; complete 2 simple tasks or take penalties.", uses:1 }
+  },
+  { id:"blackrun", codename:"BLACKRUN", cover:"Avalanche Risk Specialist",
+    background:"Indian Para (SF) mountain warfare; calls avalanches & social disasters.",
+    discharge:"Medical; survived the avalanche that ended her unit",
+    secret:"Run a spontaneous 'safety briefing' with strangers; end with redistributed items worn proudly",
+    oddity:"Adds 'allegedly' to any claim when alcohol is present",
+    perks:[
+      "Beacon Check: on call, all phones face-down 5 min; touching = penalty.",
+      "Disaster Brief: two table taps reset topic & pick next speaker."
+    ],
+    con:"On triangles/angles, must estimate degrees aloud; off by >10° → draw napkin protractor & correct.",
+    ability:{ id:"avalanche_protocol", name:"Avalanche Protocol", desc:"Clap twice: 30-sec evac drill. Everyone swaps seats & surrenders a small item; you redistribute.", uses:1 }
+  },
+  { id:"powder_keg", codename:"POWDER KEG", cover:"Luxury Lodge Event Coordinator",
+    background:"Spanish social engineer who pairs diplomacy with drama.",
+    discharge:"Dishonourable—ran weapons through receptions; gauche, honestly.",
+    secret:"Get a stranger to announce you as 'Her Excellency the Ambassador of Après'",
+    oddity:"Refuses real names; assigns everyone a callsign",
+    perks:[
+      "VIP Gate: on entering, others must introduce you with a grand invented title (miss = penalty).",
+      "Guest List: say 'You’re on the list' → 2-min private chat to assign a micro-task."
+    ],
+    con:"On any rumour, must add 'exclusive source' + wink; if asked 'source?' later—confess 'It was me.'",
+    ability:{ id:"task_mark", name:"Task the Mark", desc:"Nominate any player to get a phone #, key/card, or selfie with any person within 20 min. Failure = penalty.", uses:1 }
+  },
+  { id:"icepick", codename:"ICEPICK", cover:"Artisanal Spirits Consultant",
+    background:"Ex-Spetsnaz interrogator; defected (or didn’t). Organises glassware dress-right-dress.",
+    discharge:"'Defected' during the Sochi Olympics—allegedly",
+    secret:"Learn a new vodka toast and perform it with the group",
+    oddity:"Answers 'roger' instead of 'yes' and ends sentences with 'over.'",
+    perks:[
+      "Cold Stare: on eye contact, the other must break first or penalty.",
+      "Vodka Toast Override: on 'Na zdorovye,' all must toast with alcohol; no drink → 30s to get some or penalty."
+    ],
+    con:"Pocket Sweep Protocol: when a door opens or a new person arrives, must pat self down muttering 'ID, keys, exit—roger.' If caught skipping → 10-sec bug sweep.",
+    ability:{ id:"charm_offensive", name:"Charm Offensive (vodka-only)", desc:"Activate once; before midnight compel 3 people to buy you vodka drinks. Refusal/wrong drink = penalty.", uses:1 }
+  }
+];
+
+// Ambiguous murderer acts
+const murdererActs = [
+  "Leave one coaster upside-down at a table you visit.",
+  "Say the word 'almond' at least twice in different conversations.",
+  "Touch the back of a chair before sitting, every time.",
+  "Hum two short notes before speaking, at least three times.",
+  "Place a napkin folded into a triangle at a random spot.",
+  "Tap the table twice with your index finger before drinking."
+];
+
+// ===================== SETUP & ROLES =====================
+function assignRoles(playerCount){
+  let rolePool = [];
+  if(playerCount<=3) rolePool = ['flipped_agent','handler','wildcard'];
+  else if(playerCount===4) rolePool = ['flipped_agent','handler','wildcard','wildcard'];
+  else if(playerCount===5) rolePool = ['flipped_agent','handler','wildcard','wildcard','innocent'];
+  else if(playerCount===6) rolePool = ['flipped_agent','handler','wildcard','wildcard','innocent','innocent'];
+  else rolePool = Array.from({length:playerCount}, (_,i)=> i===0?'flipped_agent': (i%3?'wildcard':'innocent'));
+  gameState.rolePool = rolePool.sort(()=>Math.random()-0.5);
+  addToLog(`🎯 Roles prepared for ${rolePool.length} operatives`);
+}
+
+function maybeAssignMurderer(){
+  if(gameState.murderer || gameState.players.length<3) return;
+  const pick = gameState.players[Math.floor(Math.random()*gameState.players.length)];
+  const act  = murdererActs[Math.floor(Math.random()*murdererActs.length)];
+  gameState.murderer = { id: pick.id, act, performedDates:[] };
+  addToLog('☠️ A secret murderer has been assigned.');
+}
+
+function initializeGame(){
+  try{
+    console.log('[INIT] Clicked Initialize New Game');
+    const sessionId = safeGet(byId('sessionId').value).trim();
+    const playerCount = parseInt(safeGet(byId('playerCount').value), 10) || 3;
+    if(!sessionId){ alert('Please enter a session ID'); return; }
+
+    gameState.sessionId = sessionId;
+    gameState.gamePhase = 'setup';
+    gameState.masterPlayer = 'gm_' + Math.random().toString(36).slice(2,11);
+    gameState.players = [];
+    gameState.playerMessages = {};
+    gameState.murderer = null;
+
+    gameState.finalNightAt = toTs(byId('finalNightAt').value);
+    gameState.gameEndsAt   = toTs(byId('gameEndsAt').value);
+
+    assignRoles(playerCount);
+
+    byId('gameSetup').classList.add('hidden');
+    byId('onboarding').classList.remove('hidden');
+
+    saveGameState();
+    addToLog(`🎮 New game session ${sessionId} initialized for up to ${playerCount} players`);
+    if(gameState.finalNightAt) addToLog(`🕛 Final Night starts: ${fmtTime(gameState.finalNightAt)}`);
+    else addToLog('⚠️ Final Night not set—scans/accusations will remain locked.');
+    if(gameState.gameEndsAt)   addToLog(`🏁 Game ends: ${fmtTime(gameState.gameEndsAt)}`);
+
+    // safety refresh of gates/timers UI
+    updateFinalNightGate();
+    startTickers();
+  }catch(err){
+    console.error('[INIT] Error:', err);
+    addToLog(`❌ Init error: ${err.message||err}`);
+    alert('Init failed (see console).');
+  }
+}
+
+function loadExistingGame(){
+  try{
+    const sessionId = safeGet(byId('sessionId').value).trim();
+    if(!sessionId){ alert('Please enter a session ID'); return; }
+    const savedGame = localStorage.getItem(`game_${sessionId}`);
+    if(savedGame){
+      gameState = JSON.parse(savedGame);
+      byId('gameSetup').classList.add('hidden');
+      byId('onboarding').classList.remove('hidden');
+      addToLog(`📡 Game session ${sessionId} loaded`);
+      updateFinalNightGate();
+      startTickers();
+    } else { alert('Session not found'); }
+  }catch(err){
+    console.error('[LOAD] Error:', err);
+    addToLog(`❌ Load error: ${err.message||err}`);
+  }
+}
+
+// ===================== PLAYER JOIN =====================
+function registerPlayer(){
+  try{
+    const playerName = safeGet(byId('playerName').value).trim();
+    const sessionId = safeGet(byId('joinSessionId').value).trim();
+    const selfieFile = byId('selfieUpload').files[0];
+    if(!playerName || !sessionId){ alert('Please enter both your name and session ID'); return; }
+
+    if(!gameState.sessionId || gameState.sessionId!==sessionId){
+      const savedGame = localStorage.getItem(`game_${sessionId}`);
+      if(savedGame){ gameState = JSON.parse(savedGame); }
+      else { alert('Session not found. Make sure the Game Master has initialized the session.'); return; }
+    }
+
+    if(gameState.players.length >= gameState.rolePool.length){ alert('This session is full!'); return; }
+
+    const playerId = 'agent_' + Math.random().toString(36).slice(2,11);
+    const availableChars = characterDatabase.filter(c=> !gameState.players.some(p=>p.characterId===c.id));
+    if(!availableChars.length){ alert('No more characters available'); return; }
+    const character = availableChars[Math.floor(Math.random()*availableChars.length)];
+    const roleIndex = gameState.players.length;
+    const assignedRole = gameState.rolePool[roleIndex] || 'innocent';
+
+    const player = {
+      id: playerId,
+      realName: playerName,
+      characterId: character.id,
+      codename: character.codename,
+      cover: character.cover,
+      background: character.background,
+      discharge: character.discharge,
+      secret: character.secret,
+      oddity: character.oddity,
+      perks: character.perks || [],
+      con: character.con || "If spotted not following their own rules, must loudly self-report 'Infraction!' and pose for 3s.",
+      role: assignedRole,
+      ability: {...character.ability},
+      selfie: null,
+      challengesCompleted:0,
+      completedChallenges:[],
+      activeChallenge:null,
+      abilityUsed:false,
+      scanCount:0,
+      isRevealed:false
+    };
+
+    if(selfieFile){
+      const reader = new FileReader();
+      reader.onload = (e)=>{ player.selfie = e.target.result; deployPlayer(player); };
+      reader.readAsDataURL(selfieFile);
+    } else { deployPlayer(player); }
+  }catch(err){
+    console.error('[REGISTER] Error:', err);
+    addToLog(`❌ Register error: ${err.message||err}`);
+  }
+}
+
+function deployPlayer(player){
+  gameState.currentPlayer = player;
+  gameState.players.push(player);
+  if(!gameState.playerMessages[player.id]) gameState.playerMessages[player.id] = [];
+  byId('onboarding').classList.add('hidden');
+  byId('playerProfile').classList.remove('hidden');
+  displayPlayerProfile(player);
+  generatePlayerQR(player);
+  populateSelectors();
+  renderRoster();
+  maybeAssignMurderer();
+  revealMurdererIfMe();
+  saveGameState();
+  addToLog(`🚁 Agent ${player.codename} (${player.realName}) deployed successfully`);
+  renderInbox();
+}
+
+function displayPlayerProfile(player){
+  byId('playerCodename').textContent = player.codename;
+  byId('realName').textContent = player.realName;
+  byId('coverIdentity').textContent = player.cover;
+  byId('background').textContent = player.background;
+  byId('discharge').textContent = player.discharge;
+  byId('secret').textContent = player.secret;
+  byId('oddity').textContent = player.oddity;
+  byId('perkList').innerHTML = player.perks.length? ('<ul>'+player.perks.map(p=>`<li>${p}</li>`).join('')+'</ul>'):'-';
+  byId('conText').textContent = player.con || '-';
+  byId('playerIdText').textContent = player.id;
+
+  const roleInfo = roles[player.role] || { name:'Innocent Operative', objective:'Survive & complete personal objectives', winCondition:'Stay alive and avoid suspicion' };
+  byId('roleDescription').innerHTML = `<strong>${roleInfo.name}</strong><br>${roleInfo.objective}`;
+  byId('roleObjective').innerHTML   = `<strong>Victory Condition:</strong> ${roleInfo.winCondition}`;
+
+  byId('abilityDescription').textContent = player.ability?.desc || '—';
+  updateChallengeProgress();
+  updateFinalNightGate();
+  startTickers();
+}
+
+function revealMurdererIfMe(){
+  const me = gameState.currentPlayer;
+  if(!me || !gameState.murderer) return;
+  if(me.id === gameState.murderer.id){
+    byId('murdererPanel').classList.remove('hidden');
+    byId('murdererDirective').textContent = `Each day perform the act without being caught: ${gameState.murderer.act}`;
+  } else {
+    byId('murdererPanel').classList.add('hidden');
+  }
+}
+
+// ===================== QR =====================
+function qrPayloadFor(player){ return JSON.stringify({ id: player.id, codename: player.codename, type:'agent', session: gameState.sessionId }); }
+function generatePlayerQR(player){
+  const payload = qrPayloadFor(player);
+  const container = byId('playerQR');
+  container.innerHTML = '';
+  try{
+    if(typeof window.qrcode === 'function'){
+      const qr = window.qrcode(4,'M');
+      qr.addData(payload);
+      qr.make();
+      const svgOrImg = (qr.createSvgTag ? qr.createSvgTag(4) : qr.createImgTag(4));
+      container.innerHTML = svgOrImg;
+    }else{
+      throw new Error('qrcode library not loaded');
+    }
+  }catch(err){
+    console.error('QR Code Error:', err);
+    container.innerHTML = `
+      <div class="muted">QR generation failed. Use payload below or Refresh.</div>
+      <code style="display:block;white-space:break-spaces;color:#000;background:#fff;padding:6px;border-radius:8px">${payload}</code>
+    `;
+  }
+  const shareUrl = `${location.origin}${location.pathname}?session=${encodeURIComponent(gameState.sessionId)}&player=${encodeURIComponent(player.id)}`;
+  byId('shareLink').innerHTML = `<strong>Direct Link:</strong><br><small>${shareUrl}</small>`;
+}
+function refreshQR(){ if(gameState.currentPlayer) generatePlayerQR(gameState.currentPlayer); }
+function copyQrPayload(){
+  if(!gameState.currentPlayer) return;
+  const payload = qrPayloadFor(gameState.currentPlayer);
+  navigator.clipboard.writeText(payload).then(()=>addToLog('📋 QR payload copied'));
+}
+function copyPlayerId(){
+  const id = byId('playerIdText').textContent.trim();
+  if(!id) return;
+  navigator.clipboard.writeText(id).then(()=>addToLog('📋 Player ID copied'));
+}
+
+// ===================== CHALLENGES =====================
+const challenges = [
+  { id:"goggle_dinner", text:"Wear ski goggles to dinner; never explain why", reward:"Perk refresh + basic intel" },
+  { id:"tactical_drinking", text:"Shotgun beer if called out for saying 'tactical'", reward:"Scan immunity for 2 hours" },
+  { id:"cia_inquiry", text:"Ask 3 strangers where the CIA safehouse is", reward:"Learn one player's role type" },
+  { id:"snowball_diplomacy", text:"Challenge someone to snowball duel; loser does shoey", reward:"Force challenge redraw" },
+  { id:"mystery_artifact", text:"Bring random item to bar; convince stranger it's priceless", reward:"Bonus ability usage" },
+  { id:"room_recon", text:"Gain legitimate access to someone else's room for 15 min", reward:"Deep scan ability" },
+  { id:"accent_acquisition", text:"Speak only in fake Russian accent for 3 hours", reward:"Counter-intel for 24h" },
+  { id:"fashion_police", text:"Critique outfits using military terminology", reward:"Learn Coil intel fragment" },
+  { id:"surveillance_photo", text:"Take candid photo of each player undetected", reward:"Identity protection" },
+  { id:"loyalty_test", text:"Get someone to break a minor rule for you", reward:"Recruitment ability" }
+];
+
+function drawChallenge(){
+  const me = gameState.currentPlayer;
+  if(!me){ alert('No player active'); return; }
+  if(me.challengesCompleted>=10){ alert('Maximum challenges completed (10/10)'); return; }
+  const available = challenges.filter(c=> !(me.completedChallenges||[]).includes(c.id));
+  if(!available.length){ alert('No more challenges available'); return; }
+  const challenge = available[Math.floor(Math.random()*available.length)];
+  me.activeChallenge = challenge;
+  byId('challengeText').textContent = challenge.text;
+  byId('rewardText').textContent = challenge.reward;
+  byId('challengeReward').classList.remove('hidden');
+  byId('completeBtn').disabled = false;
+  saveGameState();
+  addToLog(`📋 New mission assigned: "${challenge.text.substring(0, 60)}..."`);
+}
+
+function completeChallenge(){
+  const me = gameState.currentPlayer;
+  if(!me?.activeChallenge) return;
+  const challenge = me.activeChallenge;
+  me.challengesCompleted++;
+  if(!me.completedChallenges) me.completedChallenges=[];
+  me.completedChallenges.push(challenge.id);
+  processReward(challenge);
+  me.activeChallenge = null;
+  byId('challengeText').textContent = 'Mission completed! Request new assignment when ready.';
+  byId('completeBtn').disabled = true;
+  byId('challengeReward').classList.add('hidden');
+  updateChallengeProgress();
+  saveGameState();
+  addToLog(`✅ Mission "${challenge.text.substring(0, 40)}..." completed`);
+}
+
+function processReward(ch){
+  const count = gameState.currentPlayer.challengesCompleted;
+  let reward = ch.reward;
+  if(count===1) reward = 'Intel: "Someone here is not who they claim to be"';
+  else if(count===3){ reward='Scan immunity for 24h'; gameState.currentPlayer.scanImmunity = now() + 24*60*60*1000; }
+  else if(count===5){ reward='Deep intel: Role distribution revealed'; showRoleDistribution(); }
+  else if(count===7){ reward='Nuclear option unlocked'; gameState.currentPlayer.nuclearAccess = true; }
+  addToLog(`🏆 Reward: ${reward}`);
+}
+
+function updateChallengeProgress(){
+  const me = gameState.currentPlayer;
+  if(!me) return;
+  const count = me.challengesCompleted;
+  byId('challengeCount').textContent = count;
+  byId('challengeProgress').style.width = `${(count/10)*100}%`;
+  let level = 'Basic'; if(count>=7) level='Maximum'; else if(count>=5) level='Advanced'; else if(count>=3) level='Intermediate';
+  byId('intelLevel').textContent = level;
+}
+
+function showRoleDistribution(){
+  const roleCount = {};
+  gameState.rolePool.forEach(r=> roleCount[r]=(roleCount[r]||0)+1 );
+  let text = 'Role Distribution:\n' + Object.entries(roleCount).map(([r,c])=>{
+    const roleName = roles[r]?.name || r; return `• ${roleName}: ${c}`;
+  }).join('\n');
+  addToLog(`📊 ${text}`);
+}
+
+// ===================== ROSTER / SELECTORS =====================
+function populateSelectors(){
+  const selects = [byId('abilityTargetSelect'), byId('actionTarget'), byId('scanSelect'), byId('suspectSelect')];
+  selects.forEach(sel=>{ if(sel){ sel.innerHTML = '<option value="">— Select —</option>'; } });
+  gameState.players.forEach(p=>{
+    const opt = (label,value)=>{ const o=document.createElement('option'); o.value=value; o.textContent=label; return o; };
+    if(byId('abilityTargetSelect')) byId('abilityTargetSelect').appendChild(opt(`${p.codename} (${p.realName})`, p.id));
+    if(byId('actionTarget'))       byId('actionTarget').appendChild(opt(`${p.codename} (${p.realName})`, p.id));
+    if(byId('scanSelect'))         byId('scanSelect').appendChild(opt(`${p.codename} (${p.realName})`, p.id));
+    if(byId('suspectSelect') && gameState.currentPlayer && p.id!==gameState.currentPlayer.id)
+      byId('suspectSelect').appendChild(opt(`${p.codename} (${p.realName})`, p.id));
+  });
+}
+
+function renderRoster(){
+  const container = byId('rosterList');
+  if(!gameState.players.length){ container.innerHTML = '<div class="muted">No agents yet.</div>'; return; }
+  container.innerHTML = gameState.players.map(p=>{
+    const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+    const selfie = p.selfie? `<img src="${p.selfie}" class="selfie-preview" style="max-width:100px;border-color:#3498db">` : '';
+    return `
+      <div class="roster-card">
+        <div class="flex" style="justify-content:space-between">
+          <div><strong>${p.codename}</strong> — ${p.realName}</div>
+          <div class="small muted">${p.id}</div>
+        </div>
+        <div class="small">${p.cover}</div>
+        <div class="grid grid-3" style="margin-top:8px">
+          <div><strong>Quirk:</strong><br>${p.oddity}</div>
+          <div><strong>Con:</strong><br>${p.con}</div>
+          <div>${selfie}</div>
+        </div>
+        <div style="margin-top:6px"><strong>Perks:</strong><ul>${perks}</ul></div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===================== ABILITIES / ACTIONS =====================
+function targetFromSelectOrQr(selectId, qrId){
+  const sel = byId(selectId)?.value;
+  const qr = byId(qrId)?.value.trim();
+  if(sel) return gameState.players.find(p=>p.id===sel);
+  if(qr){
+    try{ const data = JSON.parse(qr); return gameState.players.find(p=>p.id===data.id); }
+    catch{ /* ignore */ }
+  }
+  return null;
+}
+
+function useAbility(){
+  const me = gameState.currentPlayer;
+  if(!me?.ability) return;
+  if(me.abilityUsed){ addToLog('⚠️ Ability already used'); return; }
+
+  const target = targetFromSelectOrQr('abilityTargetSelect','abilityTargetQr');
+  const tLabel = target ? `${target.codename} (${target.realName})` : '—';
+  me.abilityUsed = true;
+  byId('abilityStatus').className = 'status-badge status-used';
+  byId('abilityStatus').textContent = 'USED';
+
+  addToLog(`⚡ ${me.codename} used ability "${me.ability.name}" on ${tLabel}`);
+  if(target){
+    pushInbox(target.id, { from: me.codename, type:'Ability', text:`${me.codename} used "${me.ability.name}" on you. Instruction: ${me.ability.desc}` });
+  }
+  saveGameState();
+  renderInbox();
+}
+
+function titleFor(t){
+  return t==='penalty'?'Penalty':
+         t==='task_complete'?'Task Complete':
+         t==='murderer_act'?'Murderer Act':
+         'Ability';
+}
+function labelFor(id){
+  if(!id) return '—';
+  const p = gameState.players.find(x=>x.id===id);
+  return p? `${p.codename} (${p.realName})` : id;
+}
+
+function submitAction(){
+  const me = gameState.currentPlayer; if(!me) return;
+  const type = byId('actionType').value;
+  const target = byId('actionTarget').value;
+  const details = safeGet(byId('actionDetails').value).trim() || '(no details)';
+
+  let text = '';
+  if(type==='penalty') text = `Penalty reported on ${labelFor(target)} — ${details}`;
+  else if(type==='task_complete') text = `Task completed by ${me.codename} — ${details}`;
+  else if(type==='murderer_act') text = `Murderer act report by ${me.codename} — ${details}`;
+  else if(type==='use_ability') text = `Ability use request on ${labelFor(target)} — ${details}`;
+
+  addToLog(`📝 ${text}`);
+  if(target){
+    pushInbox(target, { from: me.codename, type: titleFor(type), text: details });
+  }
+  saveGameState();
+  renderInbox();
+  byId('actionDetails').value='';
+  byId('actionTarget').value='';
+}
+
+// ===================== SCAN / ACCUSE (Final Night only) =====================
+function getRandomPsychProfile(){
+  const profiles = ['High stress','Deceptive patterns','Loyalty normal','Paranoia elevated','Combat ready','Trust compromised'];
+  return profiles[Math.floor(Math.random()*profiles.length)];
+}
+function performScan(targetPlayer){
+  const scanTypes = [
+    `Quirk check: ${targetPlayer.oddity}`,
+    `Challenge status: ${targetPlayer.challengesCompleted>0 ? 'Active recently' : 'No recent activity'}`,
+    `Behavioral read: ${targetPlayer.role==='flipped_agent' ? 'deceptive cues' : 'standard stress markers'}`,
+    `Equipment: carrying ${Math.floor(Math.random()*5)+1} suspicious items`,
+    `Comms: ${targetPlayer.role==='handler' ? 'encrypted chatter' : 'normal traffic'}`,
+    `Psyche: ${getRandomPsychProfile()}`
+  ];
+  return scanTypes[Math.floor(Math.random()*scanTypes.length)];
+}
+
+function scanAgent(){
+  if(!finalNightOpen()){ addToLog('⛔ Scans locked until Final Night'); return; }
+  const me = gameState.currentPlayer;
+  const target = targetFromSelectOrQr('scanSelect','scanInput');
+  if(!target){ alert('Pick a target or paste QR payload'); return; }
+  if(gameState.scanHistory.some(s=> s.scanner===me.id && s.target===target.id)){
+    addToLog(`⚠️ ${target.codename} already scanned by you`); return;
+  }
+  const scanResult = performScan(target);
+  gameState.scanHistory.push({ scanner: me.id, target: target.id, timestamp: now(), result: scanResult });
+  addToLog(`🔍 Scanned ${target.codename}: ${scanResult}`);
+  saveGameState();
+}
+
+function accuseAgent(){
+  if(!finalNightOpen()){ addToLog('⛔ Accusations locked until Final Night'); return; }
+  const me = gameState.currentPlayer;
+  const target = targetFromSelectOrQr('scanSelect','scanInput');
+  if(!target){ alert('Pick a target or paste QR payload'); return; }
+  if(!confirm(`Accuse ${target.codename} of treason? This cannot be undone.`)) return;
+
+  gameState.accusations.push({ accuser: me.id, accused: target.id, timestamp: now() });
+  addToLog(`🚨 FORMAL ACCUSATION: ${me.codename} → ${target.codename}`);
+  saveGameState();
+
+  if(gameState.accusations.length >= Math.floor(gameState.players.length/2)){
+    triggerFinalVote();
+  }
+}
+
+function triggerFinalVote(){
+  gameState.gamePhase = 'voting';
+  byId('finalVote').style.display = 'block';
+  const select = byId('suspectSelect');
+  select.innerHTML = '<option value="">Select your suspect...</option>';
+  gameState.players.forEach(p=>{
+    if(p.id !== gameState.currentPlayer.id){
+      const o=document.createElement('option');
+      o.value=p.id; o.textContent=`${p.codename} (${p.realName})`;
+      select.appendChild(o);
+    }
+  });
+  addToLog('🗳️ FINAL VOTE INITIATED');
+}
+
+function castFinalVote(){
+  const suspectId = byId('suspectSelect').value;
+  if(!suspectId){ alert('Select a suspect'); return; }
+  const me = gameState.currentPlayer;
+  gameState.votes[me.id] = suspectId;
+  const suspectPlayer = gameState.players.find(p=>p.id===suspectId);
+  addToLog(`🗳️ Vote cast by ${me.codename} → ${suspectPlayer.codename}`);
+  byId('finalVote').innerHTML = '<h3>Vote Submitted</h3><p>Awaiting results from other operatives...</p>';
+  saveGameState();
+}
+
+// ===================== TIME GATES =====================
+function finalNightOpen(){
+  if(!gameState.finalNightAt) return false;
+  return now() >= gameState.finalNightAt;
+}
+function updateFinalNightGate(){
+  const gate = byId('scannerBlock');
+  const note = byId('scanGateNotice');
+  if(!gate || !note) return;
+  if(!gameState.finalNightAt){
+    gate.classList.remove('hidden');
+    note.textContent = 'Set a Final Night time in GM controls to gate scanning/accusations.';
+    Array.from(gate.querySelectorAll('button,input,select')).forEach(el=> el.disabled = true);
+    return;
+  }
+  const open = finalNightOpen();
+  gate.style.opacity = open ? '1' : '.5';
+  Array.from(gate.querySelectorAll('button,input,select')).forEach(el=> el.disabled = !open);
+  note.textContent = open
+    ? '✅ Scans & accusations are UNLOCKED.'
+    : `🔒 Locked until Final Night: ${fmtTime(gameState.finalNightAt)}`;
+  const tDiv = byId('timers');
+  const ends = gameState.gameEndsAt ? ` | Ends: ${fmtTime(gameState.gameEndsAt)}` : '';
+  tDiv.textContent = `Final Night: ${fmtTime(gameState.finalNightAt)}${ends}`;
+}
+let tickerHandle=null;
+function startTickers(){
+  if(tickerHandle) clearInterval(tickerHandle);
+  tickerHandle = setInterval(()=>{ updateFinalNightGate(); renderInbox(); }, 15000);
+}
+
+// ===================== SELFIE PREVIEW =====================
+const selfieEl = byId('selfieUpload');
+if(selfieEl){
+  selfieEl.addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(file){
+      const reader = new FileReader();
+      reader.onload = (ev)=>{ byId('selfiePreview').innerHTML = `<img src="${ev.target.result}" class="selfie-preview">`; };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// ===================== DEBUG (optional) =====================
+function debugGameState(){ console.log('Current Game State:', gameState); return gameState; }
+function resetGame(){
+  if(confirm('Reset the entire game?')){
+    const sid = gameState.sessionId;
+    if(sid) localStorage.removeItem(`game_${sid}`);
+    location.href = location.pathname;
+  }
+}
+window.gameDebug = { state:()=>gameState, reset:resetGame, addLog:addToLog, triggerVote:triggerFinalVote };
+
+// ===================== EXPOSE GLOBALLY FOR INLINE HANDLERS =====================
+Object.assign(window, {
+  initializeGame, loadExistingGame, registerPlayer,
+  drawChallenge, completeChallenge, revealPerk,
+  refreshQR, copyQrPayload, copyPlayerId,
+  scanAgent, accuseAgent, castFinalVote, renderRoster,
+  submitAction, useAbility, debugGameState
+});
+
+// ===================== BOOT =====================
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Redundant safety: also wire buttons via listeners (works even if inline fails)
+  const bind = (id, fn)=>{ const el = byId(id); if(el) el.addEventListener('click', (e)=>{ e.preventDefault?.(); fn(); }); };
+  bind('btnInit', initializeGame);
+  bind('btnLoad', loadExistingGame);
+
+  loadGameState();
+  if(!gameState.sessionId && location.search.includes('demo')){
+    byId('sessionId').value = 'DEMO_' + Math.random().toString(36).slice(2,8);
+    byId('playerCount').value = '6';
+  }
+  console.log('DOM loaded, ready.');
+});
+console.log('Script loaded successfully');
+</script>
+</body>
+</html>
