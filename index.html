@@ -29,8 +29,8 @@
     input,select{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid var(--vio);border-radius:8px;color:var(--fg)}
     .btn{background:linear-gradient(45deg,var(--red),#ff6b7a);color:#000;border:none;padding:12px 16px;border-radius:8px;
       font-weight:bold;cursor:pointer;transition:.15s;text-transform:uppercase;letter-spacing:1px}
-    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(255,71,87,.45)}
     .btn.sec{background:linear-gradient(45deg,var(--vio),var(--vio2));color:#fff}
+    .btn.alt{background:linear-gradient(45deg,var(--blue),#78a9ff);color:#000}
     .btn.out{background:transparent;border:2px dashed var(--vio);color:var(--muted)}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .small{font-size:.85em;color:var(--muted)}
@@ -49,7 +49,7 @@
       <div class="grid g3">
         <div>
           <label>Game Key</label>
-          <input id="sessionId" placeholder="e.g. QT1" />
+          <input id="sessionId" placeholder="e.g. QT1"/>
         </div>
         <div>
           <label>Player Limit</label>
@@ -66,13 +66,13 @@
       <div class="row" style="margin-top:10px">
         <button class="btn" onclick="createGame()">Create Game</button>
         <button class="btn sec" onclick="refreshState()">Refresh State</button>
-        <button class="btn out" onclick="copyGameLink()">Copy Join Link (Key Only)</button>
+        <button class="btn out" onclick="copyJoinLink()">Copy Join Link</button>
       </div>
       <div id="gmMsg" class="small" style="margin-top:8px"></div>
       <div id="seatList" class="grid g3" style="margin-top:10px"></div>
     </div>
 
-    <!-- LOGIN PANEL -->
+    <!-- PLAYER LOGIN -->
     <div id="loginPanel" class="section">
       <div class="title">🔐 Player Login</div>
       <div class="grid g3">
@@ -86,7 +86,7 @@
         </div>
         <div>
           <label>Seat Key</label>
-          <input id="seatKey" placeholder="e.g. AB1C-9XYZ"/>
+          <input id="seatKey" placeholder="e.g. ABCD-1234"/>
         </div>
       </div>
       <div class="row" style="margin-top:10px">
@@ -98,80 +98,159 @@
   </div>
 
 <script>
-/* ---------- helpers ---------- */
+/* ================= helpers ================= */
 const $ = id => document.getElementById(id);
-function uiMsg(id, text){ const el=$(id); if(el) el.textContent = text||''; }
-function copyText(t){ navigator.clipboard.writeText(t); }
+function uiMsg(id, t){ const el=$(id); if(el) el.textContent=t||''; }
+function copyText(t){ navigator.clipboard?.writeText(t).catch(()=>{}); }
 
-/* ---------- API ---------- */
-async function api(op, body={}){
-  if(op==='get'){
-    const r = await fetch(`/api/game?id=${encodeURIComponent(body.id)}`, { cache:'no-store' });
-    try { return await r.json(); } catch { return { ok:false, error:'Bad JSON' }; }
-  }
-  const r = await fetch('/api/game', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({op, ...body})
-  });
-  try { return await r.json(); } catch { return { ok:false, error:'Bad JSON' }; }
+async function api(op, body = {}) {
+  const url = op === 'get' ? `/api/game?id=${encodeURIComponent(body.id||'')}` : '/api/game';
+  const opts = op === 'get' ? {} : { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({op, ...body}) };
+  const res = await fetch(url, opts);
+  let data; try{ data = await res.json(); }catch{ data = { ok:false, error:`HTTP ${res.status}` }; }
+  return data;
 }
 
-/* ---------- GM ---------- */
+/* ================= GM actions ================= */
 async function createGame(){
   const sessionId = ($('sessionId').value||'').toUpperCase().trim();
   const playerLimit = Number($('playerCount').value||6);
   const finalNightAt = $('finalNightAt').value ? new Date($('finalNightAt').value).getTime() : null;
-  const res = await api('create', { sessionId, playerLimit, finalNightAt });
-  if(!res.ok){ uiMsg('gmMsg','❌ '+(res.error||'Create failed')); return; }
-  localStorage.setItem('gm_session', res.session.id);
-  $('gameKeyLogin').value = res.session.id;
-  uiMsg('gmMsg', `✅ Game ${res.session.id} created (limit ${res.session.playerLimit})`);
-  renderSeats(res.seats||[]);
-}
-function renderSeats(seats){
-  $('seatList').innerHTML = seats.map(s=>`
-    <div class="card">
-      <div><strong>${s.token}</strong></div>
-      <div class="small">${s.claimed ? 'Claimed' : 'Open'}</div>
-      <div style="margin-top:6px">
-        <button class="btn sec" style="padding:6px 10px" onclick="copyText('${s.token}')">Copy</button>
-      </div>
-    </div>`).join('');
-}
-function copyGameLink(){
-  const id = $('sessionId').value || localStorage.getItem('gm_session') || '';
-  if(!id){ uiMsg('gmMsg','No game key yet.'); return; }
-  const url = `${location.origin}${location.pathname}?session=${encodeURIComponent(id)}`;
-  copyText(url);
-  uiMsg('gmMsg','Copied join link (key only).');
-}
-async function refreshState(){
-  const id = localStorage.getItem('gm_session') || ($('sessionId').value||'').toUpperCase();
-  if(!id) return;
-  const res = await api('get', { id });
-  if(!res.ok) return;
-  if(res.seats) renderSeats(res.seats);
+
+  const r = await api('create', { sessionId, playerLimit, finalNightAt });
+  if(!r.ok){ uiMsg('gmMsg', '❌ ' + (r.error||'Create failed')); return; }
+
+  localStorage.setItem('gm_session', r.session.id);
+  $('gameKeyLogin').value = r.session.id;
+  uiMsg('gmMsg', `✅ Game ${r.session.id} created (limit ${r.session.playerLimit})`);
+  renderSeats(r.seats||[]);
+  await refreshState();
 }
 
-/* ---------- Player Join ---------- */
+function renderSeats(seats){
+  $('seatList').innerHTML = (seats||[]).map(s => `
+    <div class="card">
+      <div><strong>${s.token}</strong></div>
+      <div class="small">${s.playerId ? 'Claimed' : 'Open'}</div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn sec" style="padding:6px 10px" onclick="copyText('${s.token}')">Copy</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copyJoinLink(){
+  const id = ($('sessionId').value||localStorage.getItem('gm_session')||'').toUpperCase();
+  if(!id){ uiMsg('gmMsg','No game key yet.'); return; }
+  const link = `${location.origin}/?session=${encodeURIComponent(id)}`;
+  copyText(link);
+  uiMsg('gmMsg','Join link copied.');
+}
+
+/* ================= Player ================= */
 async function joinGame(){
   const sessionId = ($('gameKeyLogin').value||'').toUpperCase().trim();
   const seatToken = ($('seatKey').value||'').toUpperCase().trim();
   const playerName = ($('playerName').value||'').trim();
   if(!sessionId || !seatToken){ uiMsg('loginMsg','Enter game key and seat key'); return; }
 
-  // minimal character stub here; full character picked on agent page from seat (kept backwards compatible)
-  const res = await api('join', { sessionId, seatToken, playerName });
-  if(!res.ok){ uiMsg('loginMsg','❌ '+(res.error||'Join failed')); return; }
+  // Minimal deterministic character pack derived from seat (client-side)
+  const char = pickCharacter(seatToken);
+  char.adoptedName = char.alias;
+  const abilityState = { usesLeft: (char.ability?.usesPerDay ?? 1), lastResetDay: dayKey() };
 
-  // persist & go to dashboard page
-  localStorage.setItem('session', res.session.id);
+  const r = await api('join', { sessionId, seatToken, playerName, character:char, abilityState });
+  if(!r.ok){ uiMsg('loginMsg','❌ ' + (r.error||'Join failed')); return; }
+
+  // Persist seat and player identity, then go to the agent page
+  localStorage.setItem('session', r.session.id);
   localStorage.setItem('seatToken', seatToken);
-  localStorage.setItem('playerId', res.player.id);
-  window.location.href = 'agent.html?session=' + encodeURIComponent(res.session.id);
+  localStorage.setItem('playerId', r.player.id);
+
+  location.href = '/agent.html?session=' + encodeURIComponent(r.session.id);
 }
 
-/* ---------- boot ---------- */
+async function refreshState(){
+  const id = (localStorage.getItem('gm_session') || ($('sessionId').value||'') || ($('gameKeyLogin').value||'')).toUpperCase().trim();
+  if(!id) return;
+  const r = await api('get', { id });
+  if(!r.ok){ return; }
+  if(r.session?.seats) renderSeats(r.session.seats);
+}
+
+/* ================= small utils for character ================= */
+function dayKey(){ const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function pickCharacter(seatKey){
+  // same 12-pack as agent page expects (shortened summary OK; server stores the pack we send)
+  const CHARACTERS = [
+    { alias:"Valérie “Val” Marchand", codename:"LACEHUNTER", cover:"Luxury Skiwear Designer",
+      publicBio:"French AF comms → NATO PSYOPS ‘tactical glam’.", background:"Former French AF comms.",
+      discharge:"Non-disciplinary separation.", secretMission:"Collect 3 clues from a ghoster.",
+      perks:["Honorific Lock","Style Verdict"], quirk:"Silk cravat; lip balm mid-sentence.",
+      con:"Must preen at reflections.", ability:{ name:"Fashion Emergency", desc:"Swap two clothing items.", usesPerDay:1 }, role:"wildcard" },
+    { alias:"Kaimana “Kai” Savai'i", codename:"SNOWBLIND", cover:"Extreme Sports Photographer",
+      publicBio:"RFMF recon tracker; GPS for happy hour.", background:"Recon & humanitarian liaison.",
+      discharge:"Honourable.", secretMission:"Collect 3 hometown slang items.",
+      perks:["Breadcrumb Command","Switchback"], quirk:"Whispers intel, ends with 'copy?'.",
+      con:"'Family/ohana' → give a lesson.", ability:{ name:"Hire a Tail", desc:"Recruit a shadow 10–30 min.", usesPerDay:1 }, role:"innocent" },
+    { alias:"Bartosz “Bas” Nowak", codename:"FROSTBITE", cover:"Adventure Safety Coordinator",
+      publicBio:"Polish GROM cold-weather specialist.", background:"SERE instructor.",
+      discharge:"Honourable.", secretMission:"Gloves silhouette pose.",
+      perks:["Interrogator’s Pause","Cold Protocol"], quirk:"Over-enunciates; NATO phonetics.",
+      con:"If asked 'plan?' → checklist or salute.", ability:{ name:"Coerce an Asset", desc:"Designate an Asset 15 min.", usesPerDay:1 }, role:"handler" },
+    { alias:"Ira “Iris” Khatri", codename:"BLACKRUN", cover:"Avalanche Risk Specialist",
+      publicBio:"SF mountain warfare; predicts disasters.", background:"Demo team; SAR.",
+      discharge:"Medical.", secretMission:"Run a safety briefing with props.",
+      perks:["Beacon Check","Disaster Brief"], quirk:"Adds 'allegedly' if alcohol present.",
+      con:"Estimates angles aloud.", ability:{ name:"Avalanche Protocol", desc:"30s evac drill + swap seats.", usesPerDay:1 }, role:"wildcard" },
+    { alias:"Pilar “Pili” Castaño", codename:"POWDER KEG", cover:"Lodge Event Coordinator",
+      publicBio:"Spanish social engineer; chaos diplomat.", background:"Embassy events fixer.",
+      discharge:"Dishonourable.", secretMission:"Be announced as Ambassador of Après.",
+      perks:["VIP Gate","Guest List"], quirk:"Assigns callsigns, not names.",
+      con:"Rumours → 'exclusive source' wink.", ability:{ name:"Task the Mark", desc:"Nominate player to obtain item.", usesPerDay:1 }, role:"wildcard" },
+    { alias:"Dmitri “Dima” Volkov", codename:"ICEPICK", cover:"Spirits Consultant",
+      publicBio:"Ex-Spetsnaz? Measures every drink.", background:"Urban recon.",
+      discharge:"Special transfer.", secretMission:"Learn + perform a new toast.",
+      perks:["Cold Stare","Vodka Toast Override"], quirk:"Ends sentences with 'over'.",
+      con:"On new arrival: pocket pat ritual.", ability:{ name:"Charm Offensive", desc:"Get 3 vodka drinks bought for you.", usesPerDay:1 }, role:"innocent" },
+    { alias:"Rowan “Ro” Hart", codename:"WOLFTRAP", cover:"Night Security Analyst",
+      publicBio:"Perimeter whisperer; hears bouncers first.", background:"Crowd control.",
+      discharge:"Honourable.", secretMission:"Get a staffer to radio-check you.",
+      perks:["Line Cutter","Bouncer’s Choice"], quirk:"Counts exits when entering.",
+      con:"Music change → freeze 3s.", ability:{ name:"Angle Check", desc:"Command 10-sec pose.", usesPerDay:1 }, role:"innocent" },
+    { alias:"Asher “Ash” Del Mar", codename:"SEALEVEL", cover:"Hydro Logistics Planner",
+      publicBio:"Boat guy; altitude-sick at menus.", background:"Riverine logistics.",
+      discharge:"Honourable.", secretMission:"Collect 3 venue coasters map.",
+      perks:["High-Water Mark","Docking Fee"], quirk:"Constant boat metaphors.",
+      con:"If 'wave' heard → lifeguard salute.", ability:{ name:"Harbour Master", desc:"Declare table 'Port'.", usesPerDay:1 }, role:"wildcard" },
+    { alias:"Noah “Knox” Keegan", codename:"SWITCHBACK", cover:"MTB Guide",
+      publicBio:"Downhill brain, uphill charm.", background:"Bike courier.",
+      discharge:"Honourable.", secretMission:"Borrow & wear a helmet 2 min.",
+      perks:["Gear Check","Trail Marshal"], quirk:"Claps once when standing.",
+      con:"If 'brake' heard → freeze 2s.", ability:{ name:"Trail Tax", desc:"Swap two seats; route apology.", usesPerDay:1 }, role:"innocent" },
+    { alias:"Jamie “Harrow” Quinn", codename:"BONESAW", cover:"Field Medic (Former)",
+      publicBio:"Great stitches, terrible boundaries.", background:"Triage medic.",
+      discharge:"Honourable.", secretMission:"Bandage a non-player; get rating.",
+      perks:["Triage","Sterile Field"], quirk:"Calls snacks 'oral meds'.",
+      con:"If 'owie' heard → produce bandage.", ability:{ name:"Scrub In", desc:"Emergency consult whisper.", usesPerDay:1 }, role:"wildcard" },
+    { alias:"Elliot “Ledger” Vance", codename:"COUNTERSIGN", cover:"Casino Surveillance",
+      publicBio:"Counts cards and people.", background:"Pattern analysis.",
+      discharge:"Honourable.", secretMission:"Speak only in numbers for 30s.",
+      perks:["Tell Read","Double Down"], quirk:"Murmurs odds.",
+      con:"Numbers >10 → whisper random number.", ability:{ name:"Background Count", desc:"GM statistical hint.", usesPerDay:1 }, role:"handler" },
+    { alias:"Rafe “Static” Moretti", codename:"JAMMER", cover:"RF Tech",
+      publicBio:"More antennas than personality.", background:"Signals/EW.",
+      discharge:"Honourable.", secretMission:"Make a stranger say 'Say again?' twice.",
+      perks:["Signal Check","Dead Zone"], quirk:"Says 'Copy' to compliments.",
+      con:"If 'loud' heard → turn imaginary knob.", ability:{ name:"Static Burst", desc:"30-sec whisper-only outage.", usesPerDay:1 }, role:"innocent" },
+  ];
+  let h=0; for(const c of seatKey) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  return JSON.parse(JSON.stringify(CHARACTERS[h % CHARACTERS.length]));
+}
+
+/* ================= boot ================= */
 document.addEventListener('DOMContentLoaded', async ()=>{
   const qs = new URLSearchParams(location.search);
   const urlSession = (qs.get('session')||'').toUpperCase();
@@ -180,6 +259,9 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     $('gameKeyLogin').value = urlSession;
     localStorage.setItem('gm_session', urlSession);
     await refreshState();
+  }else{
+    const gm = localStorage.getItem('gm_session');
+    if(gm){ $('sessionId').value = gm; $('gameKeyLogin').value = gm; await refreshState(); }
   }
 });
 </script>
