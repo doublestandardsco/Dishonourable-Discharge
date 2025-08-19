@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dishonourable Discharge — Agent</title>
+  <style>
+    :root{
+      --bg:#0a0a0a; --bg2:#1a1a2e; --bg3:#16213e;
+      --red:#ff4757; --vio:#5f27cd; --vio2:#7c3aed; --ora:#ffa500; --blue:#3498db; --green:#27ae60;
+      --fg:#e0e0e0; --muted:#9bbcff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Courier New',monospace;color:var(--fg);min-height:100vh;
+      background:linear-gradient(135deg,var(--bg),var(--bg2),var(--bg3));padding:18px}
+    .wrap{max-width:1000px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid var(--red);
+      border-radius:16px;padding:22px;box-shadow:0 0 40px rgba(255,71,87,.25);position:relative}
+    .stamp{position:absolute;top:20px;right:20px;background:var(--red);color:#000;
+      padding:7px 14px;border:3px solid #000;transform:rotate(10deg);font-weight:bold}
+    h1{margin:0 0 6px;color:var(--red);text-shadow:0 0 18px rgba(255,71,87,.7);letter-spacing:3px;text-align:center}
+    .sub{color:var(--vio);text-align:center;margin-bottom:20px}
+    .section{background:rgba(255,255,255,.03);border-left:4px solid var(--vio);border-radius:10px;padding:18px;margin:14px 0}
+    .title{color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+    .grid{display:grid;gap:12px}
+    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+    label{display:block;margin-bottom:6px;color:var(--vio);font-weight:bold;font-size:.88em;letter-spacing:.5px}
+    input,select,textarea{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid var(--vio);border-radius:8px;color:var(--fg)}
+    .btn{background:linear-gradient(45deg,var(--red),#ff6b7a);color:#000;border:none;padding:12px 16px;border-radius:8px;
+      font-weight:bold;cursor:pointer;transition:.15s;text-transform:uppercase;letter-spacing:1px}
+    .btn.sec{background:linear-gradient(45deg,var(--vio),var(--vio2));color:#fff}
+    .btn.alt{background:linear-gradient(45deg,var(--blue),#78a9ff);color:#000}
+    .btn.out{background:transparent;border:2px dashed var(--vio);color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .small{font-size:.85em;color:var(--muted)}
+    .muted{opacity:.75}
+    .card{border:1px dashed var(--vio);border-radius:10px;padding:10px}
+    .dossier{border:2px solid var(--red);border-radius:12px;background:linear-gradient(135deg,rgba(255,71,87,.1),rgba(95,39,205,.1));padding:16px;margin:12px 0;position:relative}
+    .dossier:before{content:"CLASSIFIED";position:absolute;top:-10px;left:18px;background:var(--red);color:#000;padding:3px 10px;font-size:.72em;font-weight:bold}
+    .code{color:var(--red);font-weight:bold}
+    .log{max-height:260px;overflow:auto;background:rgba(0,0,0,.45);border:2px solid var(--vio);border-radius:10px;padding:12px}
+    .line{border-left:3px solid var(--vio);padding-left:10px;margin:8px 0;background:rgba(95,39,205,.12);border-radius:4px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:bold}
+    .b-ready{background:var(--green);color:#fff}.b-used{background:#e74c3c;color:#fff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="stamp">TOP SECRET</div>
+    <h1>DISHONOURABLE DISCHARGE</h1>
+    <div class="sub">Agent Dashboard</div>
+
+    <!-- DASHBOARD -->
+    <div id="dashPanel" class="section">
+      <div class="title">🧾 Agent Dashboard</div>
+
+      <div class="dossier">
+        <div class="row" style="justify-content:space-between">
+          <div><span class="code" id="codenameText">—</span> <span class="small muted">(Agent ID <span id="agentIdText">—</span>)</span></div>
+          <div class="small">Game: <span id="gameKeyText">—</span> · Final Night: <span id="finalNightText">—</span></div>
+        </div>
+        <div class="grid g3" style="margin-top:10px">
+          <div class="card">
+            <div class="small muted">Your Name</div>
+            <div id="realNameText">—</div>
+            <div class="small muted" style="margin-top:6px">Adopted Character Name</div>
+            <div id="aliasText">—</div>
+            <div class="small muted" style="margin-top:6px">Cover Identity</div>
+            <div id="coverText">—</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Operational Role</div>
+            <div id="roleText">—</div>
+            <div class="small muted" style="margin-top:6px">Role Objective</div>
+            <div id="roleObjective">—</div>
+            <div class="small muted" style="margin-top:6px">Win Condition</div>
+            <div id="roleWin">—</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Secret Mission (you only)</div>
+            <div id="secretMissionText">—</div>
+          </div>
+        </div>
+
+        <div class="grid g2" style="margin-top:10px">
+          <div class="card">
+            <div class="small muted">Background</div>
+            <div id="backgroundText">—</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Discharge</div>
+            <div id="dischargeText">—</div>
+          </div>
+        </div>
+
+        <div class="grid g3" style="margin-top:10px">
+          <div class="card">
+            <div class="small muted">Perks</div>
+            <ul id="perkList" style="margin:6px 0 0 18px"></ul>
+          </div>
+          <div class="card">
+            <div class="small muted">Behavioral Quirk</div>
+            <div id="quirkText">—</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Con</div>
+            <div id="conText">—</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:10px">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <div class="small muted">Special Ability</div>
+              <div id="abilityName"><strong>—</strong></div>
+              <div class="small" id="abilityDesc">—</div>
+            </div>
+            <div>
+              <span id="abilityBadge" class="badge b-ready">READY</span>
+              <div class="small">Uses Left Today: <span id="abilityUsesLeft">1</span></div>
+            </div>
+          </div>
+          <div class="grid g3" style="margin-top:10px">
+            <div>
+              <label class="small">Target (optional)</label>
+              <select id="abilityTargetSelect"></select>
+            </div>
+            <div>
+              <label class="small">…or type Agent ID</label>
+              <input id="abilityTargetId" placeholder="agent_xxx"/>
+            </div>
+            <div style="align-self:end">
+              <button class="btn alt" onclick="useAbility()">Use Ability</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missions -->
+      <div class="section" style="border-left-color:var(--ora)">
+        <div class="title">📋 Missions</div>
+        <div id="activeMission" class="card">
+          <div class="small muted">Active Mission</div>
+          <div id="missionText">None. Request one below.</div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn sec" onclick="requestMission()">Request Mission</button>
+            <button class="btn" onclick="completeMission()">Complete Mission</button>
+            <button class="btn out" onclick="failMission()">Fail & Redraw</button>
+          </div>
+          <div class="small" style="margin-top:6px">Completed: <span id="missionCount">0</span></div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="section" style="border-left-color:var(--blue)">
+        <div class="title">📝 Submit Action / Penalty / Task</div>
+        <div class="grid g3">
+          <div>
+            <label>Action Type</label>
+            <select id="actionType">
+              <option value="penalty">Report Penalty</option>
+              <option value="task_complete">Task Complete</option>
+              <option value="murderer_act">Report Murderer Act</option>
+              <option value="ability">Use Ability (also above)</option>
+            </select>
+          </div>
+          <div>
+            <label>Target Player</label>
+            <select id="actionTarget"></select>
+          </div>
+          <div>
+            <label>Details</label>
+            <input id="actionDetails" placeholder="What happened / instructions"/>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn alt" onclick="submitAction()">Submit</button>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="section" style="border-left-color:var(--vio2)">
+        <div class="title">📡 Operation Log</div>
+        <div id="logView" class="log"></div>
+      </div>
+
+      <div class="row">
+        <button class="btn sec" onclick="refreshState()">Refresh</button>
+        <button class="btn out" onclick="leaveSeat()">Leave Seat</button>
+        <a class="btn out" href="/">Back</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== helpers ===== */
+const $ = id => document.getElementById(id);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function dayKey(){ const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+async function api(op, body = {}) {
+  const url = op === 'get' ? `/api/game?id=${encodeURIComponent(body.id||'')}` : '/api/game';
+  const opts = op === 'get' ? {} : { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({op, ...body}) };
+  const res = await fetch(url, opts);
+  let data; try{ data = await res.json(); }catch{ data = { ok:false, error:`HTTP ${res.status}`}; }
+  if(!res.ok || data?.ok === false){ console.warn('API error', {op, body, res:data}); }
+  return data;
+}
+async function postEvent(msg){
+  const id = gameState.id || localStorage.getItem('session');
+  if(!id) return;
+  await api('event', { sessionId:id, msg });
+}
+
+/* ===== state ===== */
+let gameState = {};
+let currentPlayer = null;
+let pollHandle = null;
+
+/* ===== renderers ===== */
+function renderDossier(){
+  if(!currentPlayer) return;
+  const p = currentPlayer;
+  $('codenameText').textContent = p.codename || 'OPERATIVE';
+  $('agentIdText').textContent = p.id || '—';
+  $('realNameText').textContent = p.realName || '—';
+  $('aliasText').textContent = p.adoptedName || p.alias || '—';
+  $('coverText').textContent = p.cover || '—';
+  $('backgroundText').textContent = p.background || '—';
+  $('dischargeText').textContent = p.discharge || '—';
+  $('secretMissionText').textContent = p.secretMission || '—';
+  $('quirkText').textContent = p.quirk || '—';
+  $('conText').textContent = p.con || '—';
+
+  $('abilityName').innerHTML = `<strong>${p.ability?.name||'—'}</strong>`;
+  $('abilityDesc').textContent = p.ability?.desc || '—';
+
+  const usesLeft = abilityUsesLeft();
+  $('abilityUsesLeft').textContent = usesLeft;
+  $('abilityBadge').className = 'badge ' + (usesLeft>0 ? 'b-ready' : 'b-used');
+
+  const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+  $('perkList').innerHTML = perks;
+}
+function renderRoster(){
+  const list = gameState.players || [];
+  $('actionTarget').innerHTML = '<option value="">— Select —</option>' + list
+    .filter(p => !currentPlayer || p.id !== currentPlayer.id)
+    .map(p=>`<option value="${p.id}">${p.codename} (${p.realName})</option>`).join('');
+
+  $('abilityTargetSelect').innerHTML = '<option value="">— Select —</option>' + list
+    .filter(p => !currentPlayer || p.id !== currentPlayer.id)
+    .map(p=>`<option value="${p.id}">${p.codename} (${p.realName})</option>`).join('');
+}
+function renderLog(){
+  const log = gameState.gameLog || [];
+  $('logView').innerHTML = log.slice(-300).map(l=>`<div class="line"><strong>[${new Date(l.ts).toLocaleTimeString()}]</strong> ${l.msg}</div>`).join('') || '<div class="muted">No events yet.</div>';
+  $('logView').scrollTop = $('logView').scrollHeight;
+}
+
+/* ===== ability / missions / actions ===== */
+function abilityUsesLeft(){
+  const st = currentPlayer?.abilityState || {usesLeft:(currentPlayer?.ability?.usesPerDay??1), lastResetDay:dayKey()};
+  if(st.lastResetDay !== dayKey()){
+    st.lastResetDay = dayKey();
+    st.usesLeft = currentPlayer?.ability?.usesPerDay ?? 1;
+    currentPlayer.abilityState = st;
+    updateMe({abilityState:st});
+  }
+  return st.usesLeft ?? 0;
+}
+async function updateMe(patch){
+  const sessionId = gameState.id || localStorage.getItem('session');
+  const playerId = currentPlayer?.id || localStorage.getItem('playerId');
+  if(!sessionId || !playerId) return;
+  const res = await api('update_player', { sessionId, playerId, patch });
+  if(res?.ok && res.player){ currentPlayer = res.player; }
+}
+
+async function useAbility(){
+  if(!currentPlayer?.ability) return;
+  const left = abilityUsesLeft();
+  if(left<=0){ await postEvent(`⚠️ ${currentPlayer.codename} tried to use ability with no uses left.`); return; }
+
+  const selId = $('abilityTargetSelect').value || '';
+  const typed = ($('abilityTargetId').value||'').trim();
+  const target = (gameState.players||[]).find(p=> p.id === (selId||typed));
+  const tLabel = target ? `${target.codename} (${target.realName})` : '—';
+
+  const st = currentPlayer.abilityState || {usesLeft:1,lastResetDay:dayKey()};
+  st.usesLeft = Math.max(0, (st.usesLeft??1)-1);
+  currentPlayer.abilityState = st;
+  $('abilityUsesLeft').textContent = st.usesLeft;
+  $('abilityBadge').className = 'badge ' + (st.usesLeft>0 ? 'b-ready':'b-used');
+
+  await updateMe({abilityState:st});
+  await postEvent(`⚡ ${currentPlayer.codename} used “${currentPlayer.ability.name}” on ${tLabel}.`);
+  $('abilityTargetId').value='';
+}
+
+function ensureMissionState(){
+  currentPlayer.missions = currentPlayer.missions || {active:null, count:0};
+  return currentPlayer.missions;
+}
+async function requestMission(){
+  const MISSIONS=[ "Wear ski goggles to dinner; never explain why.",
+    "Ask 3 strangers where the CIA safehouse is.", "Challenge someone to a snowball duel; loser does a shoey.",
+    "Bring a random item to the bar and convince someone it’s priceless.", "Gain legit access to another player’s room for 15 minutes.",
+    "Speak only in a fake Russian accent for 3 hours.", "Critique outfits using military terminology.",
+    "Take a candid photo of every player undetected.", "Get someone to break a minor rule for you.",
+    "Teach a stranger a codeword and use it later." ];
+  const ms = ensureMissionState();
+  if(ms.active){ await postEvent(`${currentPlayer.codename} requested new mission without completing previous → group consensus penalty?`); }
+  ms.active = pick(MISSIONS);
+  $('missionText').textContent = ms.active;
+  await updateMe({missions:ms});
+  await postEvent(`📋 ${currentPlayer.codename} drew a mission: “${ms.active}”.`);
+}
+async function completeMission(){
+  const ms = ensureMissionState();
+  if(!ms.active) return;
+  await postEvent(`✅ ${currentPlayer.codename} completed mission: “${ms.active}”.`);
+  ms.active=null; ms.count=(ms.count||0)+1;
+  $('missionText').textContent='None. Request one below.'; $('missionCount').textContent=ms.count;
+  await updateMe({missions:ms});
+}
+async function failMission(){
+  const ms = ensureMissionState();
+  if(!ms.active){ await requestMission(); return; }
+  await postEvent(`❌ ${currentPlayer.codename} failed mission: “${ms.active}” — new mission requested.`);
+  ms.active = '…drawing new mission…';
+  await updateMe({missions:ms});
+  await requestMission();
+}
+
+function labelFor(id){ const p=(gameState.players||[]).find(x=>x.id===id); return p? `${p.codename} (${p.realName})` : (id||'—'); }
+async function submitAction(){
+  const type = $('actionType').value;
+  const target = $('actionTarget').value;
+  const details = ($('actionDetails').value||'(no details)').trim();
+  let text='';
+  if(type==='penalty') text = `📝 Penalty on ${labelFor(target)} — ${details}`;
+  else if(type==='task_complete') text = `📝 Task complete by ${currentPlayer.codename} — ${details}`;
+  else if(type==='murderer_act') text = `📝 Murderer act report by ${currentPlayer.codename} — ${details}`;
+  else text = `📝 Ability use by ${currentPlayer.codename} on ${labelFor(target)} — ${details}`;
+  await postEvent(text);
+  $('actionDetails').value=''; $('actionTarget').value='';
+}
+
+/* ===== refresh / boot ===== */
+async function refreshState(){
+  const id = localStorage.getItem('session') || new URLSearchParams(location.search).get('session') || '';
+  if(!id) return;
+  const r = await api('get', { id });
+  if(!r?.ok) return;
+  gameState = r.session || {};
+  $('gameKeyText').textContent = gameState.id || '—';
+  $('finalNightText').textContent = gameState.finalNightAt ? new Date(gameState.finalNightAt).toLocaleString() : '—';
+
+  const myId = localStorage.getItem('playerId');
+  if(myId) currentPlayer = (gameState.players||[]).find(p=>p.id===myId) || currentPlayer;
+
+  renderRoster(); renderDossier(); renderLog();
+}
+
+function leaveSeat(){
+  localStorage.removeItem('session');
+  localStorage.removeItem('seatToken');
+  localStorage.removeItem('playerId');
+  location.href = '/';
+}
+
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // ensure we are bound to the seat (rejoin)
+  const session = new URLSearchParams(location.search).get('session') || localStorage.getItem('session');
+  const seatToken = localStorage.getItem('seatToken');
+  if(session && seatToken){
+    await api('join', { sessionId: session.toUpperCase(), seatToken: seatToken.toUpperCase(), playerName:'' });
+    localStorage.setItem('session', session.toUpperCase());
+  }
+  await refreshState();
+  if(pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(refreshState, 4000);
+});
+</script>
+</body>
+</html>
