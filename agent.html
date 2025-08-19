@@ -358,11 +358,26 @@ function decUse(){
   localStorage.setItem('abilityState', JSON.stringify(st));
 }
 
-/* ========= render ========= */
+/* ========= render helpers ========= */
+function isEmpty(v){ return v==null || (typeof v==='string' && v.trim()==='') || (Array.isArray(v) && v.length===0); }
+function hydratePlayerWithPack(serverPlayer, pack){
+  const p = {...serverPlayer}; // keep id/realName etc.
+  const FIELDS = ['alias','adoptedName','cover','background','discharge','secretMission','publicBio','privateBio','perks','quirk','con','ability','codename','role'];
+  FIELDS.forEach(k=>{
+    const placeholder = (k==='cover' && p[k]==='Cover Identity');
+    if(isEmpty(p[k]) || placeholder){ p[k] = pack[k]; }
+  });
+  if(isEmpty(p.adoptedName)) p.adoptedName = pack.alias;
+  // Ensure arrays/objects
+  if(!Array.isArray(p.perks)) p.perks = pack.perks||[];
+  if(!p.ability) p.ability = pack.ability||null;
+  return p;
+}
+
+/* ========= UI render ========= */
 function fillRosterTargets(){
   const others = (gameState?.players||[]).filter(p=>!me || p.id!==me.id);
-  const ids = ['abilityTarget','actionTarget'];
-  ids.forEach(id=>{
+  ['abilityTarget','actionTarget'].forEach(id=>{
     const sel=$(id); if(!sel) return;
     sel.innerHTML = '<option value="">— Select —</option>';
     others.forEach(p=>{
@@ -472,7 +487,7 @@ async function refresh(){
   if(!r?.ok){ renderLog(['Session not found.']); return; }
   gameState = r.session;
 
-  // find me: prefer stored playerId; else seat binding
+  // who am I?
   me = (gameState.players||[]).find(p=>p.id===playerId) || null;
   if(!me && seatToken){
     const seat = (gameState.seats||[]).find(s=>(s.token||'').toUpperCase()===seatToken);
@@ -480,16 +495,9 @@ async function refresh(){
   }
   if(!me){ renderLog(['Player not found in this session.']); return; }
 
-  // if server player lacks rich fields, reconstruct locally for display only
-  const need =
-    !me.alias || !me.adoptedName || !me.cover || me.cover==='Cover Identity' ||
-    !me.background || !me.discharge || !me.secretMission ||
-    !(me.perks && me.perks.length) || !me.ability || !me.codename || !me.role;
-
-  if(need){
-    const pack = pickCharacterForSeat(seatToken || me.id);
-    me = {...pack, ...me, adoptedName: me.adoptedName || pack.alias};
-  }
+  // Fill any missing/placeholder fields from deterministic pack (seat-based)
+  const pack = pickCharacterForSeat(seatToken || me.id);
+  me = hydratePlayerWithPack(me, pack);
 
   fillRosterTargets();
   renderDossier();
