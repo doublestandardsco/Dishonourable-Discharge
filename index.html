@@ -27,9 +27,13 @@
     .ok{color:#9bffaf}
     .err{color:#ff9b9b}
     .hidden{display:none}
-    .log{margin-top:12px;padding:10px;border:1px dashed var(--violet);border-radius:10px;max-height:260px;overflow:auto}
-    .log div{padding:6px;border-left:3px solid var(--violet);background:rgba(95,39,205,.12);border-radius:6px;margin-bottom:6px}
+    .copy-btn{margin-left:8px;padding:6px 10px;font-size:.85rem}
     .divider{height:1px;background:rgba(255,255,255,.1);margin:14px 0}
+    /* optional debug log hidden by default */
+    #debugWrap{display:none}
+    #debugWrap.show{display:block}
+    .log{margin-top:8px;padding:8px;border:1px dashed var(--violet);border-radius:10px;max-height:220px;overflow:auto}
+    .log div{padding:6px;border-left:3px solid var(--violet);background:rgba(95,39,205,.12);border-radius:6px;margin-bottom:6px}
   </style>
 </head>
 <body>
@@ -43,11 +47,23 @@
     <!-- GAME MASTER -->
     <div id="gmPanel" class="section">
       <h3>🎮 Game Master</h3>
+
       <div class="grid grid-2">
         <div>
-          <label>Final Night (unlock scans & accusations)</label>
+          <label>Game Key (edit or regenerate)</label>
+          <div class="row">
+            <input id="sessionId" placeholder="e.g. FJ6Q8Z" />
+            <button id="btnGenKey" class="btn secondary" title="Regenerate Game Key">Regenerate</button>
+          </div>
+          <div class="muted" style="margin-top:4px">Share this key with players. They’ll use it to join.</div>
+        </div>
+        <div>
+          <label>Final Night (unlocks scans & accusations)</label>
           <input id="finalNightAt" type="datetime-local">
         </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:10px">
         <div>
           <label>Player Limit</label>
           <select id="playerLimit">
@@ -59,19 +75,23 @@
             <option value="12">12</option>
           </select>
         </div>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button id="btnCreate" class="btn">Create Game</button>
-        <button id="btnLoad" class="btn secondary">Load Existing</button>
-      </div>
-      <div id="gmStatus" class="muted" style="margin-top:8px"></div>
-      <div class="divider"></div>
-      <div id="shareBlock" class="hidden">
-        <div class="ok">✅ Game created.</div>
-        <div style="margin-top:6px">
-          <strong>Game Key: <span id="sessionOut" style="color:#fff"></span></strong>
+        <div class="row" style="align-items:end">
+          <button id="btnCreate" class="btn">Create Game</button>
+          <button id="btnLoad" class="btn secondary">Load Existing</button>
         </div>
-        <div class="muted" style="margin-top:4px">Give this key to players. They’ll enter Name + Game Key below.</div>
+      </div>
+
+      <div id="gmStatus" class="muted" style="margin-top:8px"></div>
+
+      <div class="divider"></div>
+
+      <div id="shareBlock" class="hidden">
+        <div class="ok">✅ Game ready.</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <strong>Game Key: <span id="sessionOut" style="color:#fff"></span></strong>
+          <button id="btnCopyKey" class="btn secondary copy-btn">Copy</button>
+        </div>
+        <div class="muted" style="margin-top:4px">Players join with their name + this key.</div>
       </div>
     </div>
 
@@ -85,7 +105,7 @@
         </div>
         <div>
           <label>Game Key</label>
-          <input id="joinSession" placeholder="e.g. ABC123">
+          <input id="joinSession" placeholder="e.g. FJ6Q8Z">
         </div>
       </div>
       <div class="row" style="margin-top:8px">
@@ -102,6 +122,9 @@
       <div><strong>Role:</strong> <span id="role">—</span></div>
       <div class="divider"></div>
       <div><strong>Cover:</strong> <span id="cover">—</span></div>
+      <div><strong>Background:</strong> <span id="background">—</span></div>
+      <div><strong>Discharge:</strong> <span id="discharge">—</span></div>
+      <div class="divider"></div>
       <div><strong>Quirk:</strong> <span id="quirk">—</span></div>
       <div><strong>Perks:</strong> <span id="perks">—</span></div>
       <div><strong>Con:</strong> <span id="con">—</span></div>
@@ -120,45 +143,48 @@
       <div id="roster" class="muted">No players yet.</div>
     </div>
 
-    <!-- LOG -->
-    <div id="logPanel" class="section">
-      <h3>📡 Log</h3>
-      <div id="log" class="log"></div>
+    <!-- (Optional) Debug toggle -->
+    <div class="section" style="text-align:center">
+      <a href="#" id="toggleDebug" class="muted">Show debug</a>
+      <div id="debugWrap">
+        <div id="log" class="log"></div>
+      </div>
     </div>
   </div>
 
 <script>
-/* ========= tiny helpers ========= */
+/* ========= helpers ========= */
 const $ = id => document.getElementById(id);
-const log = (t,cls='') => {
-  const d = document.createElement('div');
-  if (cls) d.className = cls;
-  d.textContent = `[${new Date().toLocaleTimeString()}] ${t}`;
-  $('log').prepend(d);
-};
 const setHTML = (id, html) => { const el=$(id); if(el) el.innerHTML=html; };
 const setText = (id, txt) => { const el=$(id); if(el) el.textContent=txt; };
 const show = (id, on=true)=>{ const el=$(id); if(!el) return; el.classList[on?'remove':'add']('hidden'); };
-
-/* ========= state persisted locally (for refresh) ========= */
-const LS = {
-  session: 'dd_session',
-  player:  'dd_player'
+const log = (t,cls='') => {
+  const wrap = $('debugWrap'); if(!wrap || !wrap.classList.contains('show')) return;
+  const d = document.createElement('div'); if (cls) d.className=cls;
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${t}`;
+  $('log')?.prepend(d);
 };
-function saveSession(id){ localStorage.setItem(LS.session, id||''); }
-function savePlayer(id){ localStorage.setItem(LS.player, id||''); }
-function getSession(){ return localStorage.getItem(LS.session) || ''; }
-function getPlayer(){ return localStorage.getItem(LS.player) || ''; }
+function randKey(len=6){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/I/1
+  let s=''; for(let i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+
+/* ========= local persistence ========= */
+const LS = { session: 'dd_session', player: 'dd_player' };
+const saveSession = id => localStorage.setItem(LS.session, id||'');
+const savePlayer  = id => localStorage.setItem(LS.player, id||'');
+const getSession  = () => localStorage.getItem(LS.session) || '';
+const getPlayer   = () => localStorage.getItem(LS.player) || '';
 
 /* ========= API =========
-  Assumes these routes exist on your server:
-  - POST /api/game        { playerLimit:number, finalNightAt?:number } -> { ok, sessionId }
-  - GET  /api/session?id=SESSION_ID                                   -> { ok, session }
-  - POST /api/join       { sessionId:string, name:string }            -> { ok, player, session }
+  Expected server routes:
+  - POST /api/game { sessionId, playerLimit:number, finalNightAt?:number } -> { ok, sessionId }
+  - GET  /api/session?id=SESSION_ID                                      -> { ok, session }
+  - POST /api/join { sessionId, name }                                    -> { ok, player, session }
 */
-async function apiCreateGame(playerLimit, finalNightAt) {
-  const body = { playerLimit: Number(playerLimit) };
-  // only send finalNightAt if valid number
+async function apiCreateGame(sessionId, playerLimit, finalNightAt) {
+  const body = { sessionId: String(sessionId), playerLimit: Number(playerLimit) };
   const ts = Date.parse(finalNightAt || '');
   if (!Number.isNaN(ts)) body.finalNightAt = ts;
 
@@ -168,19 +194,15 @@ async function apiCreateGame(playerLimit, finalNightAt) {
     body: JSON.stringify(body)
   });
   const data = await res.json().catch(()=>({ok:false,error:'Bad JSON'}));
-  if (!res.ok || !data.ok) {
-    throw new Error(data.error || `HTTP ${res.status}`);
-  }
-  return data; // { ok:true, sessionId, ... }
+  if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
 }
-
 async function apiLoadSession(sessionId) {
-  const res = await fetch(`/api/session?id=${encodeURIComponent(sessionId)}`, { cache: 'no-store' });
+  const res = await fetch(`/api/session?id=${encodeURIComponent(sessionId)}`, { cache:'no-store' });
   const data = await res.json().catch(()=>({ok:false,error:'Bad JSON'}));
   if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data; // { ok:true, session:{...} }
+  return data;
 }
-
 async function apiJoin(sessionId, name) {
   const res = await fetch('/api/join', {
     method:'POST',
@@ -189,10 +211,10 @@ async function apiJoin(sessionId, name) {
   });
   const data = await res.json().catch(()=>({ok:false,error:'Bad JSON'}));
   if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data; // { ok:true, player:{...}, session:{...} }
+  return data;
 }
 
-/* ========= UI glue ========= */
+/* ========= renderers ========= */
 function renderRoster(session){
   if (!session || !Array.isArray(session.players) || !session.players.length){
     setHTML('roster','<span class="muted">No players yet.</span>');
@@ -207,7 +229,7 @@ function renderRoster(session){
         <div class="muted">${p.cover || ''}</div>
         <div style="margin-top:6px"><strong>Bio:</strong> ${bio}</div>
         <div style="margin-top:6px;display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))">
-          <div><strong>Quirk:</strong><br>${p.quirk || '—'}</div>
+          <div><strong>Quirk:</strong><br>${p.oddity || p.quirk || '—'}</div>
           <div><strong>Con:</strong><br>${p.con || '—'}</div>
           <div><strong>Perks:</strong><br>${perks}</div>
         </div>
@@ -216,75 +238,77 @@ function renderRoster(session){
   }).join('');
   setHTML('roster', html);
 }
-
 function renderProfile(player){
   if (!player) return;
   setText('codename', player.codename || '—');
   setText('playerId', player.id || '—');
   setText('role', player.role || '—');
   setText('cover', player.cover || '—');
-  setText('quirk', player.quirk || '—');
+  setText('background', player.background || '—');
+  setText('discharge', player.discharge || '—');
+  setText('quirk', player.oddity || player.quirk || '—');
   setHTML('perks', (player.perks && player.perks.length) ? `<ul>${player.perks.map(x=>`<li>${x}</li>`).join('')}</ul>` : '—');
   setText('con', player.con || '—');
   setText('ability', player.ability ? `${player.ability.name}: ${player.ability.desc}` : '—');
 }
 
-/* ========= event handlers ========= */
+/* ========= handlers ========= */
 async function onCreate(){
   $('btnCreate').disabled = true;
   setText('gmStatus','Creating…');
+
   try{
+    let sid = $('sessionId').value.trim();
+    if(!sid){ sid = randKey(); $('sessionId').value = sid; }
     const limit = $('playerLimit').value;
     const when  = $('finalNightAt').value; // optional
-    const out = await apiCreateGame(limit, when);
-    const sessionId = out.sessionId;
+    const out = await apiCreateGame(sid, limit, when);
+    const sessionId = out.sessionId || sid;
     saveSession(sessionId);
-    savePlayer(''); // clear
+    savePlayer('');
     setText('gmStatus','');
     setText('sessionOut', sessionId);
     show('shareBlock', true);
     log(`Game created: ${sessionId}`, 'ok');
   }catch(e){
     setText('gmStatus','');
-    log(`Create failed: ${e.message}`, 'err');
     alert(`Create Game failed: ${e.message}`);
+    log(`Create failed: ${e.message}`, 'err');
   }finally{
     $('btnCreate').disabled = false;
   }
 }
-
 async function onLoad(){
-  const s = prompt('Enter existing Game Key:');
-  if(!s) return;
+  const s = prompt('Enter existing Game Key:') || '';
+  if(!s.trim()) return;
   try{
-    const out = await apiLoadSession(s);
-    saveSession(s);
-    savePlayer(''); // not joined yet
-    setText('sessionOut', s);
+    const out = await apiLoadSession(s.trim());
+    saveSession(s.trim());
+    savePlayer('');
+    setText('sessionOut', s.trim());
     show('shareBlock', true);
     renderRoster(out.session);
     show('rosterPanel', true);
     log(`Loaded session ${s}`, 'ok');
   }catch(e){
-    log(`Load failed: ${e.message}`, 'err');
     alert(`Load failed: ${e.message}`);
+    log(`Load failed: ${e.message}`, 'err');
   }
 }
-
 async function onJoin(){
   $('btnJoin').disabled = true;
   setText('joinStatus','Joining…');
   try{
     const name = $('joinName').value.trim();
-    const sess = $('joinSession').value.trim() || getSession();
+    const sess = $('joinSession').value.trim() || $('sessionId').value.trim() || getSession();
     if(!name || !sess){
-      setText('joinStatus',''); $('btnJoin').disabled = false;
+      setText('joinStatus','');
+      $('btnJoin').disabled = false;
       return alert('Enter your name and the game key.');
     }
     const out = await apiJoin(sess, name);
     saveSession(sess);
     savePlayer(out.player.id);
-    // Show profile + roster
     renderProfile(out.player);
     renderRoster(out.session);
     show('profilePanel', true);
@@ -293,15 +317,14 @@ async function onJoin(){
     log(`Joined ${sess} as ${out.player.codename || name}`, 'ok');
   }catch(e){
     setText('joinStatus','');
-    log(`Join failed: ${e.message}`, 'err');
     alert(`Join failed: ${e.message}`);
+    log(`Join failed: ${e.message}`, 'err');
   }finally{
     $('btnJoin').disabled = false;
   }
 }
-
 async function onRefreshRoster(){
-  const s = getSession();
+  const s = getSession() || $('joinSession').value.trim() || $('sessionId').value.trim();
   if(!s){ return alert('No session to refresh.'); }
   try{
     const out = await apiLoadSession(s);
@@ -312,23 +335,39 @@ async function onRefreshRoster(){
     log(`Refresh failed: ${e.message}`, 'err');
   }
 }
-
 function onLeaveLocal(){
-  // local-only clear (doesn't call server; keeps your central model intact)
   savePlayer('');
-  log('Left locally (session remains active on server).','ok');
   alert('Local data cleared. You can join again with your Name + Game Key.');
+  log('Left locally','ok');
+}
+function onGenKey(){
+  $('sessionId').value = randKey();
+  show('shareBlock', false);
+}
+function onCopyKey(){
+  const s = $('sessionOut').textContent.trim() || $('sessionId').value.trim();
+  if(!s) return;
+  navigator.clipboard.writeText(s).then(()=>{}).catch(()=>{});
 }
 
 /* ========= boot ========= */
 document.addEventListener('DOMContentLoaded', ()=>{
+  // buttons
+  $('btnGenKey').addEventListener('click', onGenKey);
+  $('btnCopyKey').addEventListener('click', onCopyKey);
   $('btnCreate').addEventListener('click', onCreate);
   $('btnLoad').addEventListener('click', onLoad);
   $('btnJoin').addEventListener('click', onJoin);
   $('btnRefresh').addEventListener('click', onRefreshRoster);
   $('btnLeave').addEventListener('click', onLeaveLocal);
 
-  // Try to resume minimal state
+  // optional debug toggle
+  $('toggleDebug').addEventListener('click', (e)=>{ e.preventDefault(); $('debugWrap').classList.toggle('show'); });
+
+  // prefill a key
+  if(!$('sessionId').value) $('sessionId').value = randKey();
+
+  // try resume
   const s = getSession();
   if (s){
     apiLoadSession(s).then(out=>{
