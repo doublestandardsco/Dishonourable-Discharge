@@ -1,3 +1,8 @@
-"dependencies": {
-  "@vercel/kv": "^1.0.0"
+{
+  "name": "dishonourable-discharge",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vercel/kv": "^1.0.0"
+  }
 }
