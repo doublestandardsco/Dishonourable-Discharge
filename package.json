@@ -1,8 +1,9 @@
 {
   "name": "dishonourable-discharge",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@vercel/kv": "^1.0.0"
+    "@vercel/kv": "^1.0.1"
   }
 }
