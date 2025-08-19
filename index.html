@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Murder Mystery</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -65,4 +66,733 @@
             border: none; 
             padding: 15px 25px; 
             border-radius: 8px; 
-            font-size: 1
+            font-size: 1.1em; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-family: 'Courier New', monospace; 
+            text-transform: uppercase; 
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4); 
+        }
+        .btn-secondary { 
+            background: linear-gradient(45deg, #5f27cd, #7c3aed); 
+            color: #fff;
+        }
+        .btn-danger { 
+            background: linear-gradient(45deg, #ff3838, #ff6b6b); 
+            color: #fff;
+        }
+        .hidden { display: none; }
+        .dossier {
+            background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(95, 39, 205, 0.1));
+            border: 2px solid #ff4757;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 12px;
+            position: relative;
+        }
+        .dossier::before {
+            content: "CLASSIFIED";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #ff4757;
+            color: #000;
+            padding: 5px 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .codename {
+            color: #ff4757;
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+        }
+        .field-row {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .field-label {
+            color: #5f27cd;
+            font-weight: bold;
+            min-width: 140px;
+            margin-right: 15px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        .field-value {
+            color: #e0e0e0;
+            flex: 1;
+            line-height: 1.4;
+        }
+        .qr-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px solid #5f27cd;
+        }
+        .qr-code {
+            margin: 20px auto;
+            padding: 15px;
+            background: white;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        .game-log {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #5f27cd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 12px;
+            font-size: 0.9em;
+            padding: 8px;
+            border-left: 3px solid #5f27cd;
+            padding-left: 15px;
+            background: rgba(95, 39, 205, 0.1);
+            border-radius: 5px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.success { background: rgba(39, 174, 96, 0.3); border: 1px solid #27ae60; }
+        .status.error { background: rgba(231, 76, 60, 0.3); border: 1px solid #e74c3c; }
+        .status.info { background: rgba(52, 152, 219, 0.3); border: 1px solid #3498db; }
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .container { margin: 10px; padding: 20px; }
+            .action-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2em; }
+            .field-row { flex-direction: column; }
+            .field-label { min-width: auto; margin-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DIGITAL MURDER MYSTERY</h1>
+            <div style="color: #5f27cd; font-size: 1.2em;">Operation: Digital Deduction</div>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div id="config-panel" class="section">
+            <h3>Database Configuration</h3>
+            <div class="form-group">
+                <label>Supabase URL:</label>
+                <input type="text" id="supabase-url" placeholder="https://your-project.supabase.co">
+            </div>
+            <div class="form-group">
+                <label>Supabase Anon Key:</label>
+                <input type="text" id="supabase-key" placeholder="Your anon key">
+            </div>
+            <button class="btn" onclick="saveConfig()">Save Configuration</button>
+        </div>
+
+        <!-- Game Master Setup -->
+        <div id="game-setup" class="section">
+            <h3>Game Master Control</h3>
+            <div class="form-group">
+                <label>Game Name:</label>
+                <input type="text" id="game-name" placeholder="Enter unique game name">
+            </div>
+            <div class="form-group">
+                <label>Number of Players:</label>
+                <select id="player-count">
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                    <option value="5">5 Players</option>
+                    <option value="6">6 Players</option>
+                </select>
+            </div>
+            <div class="action-grid">
+                <button class="btn" onclick="createGame()">Create New Game</button>
+                <button class="btn btn-secondary" onclick="showJoinGame()">Join Existing Game</button>
+            </div>
+        </div>
+
+        <!-- Join Game -->
+        <div id="join-game" class="section hidden">
+            <h3>Join Game</h3>
+            <div class="form-group">
+                <label>Your Name:</label>
+                <input type="text" id="player-name" placeholder="Enter your real name">
+            </div>
+            <div class="form-group">
+                <label>Game Code:</label>
+                <input type="text" id="game-code" placeholder="Enter game code">
+            </div>
+            <button class="btn" onclick="joinGame()">Join Game</button>
+        </div>
+
+        <!-- Player Profile -->
+        <div id="player-profile" class="section hidden">
+            <div class="dossier">
+                <div class="codename" id="player-codename">LOADING...</div>
+                <div class="field-row">
+                    <span class="field-label">Agent Name:</span>
+                    <span class="field-value" id="real-name">-</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Cover Identity:</span>
+                    <span class="field-value" id="cover-identity">-</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Background:</span>
+                    <span class="field-value" id="background">-</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Secret Mission:</span>
+                    <span class="field-value" id="secret-mission">-</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Behavior:</span>
+                    <span class="field-value" id="behavior">-</span>
+                </div>
+            </div>
+
+            <div class="qr-section">
+                <h4>Your QR Code</h4>
+                <p>Other players scan this to interact with you</p>
+                <div id="player-qr" class="qr-code"></div>
+            </div>
+
+            <div class="section">
+                <h4>Actions</h4>
+                <div class="form-group">
+                    <label>Scan Player QR or Enter Player ID:</label>
+                    <input type="text" id="scan-input" placeholder="Enter scanned data or player ID">
+                </div>
+                <div class="action-grid">
+                    <button class="btn btn-secondary" onclick="scanPlayer()">Scan Player</button>
+                    <button class="btn btn-danger" onclick="accusePlayer()">Accuse Player</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h4>Submit Action</h4>
+                <div class="form-group">
+                    <label>Action Description:</label>
+                    <textarea id="action-description" placeholder="Describe what you did (e.g., 'Found suspicious item in kitchen', 'Overheard conversation', etc.)"></textarea>
+                </div>
+                <button class="btn" onclick="submitAction()">Submit Action</button>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="status-message" class="hidden"></div>
+
+        <!-- Game Log -->
+        <div id="game-log" class="game-log hidden">
+            <strong>Game Log</strong>
+            <div id="log-entries"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let supabaseUrl = '';
+        let supabaseKey = '';
+        let currentPlayer = null;
+        let currentGame = null;
+
+        // Character Database
+        const characters = [
+            {
+                codename: "SHADOWFOX",
+                cover: "Event Photographer",
+                background: "Former intelligence operative turned freelance photographer",
+                secret: "Secretly documenting everyone for blackmail purposes",
+                behavior: "Takes photos of everything, especially when people aren't looking"
+            },
+            {
+                codename: "NIGHTOWL",
+                cover: "Security Consultant",
+                background: "Ex-military security specialist",
+                secret: "Planning to steal valuable items during the event",
+                behavior: "Constantly checks exits and security measures"
+            },
+            {
+                codename: "REDHERRING",
+                cover: "Food Critic",
+                background: "Professional food and wine critic",
+                secret: "Poisoned someone at a previous event and got away with it",
+                behavior: "Obsessively discusses food safety and preparation methods"
+            },
+            {
+                codename: "SILENTBLADE",
+                cover: "Antique Dealer",
+                background: "Travels the world acquiring rare items",
+                secret: "Murders collectors to steal their most valuable pieces",
+                behavior: "Examines every object in detail, especially sharp items"
+            },
+            {
+                codename: "GHOSTWRITER",
+                cover: "True Crime Author",
+                background: "Bestselling author specializing in unsolved murders",
+                secret: "Commits murders to have material for new books",
+                behavior: "Takes detailed notes about everyone's movements and conversations"
+            },
+            {
+                codename: "ICEQUEEN",
+                cover: "Corporate Executive",
+                background: "High-powered business executive",
+                secret: "Eliminates business rivals through 'accidents'",
+                behavior: "Cold and calculating, treats everything like a business transaction"
+            }
+        ];
+
+        // Database Functions
+        async function dbQuery(table, method = 'GET', data = null, filters = null) {
+            if (!supabaseUrl || !supabaseKey) {
+                showStatus('Database not configured', 'error');
+                return null;
+            }
+
+            let url = `${supabaseUrl}/rest/v1/${table}`;
+            
+            const headers = {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            };
+
+            if (filters && method === 'GET') {
+                const params = new URLSearchParams();
+                Object.entries(filters).forEach(([key, value]) => {
+                    params.append(key, `eq.${value}`);
+                });
+                url += '?' + params.toString();
+            }
+
+            const config = {
+                method: method,
+                headers: headers
+            };
+
+            if (data && (method === 'POST' || method === 'PATCH')) {
+                config.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(url, config);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Database error');
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('Database error:', error);
+                showStatus(`Database error: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // Configuration Functions
+        function saveConfig() {
+            supabaseUrl = document.getElementById('supabase-url').value.trim();
+            supabaseKey = document.getElementById('supabase-key').value.trim();
+            
+            if (!supabaseUrl || !supabaseKey) {
+                showStatus('Please enter both URL and key', 'error');
+                return;
+            }
+
+            // Save to sessionStorage for this session
+            sessionStorage.setItem('supabase-url', supabaseUrl);
+            sessionStorage.setItem('supabase-key', supabaseKey);
+            
+            showStatus('Configuration saved', 'success');
+            document.getElementById('config-panel').classList.add('hidden');
+        }
+
+        function loadConfig() {
+            const savedUrl = sessionStorage.getItem('supabase-url');
+            const savedKey = sessionStorage.getItem('supabase-key');
+            
+            if (savedUrl && savedKey) {
+                supabaseUrl = savedUrl;
+                supabaseKey = savedKey;
+                document.getElementById('supabase-url').value = savedUrl;
+                document.getElementById('supabase-key').value = savedKey;
+                document.getElementById('config-panel').classList.add('hidden');
+            }
+        }
+
+        // Game Functions
+        async function createGame() {
+            const gameName = document.getElementById('game-name').value.trim();
+            const playerCount = parseInt(document.getElementById('player-count').value);
+
+            if (!gameName) {
+                showStatus('Please enter a game name', 'error');
+                return;
+            }
+
+            const gameCode = generateGameCode();
+            const shuffledCharacters = [...characters].sort(() => Math.random() - 0.5).slice(0, playerCount);
+
+            const gameData = {
+                game_name: gameName,
+                game_code: gameCode,
+                max_players: playerCount,
+                current_players: 0,
+                status: 'waiting',
+                characters: JSON.stringify(shuffledCharacters),
+                created_at: new Date().toISOString()
+            };
+
+            const result = await dbQuery('games', 'POST', gameData);
+            if (result) {
+                currentGame = result[0];
+                showStatus(`Game created! Share code: ${gameCode}`, 'success');
+                document.getElementById('game-setup').classList.add('hidden');
+                document.getElementById('join-game').classList.remove('hidden');
+                document.getElementById('game-code').value = gameCode;
+            }
+        }
+
+        function showJoinGame() {
+            document.getElementById('game-setup').classList.add('hidden');
+            document.getElementById('join-game').classList.remove('hidden');
+        }
+
+        async function joinGame() {
+            const playerName = document.getElementById('player-name').value.trim();
+            const gameCode = document.getElementById('game-code').value.trim().toUpperCase();
+
+            if (!playerName || !gameCode) {
+                showStatus('Please enter your name and game code', 'error');
+                return;
+            }
+
+            // Find the game
+            const games = await dbQuery('games', 'GET', null, { game_code: gameCode });
+            if (!games || games.length === 0) {
+                showStatus('Game not found', 'error');
+                return;
+            }
+
+            currentGame = games[0];
+            const characters = JSON.parse(currentGame.characters);
+
+            // Check if game is full
+            if (currentGame.current_players >= currentGame.max_players) {
+                showStatus('Game is full', 'error');
+                return;
+            }
+
+            // Check if player already exists
+            const existingPlayers = await dbQuery('players', 'GET', null, { game_id: currentGame.id, player_name: playerName });
+            if (existingPlayers && existingPlayers.length > 0) {
+                // Player rejoining
+                currentPlayer = existingPlayers[0];
+                showPlayerProfile();
+                return;
+            }
+
+            // Assign character
+            const assignedCharacter = characters[currentGame.current_players];
+            const playerId = generatePlayerId();
+
+            const playerData = {
+                id: playerId,
+                game_id: currentGame.id,
+                player_name: playerName,
+                codename: assignedCharacter.codename,
+                cover_identity: assignedCharacter.cover,
+                background: assignedCharacter.background,
+                secret_mission: assignedCharacter.secret,
+                behavior: assignedCharacter.behavior,
+                status: 'active',
+                created_at: new Date().toISOString()
+            };
+
+            const result = await dbQuery('players', 'POST', playerData);
+            if (result) {
+                currentPlayer = result[0];
+                
+                // Update game player count
+                await dbQuery(`games?id=eq.${currentGame.id}`, 'PATCH', {
+                    current_players: currentGame.current_players + 1
+                });
+
+                showPlayerProfile();
+                logAction(`${playerName} joined the game as ${assignedCharacter.codename}`);
+            }
+        }
+
+        function showPlayerProfile() {
+            document.getElementById('join-game').classList.add('hidden');
+            document.getElementById('player-profile').classList.remove('hidden');
+            document.getElementById('game-log').classList.remove('hidden');
+
+            // Fill in profile
+            document.getElementById('player-codename').textContent = currentPlayer.codename;
+            document.getElementById('real-name').textContent = currentPlayer.player_name;
+            document.getElementById('cover-identity').textContent = currentPlayer.cover_identity;
+            document.getElementById('background').textContent = currentPlayer.background;
+            document.getElementById('secret-mission').textContent = currentPlayer.secret_mission;
+            document.getElementById('behavior').textContent = currentPlayer.behavior;
+
+            generateQRCode();
+            loadGameLog();
+        }
+
+        function generateQRCode() {
+            const qrData = JSON.stringify({
+                type: 'player',
+                id: currentPlayer.id,
+                codename: currentPlayer.codename,
+                game: currentGame.game_code
+            });
+
+            try {
+                const qr = qrcode(4, 'M');
+                qr.addData(qrData);
+                qr.make();
+                document.getElementById('player-qr').innerHTML = qr.createImgTag(4);
+            } catch (error) {
+                document.getElementById('player-qr').innerHTML = '<p>QR Code generation failed</p>';
+            }
+        }
+
+        async function scanPlayer() {
+            const scanInput = document.getElementById('scan-input').value.trim();
+            if (!scanInput) {
+                showStatus('Please enter scan data or player ID', 'error');
+                return;
+            }
+
+            let targetPlayerId;
+            try {
+                const qrData = JSON.parse(scanInput);
+                if (qrData.type === 'player') {
+                    targetPlayerId = qrData.id;
+                } else {
+                    throw new Error('Invalid QR data');
+                }
+            } catch {
+                // Assume it's a direct player ID
+                targetPlayerId = scanInput;
+            }
+
+            const targetPlayers = await dbQuery('players', 'GET', null, { id: targetPlayerId });
+            if (!targetPlayers || targetPlayers.length === 0) {
+                showStatus('Player not found', 'error');
+                return;
+            }
+
+            const targetPlayer = targetPlayers[0];
+            const scanResult = generateScanResult(targetPlayer);
+
+            await logAction(`${currentPlayer.codename} scanned ${targetPlayer.codename}: ${scanResult}`);
+            showStatus(`Scan result: ${scanResult}`, 'info');
+            document.getElementById('scan-input').value = '';
+        }
+
+        async function accusePlayer() {
+            const scanInput = document.getElementById('scan-input').value.trim();
+            if (!scanInput) {
+                showStatus('Please enter the player ID to accuse', 'error');
+                return;
+            }
+
+            let targetPlayerId;
+            try {
+                const qrData = JSON.parse(scanInput);
+                if (qrData.type === 'player') {
+                    targetPlayerId = qrData.id;
+                } else {
+                    throw new Error('Invalid QR data');
+                }
+            } catch {
+                targetPlayerId = scanInput;
+            }
+
+            const targetPlayers = await dbQuery('players', 'GET', null, { id: targetPlayerId });
+            if (!targetPlayers || targetPlayers.length === 0) {
+                showStatus('Player not found', 'error');
+                return;
+            }
+
+            const targetPlayer = targetPlayers[0];
+            const confirmed = confirm(`Are you sure you want to accuse ${targetPlayer.codename} (${targetPlayer.player_name}) of being the murderer?`);
+            
+            if (confirmed) {
+                await logAction(`🚨 ACCUSATION: ${currentPlayer.codename} accuses ${targetPlayer.codename} of being the murderer!`);
+                showStatus(`Accusation made against ${targetPlayer.codename}`, 'success');
+                document.getElementById('scan-input').value = '';
+            }
+        }
+
+        async function submitAction() {
+            const actionDescription = document.getElementById('action-description').value.trim();
+            if (!actionDescription) {
+                showStatus('Please describe your action', 'error');
+                return;
+            }
+
+            await logAction(`${currentPlayer.codename}: ${actionDescription}`);
+            showStatus('Action submitted', 'success');
+            document.getElementById('action-description').value = '';
+        }
+
+        async function logAction(message) {
+            const actionData = {
+                game_id: currentGame.id,
+                player_id: currentPlayer.id,
+                action: message,
+                timestamp: new Date().toISOString()
+            };
+
+            await dbQuery('game_actions', 'POST', actionData);
+            loadGameLog();
+        }
+
+        async function loadGameLog() {
+            const actions = await dbQuery('game_actions', 'GET', null, { game_id: currentGame.id });
+            if (!actions) return;
+
+            const sortedActions = actions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const logContainer = document.getElementById('log-entries');
+            
+            logContainer.innerHTML = '';
+            sortedActions.forEach(action => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                const time = new Date(action.timestamp).toLocaleTimeString();
+                logEntry.innerHTML = `<strong>[${time}]</strong> ${action.action}`;
+                logContainer.appendChild(logEntry);
+            });
+
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Utility Functions
+        function generateGameCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        function generatePlayerId() {
+            return 'player_' + Math.random().toString(36).substring(2, 12);
+        }
+
+        function generateScanResult(targetPlayer) {
+            const results = [
+                `Appears nervous when ${currentPlayer.codename} approaches`,
+                `Carrying suspicious item in pocket`,
+                `Has been asking questions about ${currentPlayer.player_name}`,
+                `Seems to be avoiding certain areas`,
+                `Acting according to cover identity: ${targetPlayer.cover_identity}`,
+                `Displaying behavior: ${targetPlayer.behavior}`,
+                `Last seen talking quietly with another player`,
+                `Checking phone frequently`
+            ];
+            return results[Math.floor(Math.random() * results.length)];
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 4000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            
+            // Auto-refresh game log every 10 seconds if player is active
+            setInterval(() => {
+                if (currentPlayer && currentGame) {
+                    loadGameLog();
+                }
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
+
+<!-- 
+DATABASE SETUP INSTRUCTIONS FOR SUPABASE:
+
+1. Create a new Supabase project
+2. Run this SQL in the SQL Editor:
+
+-- Games table
+CREATE TABLE games (
+    id SERIAL PRIMARY KEY,
+    game_name VARCHAR(100) NOT NULL,
+    game_code VARCHAR(10) UNIQUE NOT NULL,
+    max_players INTEGER NOT NULL,
+    current_players INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'waiting',
+    characters TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Players table  
+CREATE TABLE players (
+    id VARCHAR(50) PRIMARY KEY,
+    game_id INTEGER REFERENCES games(id),
+    player_name VARCHAR(100) NOT NULL,
+    codename VARCHAR(50) NOT NULL,
+    cover_identity VARCHAR(200),
+    background VARCHAR(500),
+    secret_mission VARCHAR(500),
+    behavior VARCHAR(500),
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Game actions table
+CREATE TABLE game_actions (
+    id SERIAL PRIMARY KEY,
+    game_id INTEGER REFERENCES games(id),
+    player_id VARCHAR(50) REFERENCES players(id),
+    action TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE games ENABLE ROW LEVEL SECURITY;
+ALTER TABLE players ENABLE ROW LEVEL SECURITY; 
+ALTER TABLE game_actions ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for public access (adjust as needed for security)
+CREATE POLICY "Public games" ON games FOR ALL USING (true);
+CREATE POLICY "Public players" ON players FOR ALL USING (true);
+CREATE POLICY "Public actions" ON game_actions FOR ALL USING (true);
+
+3. Get your project URL and anon key from Settings > API
+4. Deploy this HTML file to Vercel or any web host
+-->
