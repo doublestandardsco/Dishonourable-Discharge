@@ -1,790 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dishonourable Discharge</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
-            color: #e0e0e0;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { 
-            max-width: 800px; 
-            margin: 0 auto; 
-            background: rgba(0,0,0,0.9); 
-            border: 2px solid #ff4757; 
-            border-radius: 15px; 
-            padding: 30px; 
-            box-shadow: 0 0 40px rgba(255, 71, 87, 0.3); 
-        }
-        .header { 
-            text-align: center; 
-            margin-bottom: 40px; 
-            border-bottom: 3px solid #ff4757; 
-            padding-bottom: 20px; 
-        }
-        .header h1 { 
-            color: #ff4757; 
-            font-size: 2.5em; 
-            text-shadow: 0 0 20px rgba(255, 71, 87, 0.8); 
-            margin-bottom: 10px; 
-        }
-        .section { 
-            margin-bottom: 30px; 
-            padding: 25px; 
-            background: rgba(255, 255, 255, 0.05); 
-            border-radius: 10px; 
-            border-left: 4px solid #5f27cd; 
-        }
-        .form-group { margin-bottom: 20px; }
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
-            color: #5f27cd; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-        }
-        input[type="text"], select, textarea {
-            width: 100%; 
-            padding: 12px; 
-            background: rgba(0,0,0,0.7); 
-            border: 2px solid #5f27cd; 
-            border-radius: 8px; 
-            color: #e0e0e0; 
-            font-family: 'Courier New', monospace;
-        }
-        textarea { resize: vertical; min-height: 80px; }
-        .btn {
-            background: linear-gradient(45deg, #ff4757, #ff6b7a); 
-            color: #000; 
-            border: none; 
-            padding: 15px 25px; 
-            border-radius: 8px; 
-            font-size: 1.1em; 
-            font-weight: bold; 
-            cursor: pointer; 
-            font-family: 'Courier New', monospace; 
-            text-transform: uppercase; 
-            margin: 5px;
-            transition: all 0.3s ease;
-        }
-        .btn:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4); 
-        }
-        .btn-secondary { 
-            background: linear-gradient(45deg, #5f27cd, #7c3aed); 
-            color: #fff;
-        }
-        .btn-danger { 
-            background: linear-gradient(45deg, #ff3838, #ff6b6b); 
-            color: #fff;
-        }
-        .hidden { display: none; }
-        .dossier {
-            background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(95, 39, 205, 0.1));
-            border: 2px solid #ff4757;
-            padding: 25px;
-            margin: 25px 0;
-            border-radius: 12px;
-            position: relative;
-        }
-        .dossier::before {
-            content: "CLASSIFIED";
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: #ff4757;
-            color: #000;
-            padding: 5px 15px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-        .codename {
-            color: #ff4757;
-            font-size: 2em;
-            margin-bottom: 15px;
-            text-align: center;
-            text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
-        }
-        .field-row {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: flex-start;
-        }
-        .field-label {
-            color: #5f27cd;
-            font-weight: bold;
-            min-width: 140px;
-            margin-right: 15px;
-            text-transform: uppercase;
-            font-size: 0.9em;
-        }
-        .field-value {
-            color: #e0e0e0;
-            flex: 1;
-            line-height: 1.4;
-        }
-        .qr-section {
-            text-align: center;
-            margin: 30px 0;
-            padding: 25px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            border: 2px solid #5f27cd;
-        }
-        .qr-code {
-            margin: 20px auto;
-            padding: 15px;
-            background: white;
-            border-radius: 15px;
-            display: inline-block;
-        }
-        .game-log {
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #5f27cd;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 25px 0;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .log-entry {
-            margin-bottom: 12px;
-            font-size: 0.9em;
-            padding: 8px;
-            border-left: 3px solid #5f27cd;
-            padding-left: 15px;
-            background: rgba(95, 39, 205, 0.1);
-            border-radius: 5px;
-        }
-        .status {
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            text-align: center;
-            font-weight: bold;
-        }
-        .status.success { background: rgba(39, 174, 96, 0.3); border: 1px solid #27ae60; }
-        .status.error { background: rgba(231, 76, 60, 0.3); border: 1px solid #e74c3c; }
-        .status.info { background: rgba(52, 152, 219, 0.3); border: 1px solid #3498db; }
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        @media (max-width: 600px) {
-            .container { margin: 10px; padding: 20px; }
-            .action-grid { grid-template-columns: 1fr; }
-            .header h1 { font-size: 2em; }
-            .field-row { flex-direction: column; }
-            .field-label { min-width: auto; margin-bottom: 5px; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dishonourable Discharge</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Courier New',monospace;background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh;padding:10px;overflow-x:hidden}
+    .container{max-width:900px;margin:0 auto;background:rgba(0,0,0,0.9);border:2px solid #ff4757;border-radius:15px;padding:25px;box-shadow:0 0 40px rgba(255,71,87,.3);backdrop-filter:blur(10px);position:relative}
+    .classified-stamp{position:absolute;top:20px;right:20px;background:#ff4757;color:#000;padding:8px 15px;transform:rotate(15deg);font-weight:bold;font-size:.9em;border:3px solid #000}
+    .header{text-align:center;margin-bottom:30px;border-bottom:3px solid #ff4757;padding-bottom:20px;position:relative}
+    .header h1{color:#ff4757;font-size:2.6em;text-shadow:0 0 20px rgba(255,71,87,.8);margin-bottom:10px;letter-spacing:3px}
+    .subtitle{color:#5f27cd;font-size:1.1em;font-style:italic;text-transform:uppercase;letter-spacing:1px}
+    .section{margin-bottom:24px;padding:18px;background:rgba(255,255,255,.03);border-radius:10px;border-left:4px solid #5f27cd}
+    .section-title{color:#ff4757;font-size:1.2em;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+    .form-group{margin-bottom:12px}
+    label{display:block;margin-bottom:6px;color:#5f27cd;font-weight:bold;text-transform:uppercase;font-size:.85em}
+    input[type="text"],input[type="datetime-local"],input[type="file"],select,textarea{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid #5f27cd;border-radius:8px;color:#e0e0e0;font-family:'Courier New',monospace;font-size:.95em}
+    textarea{min-height:70px}
+    input[type="file"]{padding:10px;border-style:dashed}
+    .btn{background:linear-gradient(45deg,#ff4757,#ff6b7a);color:#000;border:none;padding:12px 16px;border-radius:8px;font-size:1em;font-weight:bold;cursor:pointer;transition:.25s;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px}
+    .btn.full{width:100%}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,71,87,.5)}
+    .btn-secondary{background:linear-gradient(45deg,#5f27cd,#7c3aed);color:#fff}
+    .btn-danger{background:linear-gradient(45deg,#ff3838,#ff6b6b)}
+    .grid{display:grid;gap:12px}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .dossier{background:linear-gradient(135deg,rgba(255,71,87,.1),rgba(95,39,205,.1));border:2px solid #ff4757;padding:16px;margin:16px 0;border-radius:12px;position:relative}
+    .dossier::before{content:"CLASSIFIED";position:absolute;top:-10px;left:20px;background:#ff4757;color:#000;padding:4px 10px;font-size:.75em;font-weight:bold}
+    .codename{color:#ff4757;font-size:1.6em;margin-bottom:10px;text-align:center;text-shadow:0 0 10px rgba(255,71,87,.5)}
+    .dossier-field{margin-bottom:10px;display:flex;gap:10px;align-items:flex-start}
+    .field-label{color:#5f27cd;font-weight:bold;min-width:140px;text-transform:uppercase;font-size:.85em}
+    .field-value{color:#e0e0e0;flex:1;line-height:1.4}
+    .secret-section{background:rgba(255,71,87,.1);border:2px solid #ff4757;border-radius:8px;padding:12px;margin:12px 0;position:relative}
+    .secret-section::before{content:"🔒 EYES ONLY";position:absolute;top:-10px;left:12px;background:#ff4757;color:#000;padding:3px 8px;font-size:.7em;font-weight:bold}
+    .perk-box{background:linear-gradient(135deg,rgba(95,39,205,.2),rgba(116,185,255,.1));border:2px solid #5f27cd;border-radius:10px;padding:14px;margin:14px 0;text-align:center;position:relative}
+    .perk-hidden{filter:blur(3px);cursor:pointer;transition:filter .3s}
+    .perk-revealed{filter:none}
+    .quirk-box{background:linear-gradient(135deg,rgba(255,71,87,.2),rgba(255,107,122,.1));border:2px solid #ff4757;border-radius:10px;padding:14px;margin:14px 0}
+    .qr-section{text-align:center;margin:18px 0;padding:14px;background:rgba(255,255,255,.05);border-radius:15px;border:2px solid #5f27cd}
+    .qr-code{margin:10px auto;padding:10px;background:white;border-radius:12px;display:inline-block}
+    .challenge-card{background:linear-gradient(135deg,rgba(255,140,0,.2),rgba(255,165,0,.1));border:2px solid #ffa500;border-radius:12px;padding:16px;margin:16px 0;position:relative}
+    .challenge-card::before{content:"MISSION BRIEFING";position:absolute;top:-10px;left:20px;background:#ffa500;color:#000;padding:4px 10px;font-size:.75em;font-weight:bold}
+    .challenge-header{color:#ffa500;font-weight:bold;margin-bottom:10px;font-size:1.05em}
+    .status-badge{display:inline-block;padding:6px 10px;border-radius:20px;font-size:.75em;font-weight:bold;margin-left:8px;text-transform:uppercase}
+    .status-ready{background:#27ae60;color:#fff}
+    .status-used{background:#e74c3c;color:#fff}
+    .status-cooldown{background:#f39c12;color:#000}
+    .scanner-section{background:rgba(0,0,0,.7);padding:16px;border-radius:12px;margin:16px 0;border:2px solid #5f27cd}
+    .game-log{background:rgba(0,0,0,.5);border:2px solid #5f27cd;border-radius:10px;padding:14px;margin:16px 0;max-height:320px;overflow-y:auto}
+    .log-entry{margin-bottom:10px;font-size:.9em;padding:8px;border-left:3px solid #5f27cd;padding-left:12px;background:rgba(95,39,205,.1);border-radius:5px}
+    .vote-section{background:linear-gradient(135deg,rgba(231,76,60,.3),rgba(192,57,43,.2));border:3px solid #e74c3c;border-radius:15px;padding:16px;margin:18px 0;text-align:center}
+    .intel-panel{background:rgba(52,152,219,.1);border:2px solid #3498db;border-radius:10px;padding:14px;margin:14px 0}
+    .hidden{display:none}
+    .progress-bar{width:100%;height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin:10px 0}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#5f27cd,#ff4757);border-radius:5px;transition:width .3s}
+    .selfie-preview{max-width:200px;border:3px solid #5f27cd;border-radius:15px;margin:12px auto;display:block}
+    .roster-card{border:1px dashed #5f27cd;border-radius:10px;padding:10px;margin:8px 0}
+    .small{font-size:.85em;color:#9bbcff}
+    .muted{opacity:.7}
+    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    @media(max-width:720px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>DISHONOURABLE DISCHARGE</h1>
-            <div style="color: #5f27cd; font-size: 1.2em;">Operation: Alpine Debrief</div>
-        </div>
-
-        <!-- Configuration Panel -->
-        <div id="config-panel" class="section">
-            <h3>Database Configuration</h3>
-            <div class="form-group">
-                <label>Supabase URL:</label>
-                <input type="text" id="supabase-url" placeholder="https://your-project.supabase.co">
-            </div>
-            <div class="form-group">
-                <label>Supabase Anon Key:</label>
-                <input type="text" id="supabase-key" placeholder="Your anon key">
-            </div>
-            <button class="btn" onclick="saveConfig()">Save Configuration</button>
-        </div>
-
-        <!-- Game Master Setup -->
-        <div id="game-setup" class="section">
-            <h3>Game Master Control</h3>
-            <div class="form-group">
-                <label>Game Name:</label>
-                <input type="text" id="game-name" placeholder="Enter unique game name">
-            </div>
-            <div class="form-group">
-                <label>Number of Players:</label>
-                <select id="player-count">
-                    <option value="3">3 Players</option>
-                    <option value="4">4 Players</option>
-                    <option value="5">5 Players</option>
-                    <option value="6">6 Players</option>
-                </select>
-            </div>
-            <div class="action-grid">
-                <button class="btn" onclick="createGame()">Create New Game</button>
-                <button class="btn btn-secondary" onclick="showJoinGame()">Join Existing Game</button>
-            </div>
-        </div>
-
-        <!-- Join Game -->
-        <div id="join-game" class="section hidden">
-            <h3>Join Game</h3>
-            <div class="form-group">
-                <label>Your Name:</label>
-                <input type="text" id="player-name" placeholder="Enter your real name">
-            </div>
-            <div class="form-group">
-                <label>Game Code:</label>
-                <input type="text" id="game-code" placeholder="Enter game code">
-            </div>
-            <button class="btn" onclick="joinGame()">Join Game</button>
-        </div>
-
-        <!-- Player Profile -->
-        <div id="player-profile" class="section hidden">
-            <div class="dossier">
-                <div class="codename" id="player-codename">LOADING...</div>
-                <div class="field-row">
-                    <span class="field-label">Agent Name:</span>
-                    <span class="field-value" id="real-name">-</span>
-                </div>
-                <div class="field-row">
-                    <span class="field-label">Cover Identity:</span>
-                    <span class="field-value" id="cover-identity">-</span>
-                </div>
-                <div class="field-row">
-                    <span class="field-label">Background:</span>
-                    <span class="field-value" id="background">-</span>
-                </div>
-                <div class="field-row">
-                    <span class="field-label">Secret Mission:</span>
-                    <span class="field-value" id="secret-mission">-</span>
-                </div>
-                <div class="field-row">
-                    <span class="field-label">Behavior:</span>
-                    <span class="field-value" id="behavior">-</span>
-                </div>
-            </div>
-
-            <div class="qr-section">
-                <h4>Your QR Code</h4>
-                <p>Other players scan this to interact with you</p>
-                <div id="player-qr" class="qr-code"></div>
-            </div>
-
-            <div class="section">
-                <h4>Actions</h4>
-                <div class="form-group">
-                    <label>Scan Player QR or Enter Player ID:</label>
-                    <input type="text" id="scan-input" placeholder="Enter scanned data or player ID">
-                </div>
-                <div class="action-grid">
-                    <button class="btn btn-secondary" onclick="scanPlayer()">Scan Player</button>
-                    <button class="btn btn-danger" onclick="accusePlayer()">Accuse Player</button>
-                </div>
-            </div>
-
-            <div class="section">
-                <h4>Submit Action</h4>
-                <div class="form-group">
-                    <label>Action Description:</label>
-                    <textarea id="action-description" placeholder="Describe what you did (e.g., 'Found suspicious item in kitchen', 'Overheard conversation', etc.)"></textarea>
-                </div>
-                <button class="btn" onclick="submitAction()">Submit Action</button>
-            </div>
-        </div>
-
-        <!-- Status Messages -->
-        <div id="status-message" class="hidden"></div>
-
-        <!-- Game Log -->
-        <div id="game-log" class="game-log hidden">
-            <strong>Game Log</strong>
-            <div id="log-entries"></div>
-        </div>
+  <div class="container">
+    <div class="classified-stamp">TOP SECRET</div>
+    <div class="header">
+      <h1>DISHONOURABLE DISCHARGE</h1>
+      <div class="subtitle">Operation: Alpine Debrief</div>
     </div>
 
-    <script>
-        // Configuration - Pre-filled with your credentials
-        let supabaseUrl = 'https://bhmzwrtigwvuwuraxlwa.supabase.co';
-        let supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJobXp3cnRpZ3d2dXd1cmF4bHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjkxMTksImV4cCI6MjA3MTE0NTExOX0.Til_AT9BT_7D_VZugsP0DmmY_PzOycQU34CxVlF91ls';
-        let currentPlayer = null;
-        let currentGame = null;
+    <!-- Game Master Setup -->
+    <div id="gameSetup" class="section">
+      <div class="section-title">🎮 Game Master Control</div>
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label>Game Session ID</label>
+          <input type="text" id="sessionId" placeholder="Unique session ID">
+        </div>
+        <div class="form-group">
+          <label>Number of Players</label>
+          <select id="playerCount">
+            <option value="3">3 Players</option>
+            <option value="4">4 Players</option>
+            <option value="5">5 Players</option>
+            <option value="6">6 Players</option>
+            <option value="12">12 Players (expanded)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Final Night Starts (Accusations/Scans unlock)</label>
+          <input type="datetime-local" id="finalNightAt">
+        </div>
+        <div class="form-group">
+          <label>Game Ends</label>
+          <input type="datetime-local" id="gameEndsAt">
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <button class="btn" onclick="initializeGame()">Initialize New Game</button>
+        <button class="btn btn-secondary" onclick="loadExistingGame()">Load Existing Session</button>
+      </div>
+      <div id="gmHelp" class="small muted" style="margin-top:8px">
+        Tip: Share links will look like <em>?session=ABC123&player=agent_xxx</em>. Final-night gating updates automatically.
+      </div>
+    </div>
 
-        // Character Database
-        const characters = [
-            {
-                codename: "SHADOWFOX",
-                cover: "Event Photographer",
-                background: "Former intelligence operative turned freelance photographer",
-                secret: "Secretly documenting everyone for blackmail purposes",
-                behavior: "Takes photos of everything, especially when people aren't looking"
-            },
-            {
-                codename: "NIGHTOWL",
-                cover: "Security Consultant",
-                background: "Ex-military security specialist",
-                secret: "Planning to steal valuable items during the event",
-                behavior: "Constantly checks exits and security measures"
-            },
-            {
-                codename: "REDHERRING",
-                cover: "Food Critic",
-                background: "Professional food and wine critic",
-                secret: "Poisoned someone at a previous event and got away with it",
-                behavior: "Obsessively discusses food safety and preparation methods"
-            },
-            {
-                codename: "SILENTBLADE",
-                cover: "Antique Dealer",
-                background: "Travels the world acquiring rare items",
-                secret: "Murders collectors to steal their most valuable pieces",
-                behavior: "Examines every object in detail, especially sharp items"
-            },
-            {
-                codename: "GHOSTWRITER",
-                cover: "True Crime Author",
-                background: "Bestselling author specializing in unsolved murders",
-                secret: "Commits murders to have material for new books",
-                behavior: "Takes detailed notes about everyone's movements and conversations"
-            },
-            {
-                codename: "ICEQUEEN",
-                cover: "Corporate Executive",
-                background: "High-powered business executive",
-                secret: "Eliminates business rivals through 'accidents'",
-                behavior: "Cold and calculating, treats everything like a business transaction"
-            }
-        ];
+    <!-- Player Onboarding -->
+    <div id="onboarding" class="hidden">
+      <div class="section">
+        <div class="section-title">🔐 Agent Recruitment</div>
+        <div style="background:#ff4757;color:#000;padding:12px;margin:14px 0;text-align:center;font-weight:bold;transform:rotate(-1deg);">
+          ⚠️ CLASSIFIED OPERATION - AUTHORIZED PERSONNEL ONLY ⚠️
+        </div>
+        <div class="form-group">
+          <label>Agent Name</label>
+          <input type="text" id="playerName" placeholder="Enter your real name" required>
+        </div>
+        <div class="form-group">
+          <label>Profile Photo</label>
+          <input type="file" id="selfieUpload" accept="image/*" capture="user">
+          <div id="selfiePreview" style="margin-top:10px;text-align:center;"></div>
+        </div>
+        <div class="form-group">
+          <label>Session Code</label>
+          <input type="text" id="joinSessionId" placeholder="Enter session ID from Game Master">
+        </div>
+        <button class="btn full" onclick="registerPlayer()">Deploy Agent</button>
+      </div>
+    </div>
 
-        // Database Functions
-        async function dbQuery(table, method = 'GET', data = null, filters = null) {
-            if (!supabaseUrl || !supabaseKey) {
-                showStatus('Database not configured', 'error');
-                return null;
-            }
+    <!-- Player Profile -->
+    <div id="playerProfile" class="hidden">
+      <div class="dossier">
+        <div class="codename" id="playerCodename">LOADING...</div>
+        <div class="dossier-field"><span class="field-label">Agent Name:</span><span class="field-value" id="realName">-</span></div>
+        <div class="dossier-field"><span class="field-label">Cover Identity:</span><span class="field-value" id="coverIdentity">-</span></div>
+        <div class="dossier-field"><span class="field-label">Background:</span><span class="field-value" id="background">-</span></div>
+        <div class="dossier-field"><span class="field-label">Discharge:</span><span class="field-value" id="discharge">-</span></div>
 
-            let url = `${supabaseUrl}/rest/v1/${table}`;
-            
-            const headers = {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            };
+        <div class="secret-section">
+          <div class="field-label">Mission Objective:</div>
+          <div class="field-value" id="secret">-</div>
+        </div>
 
-            if (filters && method === 'GET') {
-                const params = new URLSearchParams();
-                Object.entries(filters).forEach(([key, value]) => {
-                    params.append(key, `eq.${value}`);
-                });
-                url += '?' + params.toString();
-            }
+        <div class="dossier-field"><span class="field-label">Behavioral Quirk:</span><span class="field-value" id="oddity">-</span></div>
 
-            const config = {
-                method: method,
-                headers: headers
-            };
+        <div class="dossier-field"><span class="field-label">Perks:</span><span class="field-value" id="perkList">-</span></div>
+        <div class="dossier-field"><span class="field-label">Con:</span><span class="field-value" id="conText">-</span></div>
 
-            if (data && (method === 'POST' || method === 'PATCH')) {
-                config.body = JSON.stringify(data);
-            }
+        <div class="dossier-field"><span class="field-label">Your Agent ID:</span>
+          <span class="field-value">
+            <span id="playerIdText">-</span>
+            <button class="btn btn-secondary" style="padding:6px 10px;font-size:.85em" onclick="copyPlayerId()">Copy</button>
+          </span>
+        </div>
+      </div>
 
-            try {
-                const response = await fetch(url, config);
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.message || 'Database error');
-                }
-                
-                return result;
-            } catch (error) {
-                console.error('Database error:', error);
-                showStatus(`Database error: ${error.message}`, 'error');
-                return null;
-            }
-        }
+      <!-- Role Assignment -->
+      <div class="intel-panel" id="rolePanel">
+        <h4>🎯 OPERATIONAL ROLE</h4>
+        <div id="roleDescription">Classified pending mission briefing...</div>
+        <div id="roleObjective"></div>
+      </div>
 
-        // Configuration Functions
-        function saveConfig() {
-            supabaseUrl = document.getElementById('supabase-url').value.trim();
-            supabaseKey = document.getElementById('supabase-key').value.trim();
-            
-            if (!supabaseUrl || !supabaseKey) {
-                showStatus('Please enter both URL and key', 'error');
-                return;
-            }
+      <!-- Murderer Secret -->
+      <div id="murdererPanel" class="intel-panel hidden">
+        <h4>☠️ SECRET DIRECTIVE (Murderer)</h4>
+        <div id="murdererDirective"></div>
+      </div>
 
-            // Save to sessionStorage for this session
-            sessionStorage.setItem('supabase-url', supabaseUrl);
-            sessionStorage.setItem('supabase-key', supabaseKey);
-            
-            showStatus('Configuration saved', 'success');
-            document.getElementById('config-panel').classList.add('hidden');
-        }
+      <!-- Abilities & Quirks -->
+      <div class="perk-box" id="abilityBox">
+        <h4>⚡ SPECIAL ABILITY</h4>
+        <div id="abilityDescription" class="perk-hidden" onclick="revealPerk('ability')">Click to reveal your tactical advantage...</div>
+        <span id="abilityStatus" class="status-badge status-ready">READY</span>
+        <div class="grid grid-3" style="margin-top:10px">
+          <div>
+            <label class="small">Target (optional)</label>
+            <select id="abilityTargetSelect"></select>
+          </div>
+          <div>
+            <label class="small">Or paste QR payload</label>
+            <input type="text" id="abilityTargetQr" placeholder='{"id":"agent_xxx","session":"..."}'>
+          </div>
+          <div style="align-self:end">
+            <button class="btn" onclick="useAbility()">Use Ability</button>
+          </div>
+        </div>
+      </div>
 
-        function loadConfig() {
-            // Configuration is pre-filled, hide the config panel
-            document.getElementById('config-panel').classList.add('hidden');
-        }
+      <!-- QR Code -->
+      <div class="qr-section">
+        <h4>📱 AGENT IDENTIFICATION</h4>
+        <p>Others can scan this code or use your ID.</p>
+        <div id="playerQR" class="qr-code"></div>
+        <div class="flex" style="justify-content:center;margin-top:6px">
+          <button class="btn btn-secondary" onclick="refreshQR()">Refresh QR</button>
+          <button class="btn btn-secondary" onclick="copyQrPayload()">Copy QR Payload</button>
+        </div>
+        <div id="shareLink" style="margin-top:10px;word-break:break-all;font-size:.9em;color:#5f27cd;"></div>
+      </div>
 
-        // Game Functions
-        async function createGame() {
-            const gameName = document.getElementById('game-name').value.trim();
-            const playerCount = parseInt(document.getElementById('player-count').value);
+      <!-- Roster (public bios + perks/quirks/cons) -->
+      <div class="intel-panel">
+        <div class="flex" style="justify-content:space-between;align-items:center">
+          <h4>🗂️ Public Roster (Basic Bios + Rules)</h4>
+          <button class="btn btn-secondary" onclick="renderRoster()">Refresh</button>
+        </div>
+        <div id="rosterList"></div>
+      </div>
 
-            if (!gameName) {
-                showStatus('Please enter a game name', 'error');
-                return;
-            }
+      <!-- Action Submission -->
+      <div class="intel-panel">
+        <h4>📝 Submit Action / Penalty / Task</h4>
+        <div class="grid grid-3">
+          <div>
+            <label>Action Type</label>
+            <select id="actionType">
+              <option value="penalty">Report Penalty</option>
+              <option value="task_complete">Complete Task</option>
+              <option value="murderer_act">Report Murderer Act</option>
+              <option value="use_ability">Use Ability (also above)</option>
+            </select>
+          </div>
+          <div>
+            <label>Target Player</label>
+            <select id="actionTarget"></select>
+          </div>
+          <div>
+            <label>Details</label>
+            <input type="text" id="actionDetails" placeholder="What happened / instructions"/>
+          </div>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <button class="btn" onclick="submitAction()">Submit</button>
+        </div>
+      </div>
 
-            const gameCode = generateGameCode();
-            const shuffledCharacters = [...characters].sort(() => Math.random() - 0.5).slice(0, playerCount);
+      <!-- Challenge System -->
+      <div class="challenge-card" id="currentChallenge">
+        <div class="challenge-header">📋 ACTIVE MISSION</div>
+        <div id="challengeText">No active mission. Request new assignment below.</div>
+        <div class="progress-bar"><div class="progress-fill" id="challengeProgress" style="width: 0%"></div></div>
+        <div id="challengeReward" class="intel-panel hidden"><strong>Mission Reward:</strong> <span id="rewardText"></span></div>
+        <div class="grid grid-2" style="margin-top:10px">
+          <button class="btn btn-secondary" onclick="drawChallenge()">Request Mission</button>
+          <button class="btn" id="completeBtn" onclick="completeChallenge()" disabled>Complete Mission</button>
+        </div>
+      </div>
 
-            const gameData = {
-                game_name: gameName,
-                game_code: gameCode,
-                max_players: playerCount,
-                current_players: 0,
-                status: 'waiting',
-                characters: JSON.stringify(shuffledCharacters),
-                created_at: new Date().toISOString()
-            };
+      <!-- Scanner (Final Night Only) -->
+      <div class="scanner-section" id="scannerBlock">
+        <h4>🔍 OPERATIVE SCANNER (Unlocks Final Night)</h4>
+        <div id="scanGateNotice" class="small muted"></div>
+        <div class="grid grid-3" style="margin-top:8px">
+          <div>
+            <label>Target (select)</label>
+            <select id="scanSelect"></select>
+          </div>
+          <div>
+            <label>Or paste QR payload</label>
+            <input type="text" id="scanInput" placeholder='{"id":"agent_xxx","session":"..."}'>
+          </div>
+          <div style="align-self:end" class="grid">
+            <button class="btn btn-secondary" onclick="scanAgent()">Scan Target</button>
+            <button class="btn btn-danger" onclick="accuseAgent()">Make Accusation</button>
+          </div>
+        </div>
+      </div>
 
-            const result = await dbQuery('games', 'POST', gameData);
-            if (result) {
-                currentGame = result[0];
-                showStatus(`Game created! Share code: ${gameCode}`, 'success');
-                document.getElementById('game-setup').classList.add('hidden');
-                document.getElementById('join-game').classList.remove('hidden');
-                document.getElementById('game-code').value = gameCode;
-            }
-        }
+      <!-- Final Vote -->
+      <div class="vote-section" id="finalVote" style="display:none;">
+        <h3>🗳️ FINAL JUDGMENT</h3>
+        <p>The moment of truth has arrived. Who is the traitor among us?</p>
+        <select id="suspectSelect"><option value="">Select your suspect...</option></select>
+        <div class="grid" style="margin-top:10px"><button class="btn btn-danger" onclick="castFinalVote()">Cast Vote</button></div>
+      </div>
 
-        function showJoinGame() {
-            document.getElementById('game-setup').classList.add('hidden');
-            document.getElementById('join-game').classList.remove('hidden');
-        }
+      <!-- Inbox for targeted actions -->
+      <div class="intel-panel">
+        <h4>📨 Your Inbox</h4>
+        <div id="inboxList" class="small"></div>
+      </div>
 
-        async function joinGame() {
-            const playerName = document.getElementById('player-name').value.trim();
-            const gameCode = document.getElementById('game-code').value.trim().toUpperCase();
+      <!-- Game Log -->
+      <div class="game-log" id="gameLog">
+        <strong>📡 OPERATION LOG</strong>
+        <div class="log-entry">Agent deployment initiated. Secure channels established.</div>
+      </div>
 
-            if (!playerName || !gameCode) {
-                showStatus('Please enter your name and game code', 'error');
-                return;
-            }
+      <!-- Timers -->
+      <div class="intel-panel">
+        <div id="timers" class="small"></div>
+      </div>
+    </div>
+  </div>
 
-            // Find the game
-            const games = await dbQuery('games', 'GET', null, { game_code: gameCode });
-            if (!games || games.length === 0) {
-                showStatus('Game not found', 'error');
-                return;
-            }
-
-            currentGame = games[0];
-            const characters = JSON.parse(currentGame.characters);
-
-            // Check if player already exists (rejoin scenario)
-            const existingPlayers = await dbQuery('players', 'GET', null, { game_id: currentGame.id, player_name: playerName });
-            if (existingPlayers && existingPlayers.length > 0) {
-                // Player rejoining
-                currentPlayer = existingPlayers[0];
-                showPlayerProfile();
-                return;
-            }
-
-            // Check if game is full for NEW players only
-            if (currentGame.current_players >= currentGame.max_players) {
-                showStatus('Game is full', 'error');
-                return;
-            }
-
-            // Assign character
-            const assignedCharacter = characters[currentGame.current_players];
-            const playerId = generatePlayerId();
-
-            const playerData = {
-                id: playerId,
-                game_id: currentGame.id,
-                player_name: playerName,
-                codename: assignedCharacter.codename,
-                cover_identity: assignedCharacter.cover,
-                background: assignedCharacter.background,
-                secret_mission: assignedCharacter.secret,
-                behavior: assignedCharacter.behavior,
-                status: 'active',
-                created_at: new Date().toISOString()
-            };
-
-            const result = await dbQuery('players', 'POST', playerData);
-            if (result) {
-                currentPlayer = result[0];
-                
-                // Update game player count
-                await dbQuery(`games?id=eq.${currentGame.id}`, 'PATCH', {
-                    current_players: currentGame.current_players + 1
-                });
-
-                showPlayerProfile();
-                logAction(`${playerName} joined the game as ${assignedCharacter.codename}`);
-            }
-        }
-
-        function showPlayerProfile() {
-            document.getElementById('join-game').classList.add('hidden');
-            document.getElementById('player-profile').classList.remove('hidden');
-            document.getElementById('game-log').classList.remove('hidden');
-
-            // Fill in profile
-            document.getElementById('player-codename').textContent = currentPlayer.codename;
-            document.getElementById('real-name').textContent = currentPlayer.player_name;
-            document.getElementById('cover-identity').textContent = currentPlayer.cover_identity;
-            document.getElementById('background').textContent = currentPlayer.background;
-            document.getElementById('secret-mission').textContent = currentPlayer.secret_mission;
-            document.getElementById('behavior').textContent = currentPlayer.behavior;
-
-            generateQRCode();
-            loadGameLog();
-        }
-
-        function generateQRCode() {
-            const qrData = JSON.stringify({
-                type: 'player',
-                id: currentPlayer.id,
-                codename: currentPlayer.codename,
-                game: currentGame.game_code
-            });
-
-            try {
-                const qr = qrcode(4, 'M');
-                qr.addData(qrData);
-                qr.make();
-                document.getElementById('player-qr').innerHTML = qr.createImgTag(4);
-            } catch (error) {
-                document.getElementById('player-qr').innerHTML = '<p>QR Code generation failed</p>';
-            }
-        }
-
-        async function scanPlayer() {
-            const scanInput = document.getElementById('scan-input').value.trim();
-            if (!scanInput) {
-                showStatus('Please enter scan data or player ID', 'error');
-                return;
-            }
-
-            let targetPlayerId;
-            try {
-                const qrData = JSON.parse(scanInput);
-                if (qrData.type === 'player') {
-                    targetPlayerId = qrData.id;
-                } else {
-                    throw new Error('Invalid QR data');
-                }
-            } catch {
-                // Assume it's a direct player ID
-                targetPlayerId = scanInput;
-            }
-
-            const targetPlayers = await dbQuery('players', 'GET', null, { id: targetPlayerId });
-            if (!targetPlayers || targetPlayers.length === 0) {
-                showStatus('Player not found', 'error');
-                return;
-            }
-
-            const targetPlayer = targetPlayers[0];
-            const scanResult = generateScanResult(targetPlayer);
-
-            await logAction(`${currentPlayer.codename} scanned ${targetPlayer.codename}: ${scanResult}`);
-            showStatus(`Scan result: ${scanResult}`, 'info');
-            document.getElementById('scan-input').value = '';
-        }
-
-        async function accusePlayer() {
-            const scanInput = document.getElementById('scan-input').value.trim();
-            if (!scanInput) {
-                showStatus('Please enter the player ID to accuse', 'error');
-                return;
-            }
-
-            let targetPlayerId;
-            try {
-                const qrData = JSON.parse(scanInput);
-                if (qrData.type === 'player') {
-                    targetPlayerId = qrData.id;
-                } else {
-                    throw new Error('Invalid QR data');
-                }
-            } catch {
-                targetPlayerId = scanInput;
-            }
-
-            const targetPlayers = await dbQuery('players', 'GET', null, { id: targetPlayerId });
-            if (!targetPlayers || targetPlayers.length === 0) {
-                showStatus('Player not found', 'error');
-                return;
-            }
-
-            const targetPlayer = targetPlayers[0];
-            const confirmed = confirm(`Are you sure you want to accuse ${targetPlayer.codename} (${targetPlayer.player_name}) of being the murderer?`);
-            
-            if (confirmed) {
-                await logAction(`🚨 ACCUSATION: ${currentPlayer.codename} accuses ${targetPlayer.codename} of being the murderer!`);
-                showStatus(`Accusation made against ${targetPlayer.codename}`, 'success');
-                document.getElementById('scan-input').value = '';
-            }
-        }
-
-        async function submitAction() {
-            const actionDescription = document.getElementById('action-description').value.trim();
-            if (!actionDescription) {
-                showStatus('Please describe your action', 'error');
-                return;
-            }
-
-            await logAction(`${currentPlayer.codename}: ${actionDescription}`);
-            showStatus('Action submitted', 'success');
-            document.getElementById('action-description').value = '';
-        }
-
-        async function logAction(message) {
-            const actionData = {
-                game_id: currentGame.id,
-                player_id: currentPlayer.id,
-                action: message,
-                timestamp: new Date().toISOString()
-            };
-
-            await dbQuery('game_actions', 'POST', actionData);
-            loadGameLog();
-        }
-
-        async function loadGameLog() {
-            const actions = await dbQuery('game_actions', 'GET', null, { game_id: currentGame.id });
-            if (!actions) return;
-
-            const sortedActions = actions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            const logContainer = document.getElementById('log-entries');
-            
-            logContainer.innerHTML = '';
-            sortedActions.forEach(action => {
-                const logEntry = document.createElement('div');
-                logEntry.className = 'log-entry';
-                const time = new Date(action.timestamp).toLocaleTimeString();
-                logEntry.innerHTML = `<strong>[${time}]</strong> ${action.action}`;
-                logContainer.appendChild(logEntry);
-            });
-
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-
-        // Utility Functions
-        function generateGameCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
-        }
-
-        function generatePlayerId() {
-            return 'player_' + Math.random().toString(36).substring(2, 12);
-        }
-
-        function generateScanResult(targetPlayer) {
-            const results = [
-                `Appears nervous when ${currentPlayer.codename} approaches`,
-                `Carrying suspicious item in pocket`,
-                `Has been asking questions about ${currentPlayer.player_name}`,
-                `Seems to be avoiding certain areas`,
-                `Acting according to cover identity: ${targetPlayer.cover_identity}`,
-                `Displaying behavior: ${targetPlayer.behavior}`,
-                `Last seen talking quietly with another player`,
-                `Checking phone frequently`
-            ];
-            return results[Math.floor(Math.random() * results.length)];
-        }
-
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('status-message');
-            statusDiv.textContent = message;
-            statusDiv.className = `status ${type}`;
-            statusDiv.classList.remove('hidden');
-
-            setTimeout(() => {
-                statusDiv.classList.add('hidden');
-            }, 4000);
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadConfig();
-            
-            // Auto-refresh game log every 10 seconds if player is active
-            setInterval(() => {
-                if (currentPlayer && currentGame) {
-                    loadGameLog();
-                }
-            }, 10000);
-        });
-    </script>
-</body>
-</html>
-
-<!-- 
-DATABASE SETUP INSTRUCTIONS FOR SUPABASE:
-
-1. Create a new Supabase project
-2. Run this SQL in the SQL Editor:
-
--- Games table
-CREATE TABLE games (
-    id SERIAL PRIMARY KEY,
-    game_name VARCHAR(100) NOT NULL,
-    game_code VARCHAR(10) UNIQUE NOT NULL,
-    max_players INTEGER NOT NULL,
-    current_players INTEGER DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'waiting',
-    characters TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Players table  
-CREATE TABLE players (
-    id VARCHAR(50) PRIMARY KEY,
-    game_id INTEGER REFERENCES games(id),
-    player_name VARCHAR(100) NOT NULL,
-    codename VARCHAR(50) NOT NULL,
-    cover_identity VARCHAR(200),
-    background VARCHAR(500),
-    secret_mission VARCHAR(500),
-    behavior VARCHAR(500),
-    status VARCHAR(20) DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Game actions table
-CREATE TABLE game_actions (
-    id SERIAL PRIMARY KEY,
-    game_id INTEGER REFERENCES games(id),
-    player_id VARCHAR(50) REFERENCES players(id),
-    action TEXT NOT NULL,
-    timestamp TIMESTAMP DEFAULT NOW()
-);
-
--- Enable Row Level Security
-ALTER TABLE games ENABLE ROW LEVEL SECURITY;
-ALTER TABLE players ENABLE ROW LEVEL SECURITY; 
-ALTER TABLE game_actions ENABLE ROW LEVEL SECURITY;
-
--- Create policies for public access (adjust as needed for security)
-CREATE POLICY "Public games" ON games FOR ALL USING (true);
-CREATE POLICY "Public players" ON players FOR ALL USING (true);
-CREATE POLICY "Public actions" ON game_actions FOR ALL USING (true);
-
-3. Get your project URL and anon key from Settings > API
-4. Deploy this HTML file to Vercel or any web host
--->
+<script>
+// ===================== DATA =====================
+// (Keep your themed characters – you can expand to 12+; this demo shows 6)
+const characterDatabase = [
+  { id:"lacehunter", codename:"LACEHUNTER", cover:"Luxury Skiwear Designer",
+    background:"Former French AF comms tech → NATO PSYOPS 'tactical glam technician'",
+    discharge:"Non-disciplinary separation after morale incident involving glitter & thermals",
+    secret:"Hunting a ghoster from a classified Alpine affair—suspects it's one of you",
+    oddity:"Wears silk cravat under everything; lip balm mid-sentence; calls everyone 'Lieutenant Thirsttrap'",
+    perks:[
+      "Honorific Lock: must be addressed as “Monsieur Val” (slip = penalty).",
+      "Style Verdict: on “Runway check,” target holds a 10-sec pose."
+    ],
+    con:"If he sees a reflection within ~5m he must stop & preen for 3s; interrupted → restarts whispering “couture.”",
+    ability:{ id:"fashion_emergency", name:"Fashion Emergency", desc:"Force any two players to swap one visible clothing item immediately.", uses:1 }
+  },
+  { id:"snowblind", codename:"SNOWBLIND", cover:"Extreme Sports Photographer",
+    background:"RFMF Recon tracker (Fiji) who can find rumour and happy hour with equal precision",
+    discharge:"Honourable; refused to track an innocent defector (who was his brother)",
