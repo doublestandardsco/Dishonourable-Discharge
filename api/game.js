@@ -65,6 +65,27 @@ export default async function handler(req, res) {
       const seatTokenRaw = (req.body.seatToken || '').toUpperCase().trim();
       const playerName = (req.body.playerName || '').trim();
       const character = req.body.character || null; // client can pass the full character pack
+      // Ensure one murderer per game (idempotent)
+if (!session.murdererId) {
+  // pick the first joiner or a random current player
+  const all = session.players || [];
+  const chosen = all.length ? all[Math.floor(Math.random()*all.length)] : player;
+  session.murdererId = chosen.id;
+  // store a directive for UI
+  const acts = [
+    "Leave one coaster upside-down at a table you visit.",
+    "Say the word 'almond' twice in different conversations.",
+    "Touch the back of a chair before sitting, every time.",
+    "Hum two short notes before speaking, at least three times.",
+    "Place a napkin folded into a triangle at a random spot.",
+    "Tap the table twice with your index finger before drinking."
+  ];
+  session.murdererAct = acts[Math.floor(Math.random()*acts.length)];
+  session.gameLog = session.gameLog || [];
+  session.gameLog.push({ ts: Date.now(), msg: `☠️ A secret murderer has been assigned.` });
+  // persist session back to KV here
+}
+
 
       const sess = await getSession(sessionId);
       if (!sess) return res.status(404).json({ ok: false, error: 'session not found' });
