@@ -208,67 +208,17 @@
       <div class="row">
         <button class="btn sec" id="btnRefresh">Refresh</button>
         <button class="btn out" id="btnLeave">Leave Seat (Back to Login)</button>
-        <button class="btn alt" id="btnLoadDemo">Load Demo Data</button>
       </div>
     </div>
   </div>
 
 <script>
-/* ===== characters (12) ===== */
-const CHARACTERS = [
-  { alias:"Valérie \"Val\" Marchand", codename:"LACEHUNTER", cover:"Luxury Skiwear Designer",
-    publicBio:"French AF comms → NATO PSYOPS 'tactical glam'. Gives unsolicited runway checks.",
-    privateBio:"Trans man. Busted tailoring a general's thermals. Can't pass a mirror without preening.",
-    background:"Former French Air Force comms; reassigned to NATO PSYOPS for 'morale optimization'.",
-    discharge:"Non-disciplinary separation after a glitter-related morale incident.",
-    secretMission:"Track down the mystery ghoster from a classified Alpine affair and collect 3 clues.",
-    perks:["Honorific Lock: others must call you \"Monsieur Val\".","Style Verdict: on 'Runway check', target holds an awkward 10-sec pose."],
-    quirk:"Silk cravat; lip balm mid-sentence; says \"Lieutenant Thirsttrap\".",
-    con:"If he catches his reflection he must stop & preen for 3s.",
-    ability:{ name:"Fashion Emergency", desc:"Force any two players to swap one visible clothing item immediately.", usesPerDay:1 },
-    role:"wildcard"
-  },
-  { alias:"Kaimana \"Kai\" Savai'i", codename:"SNOWBLIND", cover:"Extreme Sports Photographer",
-    publicBio:"RFMF (Fiji) recon tracker; can find happy hour with GPS accuracy.",
-    privateBio:"Refused to hunt an innocent defector (his brother). Collects slang like shell casings.",
-    background:"Reconnaissance & tracking specialist; humanitarian ops liaison.",
-    discharge:"Honourable discharge after family conflict.",
-    secretMission:"Collect 3 strangers' hometown slang and compile a 'tracking lexicon'.",
-    perks:["Breadcrumb Command: choose a trigger word; speakers owe a clue or take penalty for 10 min.",
-           "Switchback: say 'First tracks' → everyone rotates seats; last seated owes you a favour."],
-    quirk:"Whispers intel and ends with 'copy?'.",
-    con:"If someone says 'family'/'ohana', must deliver a 1-sentence heartfelt lesson.",
-    ability:{ name:"Hire a Tail", desc:"Recruit one player to shadow you 10–30 min; deliver intel every 5 min or take penalties.", usesPerDay:1 },
-    role:"innocent"
-  },
-  { alias:"Bartosz \"Bas\" Nowak", codename:"FROSTBITE", cover:"Adventure Safety Coordinator",
-    publicBio:"Polish GROM cold-weather specialist. Loves lists & laminated check cards.",
-    privateBio:"Interrogation 'cultural differences'. Considers silence a confession.",
-    background:"SERE instructor, polar training cadre.",
-    discharge:"Honourable; opted out after 'communication' feedback.",
-    secretMission:"Convince a stranger to wear your gloves and pose like a crime-scene silhouette.",
-    perks:["Interrogator's Pause: on 'Answer the question', target must reply in ≤5 words.",
-           "Cold Protocol: greetings become fist-bump only until cleared."],
-    quirk:"Over-enunciates like radio checks; NATO phonetic for numbers.",
-    con:"When asked 'what's the plan?' must show a checklist or salute 'I am improvising.'",
-    ability:{ name:"Coerce an Asset", desc:"Designate a player your Asset for 15 min; complete 2 simple tasks or take penalties.", usesPerDay:1 },
-    role:"handler"
-  }
-];
-
-/* ===== missions ===== */
-const MISSIONS = [
-  "Wear ski goggles to dinner; never explain why.",
-  "Ask 3 strangers where the CIA safehouse is.",
-  "Challenge someone to a snowball duel; loser does a shoey.",
-  "Bring a random item to the bar and convince someone it's priceless.",
-  "Gain legit access to another player's room for 15 minutes.",
-  "Speak only in a fake Russian accent for 3 hours.",
-  "Critique outfits using military terminology.",
-  "Take a candid photo of every player undetected.",
-  "Get someone to break a minor rule for you.",
-  "Teach a stranger a codeword and use it later."
-];
+/* ===== utils ===== */
+const $ = id => document.getElementById(id);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
+function text(id, val){ const el=$(id); if(el) el.textContent = val ?? '—'; }
+function html(id, val){ const el=$(id); if(el) el.innerHTML = val ?? ''; }
 
 /* ===== roles ===== */
 const ROLES = {
@@ -278,12 +228,19 @@ const ROLES = {
   innocent:{ name:"Innocent Operative", obj:"Identify the traitor and survive the final vote.", win:"Vote out the Flipped Agent OR survive to the end." }
 };
 
-/* ===== utils ===== */
-const $ = id => document.getElementById(id);
-const pick = a => a[Math.floor(Math.random()*a.length)];
-const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
-function text(id, val){ const el=$(id); if(el) el.textContent = val ?? '—'; }
-function html(id, val){ const el=$(id); if(el) el.innerHTML = val ?? ''; }
+/* ===== missions ===== */
+const MISSIONS = [
+  "Wear ski goggles to dinner; never explain why.",
+  "Ask 3 strangers where the CIA safehouse is.",
+  "Challenge someone to a snowball duel; loser does a shoey.",
+  "Bring a random item to the bar and convince someone it’s priceless.",
+  "Gain legit access to another player’s room for 15 minutes.",
+  "Speak only in a fake Russian accent for 3 hours.",
+  "Critique outfits using military terminology.",
+  "Take a candid photo of every player undetected.",
+  "Get someone to break a minor rule for you.",
+  "Teach a stranger a codeword and use it later."
+];
 
 /* ===== state ===== */
 let sessionId = null;
@@ -306,77 +263,57 @@ async function api(op, body={}) {
   return r.json();
 }
 async function postEvent(msg){
-  try{ await api('event', { sessionId, msg }); }catch(e){ console.error('Event failed:', e); }
+  try{ await api('event', { sessionId, msg }); }catch(e){}
 }
 async function patchMe(patch){
   try{
     const res = await api('update_player', { sessionId, playerId, patch });
     if(res?.ok && res.player){ me = res.player; }
-  }catch(e){ console.error('Patch failed:', e); }
+  }catch(e){}
 }
 
 /* ===== ui render ===== */
 function renderAll(){
-  if(!gameState || !me) {
-    console.warn('renderAll called but missing gameState or me:', { gameState: !!gameState, me: !!me });
-    return;
-  }
-  
-  // Game info
-  text('gameKeyText', gameState.id || 'DEMO-001');
+  if(!gameState || !me) return;
+  text('gameKeyText', gameState.id);
   text('finalNightText', gameState.finalNightAt ? new Date(gameState.finalNightAt).toLocaleString() : '—');
 
-  // Player info
   text('codenameText', me.codename || 'OPERATIVE');
-  text('agentIdText', me.id || 'agent_001');
-  text('realNameText', me.realName || me.name || '—');
-  text('aliasText', me.adoptedName || me.alias || '—');
-  text('coverText', me.cover || '—');
+  text('agentIdText', me.id);
+  text('realNameText', me.realName);
+  text('aliasText', me.adoptedName || me.alias || '');
+  text('coverText', me.cover || '');
 
-  text('backgroundText', me.background || '—');
-  text('dischargeText', me.discharge || '—');
-  text('secretMissionText', me.secretMission || '—');
-  text('quirkText', me.quirk || '—');
-  text('conText', me.con || '—');
+  text('backgroundText', me.background || '');
+  text('dischargeText', me.discharge || '');
+  text('secretMissionText', me.secretMission || '');
+  text('quirkText', me.quirk || '');
+  text('conText', me.con || '');
 
-  // Role info
   const role = ROLES[me.role] || {name:me.role||'—', obj:'—', win:'—'};
   text('roleText', role.name);
   text('roleObjective', role.obj);
   text('roleWin', role.win);
 
-  // Perks
-  const perkList = $('perkList');
-  if (perkList) {
-    perkList.innerHTML = (me.perks||[]).map(p=>`<li>${p}</li>`).join('') || '<li>—</li>';
-  }
+  $('perkList').innerHTML = (me.perks||[]).map(p=>`<li>${p}</li>`).join('') || '<li>—</li>';
 
   // ability status
   const st = me.abilityState || { usesLeft: (me.ability?.usesPerDay ?? 1), lastResetDay: dayKey() };
-  if(st.lastResetDay !== dayKey()){ 
-    st.lastResetDay = dayKey(); 
-    st.usesLeft = me.ability?.usesPerDay ?? 1; 
-  }
+  if(st.lastResetDay !== dayKey()){ st.lastResetDay = dayKey(); st.usesLeft = me.ability?.usesPerDay ?? 1; }
   me.abilityState = st;
-  
   text('abilityUsesLeft', st.usesLeft ?? 0);
-  const b = $('abilityBadge'); 
-  if (b) {
-    b.className = 'badge ' + ((st.usesLeft??0) > 0 ? 'b-ready':'b-used');
-    b.textContent = (st.usesLeft??0) > 0 ? 'READY' : 'USED';
-  }
+  const b = $('abilityBadge'); b.className = 'badge ' + ((st.usesLeft??0) > 0 ? 'b-ready':'b-used');
+  b.textContent = (st.usesLeft??0) > 0 ? 'READY' : 'USED';
   html('abilityName', `<strong>${me.ability?.name || '—'}</strong>`);
   text('abilityDesc', me.ability?.desc || '—');
 
   // murderer panel (private)
   const mp = $('murdererPanel');
-  if(mp) {
-    if(gameState.murderer && gameState.murderer.id === me.id){
-      mp.classList.remove('hidden');
-      text('murdererDirective', `Perform without being caught: ${gameState.murderer.act}`);
-    }else{
-      mp.classList.add('hidden');
-    }
+  if(gameState.murderer && gameState.murderer.id === me.id){
+    mp.classList.remove('hidden');
+    text('murdererDirective', `Perform without being caught: ${gameState.murderer.act}`);
+  }else{
+    mp.classList.add('hidden');
   }
 
   renderRoster();
@@ -391,20 +328,17 @@ function renderAll(){
 }
 
 function renderRoster(){
-  const list = gameState?.players || [];
-  const rosterEl = $('rosterList');
-  if (!rosterEl) return;
-  
-  rosterEl.innerHTML = list.length ? list.map(p=>{
+  const list = gameState.players || [];
+  $('rosterList').innerHTML = list.length ? list.map(p=>{
     const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
     const meTag = (me && p.id===me.id) ? ' (you)' : '';
     return `
       <div class="card" style="margin:8px 0">
         <div class="row" style="justify-content:space-between">
-          <div><strong class="code">${p.codename || 'AGENT'}</strong> — ${p.realName || p.name || 'Unknown'}${meTag}</div>
-          <div class="small muted">${p.id || '—'}</div>
+          <div><strong class="code">${p.codename}</strong> — ${p.realName}${meTag}</div>
+          <div class="small muted">${p.id}</div>
         </div>
-        <div class="small">${p.cover||'—'}</div>
+        <div class="small">${p.cover||''}</div>
         <div class="grid g3" style="margin-top:8px">
           <div><div class="small muted">Public Bio</div>${p.publicBio||'—'}</div>
           <div><div class="small muted">Quirk</div>${p.quirk||'—'}</div>
@@ -417,16 +351,13 @@ function renderRoster(){
 }
 
 function renderLog(){
-  const log = gameState?.gameLog || [];
-  const logEl = $('logView');
-  if (!logEl) return;
-  
-  logEl.innerHTML = log.slice(-300).map(l=>`<div class="line"><strong>[${new Date(l.ts).toLocaleTimeString()}]</strong> ${l.msg}</div>`).join('') || '<div class="muted">No events yet.</div>';
-  logEl.scrollTop = logEl.scrollHeight;
+  const log = gameState.gameLog || [];
+  $('logView').innerHTML = log.slice(-300).map(l=>`<div class="line"><strong>[${new Date(l.ts).toLocaleTimeString()}]</strong> ${l.msg}</div>`).join('') || '<div class="muted">No events yet.</div>';
+  $('logView').scrollTop = $('logView').scrollHeight;
 }
 
 function populateTargets(){
-  const others = (gameState?.players||[]).filter(p => !me || p.id !== me.id);
+  const others = (gameState.players||[]).filter(p => !me || p.id !== me.id);
   const fill = id => {
     const sel = $(id);
     if(!sel) return;
@@ -434,7 +365,7 @@ function populateTargets(){
     others.forEach(p=>{
       const o = document.createElement('option');
       o.value = p.id;
-      o.textContent = `${p.codename || 'AGENT'} (${p.realName || p.name || 'Unknown'})`;
+      o.textContent = `${p.codename} (${p.realName})`;
       sel.appendChild(o);
     });
   };
@@ -444,7 +375,6 @@ function populateTargets(){
 
 /* ===== actions ===== */
 function abilityUsesLeft(){
-  if (!me?.ability) return 0;
   const st = me.abilityState || { usesLeft:(me.ability?.usesPerDay ?? 1), lastResetDay: dayKey() };
   if(st.lastResetDay !== dayKey()){
     st.lastResetDay = dayKey();
@@ -456,20 +386,14 @@ function abilityUsesLeft(){
 }
 
 async function useAbility(){
-  if(!me?.ability) {
-    console.warn('No ability available');
-    return;
-  }
+  if(!me?.ability) return;
   const left = abilityUsesLeft();
-  if(left <= 0){ 
-    await postEvent(`⚠️ ${me.codename} tried to use ability but has no uses left.`); 
-    return; 
-  }
+  if(left <= 0){ await postEvent(`⚠️ ${me.codename} tried to use ability but has no uses left.`); return; }
 
-  const selId = $('abilityTargetSelect')?.value || '';
-  const typed = ($('abilityTargetId')?.value||'').trim();
-  const target = (gameState?.players||[]).find(p=> p.id === (selId || typed));
-  const tLabel = target ? `${target.codename} (${target.realName || target.name})` : 'No Target';
+  const selId = $('abilityTargetSelect').value || '';
+  const typed = ($('abilityTargetId').value||'').trim();
+  const target = (gameState.players||[]).find(p=> p.id === (selId || typed));
+  const tLabel = target ? `${target.codename} (${target.realName})` : '—';
 
   const st = me.abilityState || { usesLeft:1, lastResetDay:dayKey() };
   st.usesLeft = Math.max(0, (st.usesLeft ?? 1)-1);
@@ -478,8 +402,7 @@ async function useAbility(){
   renderAll();
 
   await postEvent(`⚡ ${me.codename} used "${me.ability.name}" on ${tLabel}.`);
-  const targetInput = $('abilityTargetId');
-  if (targetInput) targetInput.value='';
+  $('abilityTargetId').value='';
 }
 
 function ensureMissionState(){
@@ -488,9 +411,7 @@ function ensureMissionState(){
 }
 async function requestMission(){
   const ms = ensureMissionState();
-  if(ms.active){ 
-    await postEvent(`${me.codename} requested new mission without completing previous → group consensus penalty?`); 
-  }
+  if(ms.active){ await postEvent(`${me.codename} requested new mission without completing previous → group consensus penalty?`); }
   ms.active = pick(MISSIONS);
   await patchMe({ missions: ms });
   await postEvent(`📋 ${me.codename} drew a mission: "${ms.active}"`);
@@ -500,17 +421,13 @@ async function completeMission(){
   const ms = ensureMissionState();
   if(!ms.active) return;
   await postEvent(`✅ ${me.codename} completed mission: "${ms.active}"`);
-  ms.active = null; 
-  ms.count = (ms.count||0)+1;
+  ms.active = null; ms.count = (ms.count||0)+1;
   await patchMe({ missions: ms });
   renderAll();
 }
 async function failMission(){
   const ms = ensureMissionState();
-  if(!ms.active){ 
-    await requestMission(); 
-    return; 
-  }
+  if(!ms.active){ await requestMission(); return; }
   await postEvent(`❌ ${me.codename} failed mission: "${ms.active}" — new mission requested.`);
   ms.active = pick(MISSIONS);
   await patchMe({ missions: ms });
@@ -518,103 +435,31 @@ async function failMission(){
 }
 
 function labelFor(id){
-  const p=(gameState?.players||[]).find(x=>x.id===id);
-  return p? `${p.codename} (${p.realName || p.name})` : (id||'—');
+  const p=(gameState.players||[]).find(x=>x.id===id);
+  return p? `${p.codename} (${p.realName})` : (id||'—');
 }
 async function submitAction(){
-  const typeEl = $('actionType');
-  const targetEl = $('actionTarget'); 
-  const detailsEl = $('actionDetails');
-  
-  if (!typeEl || !targetEl || !detailsEl) {
-    console.error('Action form elements not found');
-    return;
-  }
-  
-  const type = typeEl.value;
-  const target = targetEl.value;
-  const details = (detailsEl.value||'(no details)').trim();
-  
+  const type = $('actionType').value;
+  const target = $('actionTarget').value;
+  const details = ($('actionDetails').value||'(no details)').trim();
   let textMsg = '';
   if(type==='penalty') textMsg = `📝 Penalty on ${labelFor(target)} — ${details}`;
   else if(type==='task_complete') textMsg = `📝 Task complete by ${me.codename} — ${details}`;
   else if(type==='murderer_act') textMsg = `📝 Murderer act report by ${me.codename} — ${details}`;
   else textMsg = `📝 Ability use by ${me.codename} on ${labelFor(target)} — ${details}`;
-  
   await postEvent(textMsg);
-  detailsEl.value='';
-  targetEl.value='';
-}
-
-/* ===== demo data ===== */
-function loadDemoData(){
-  // Create demo game state
-  gameState = {
-    id: 'DEMO-ALPINE-001',
-    finalNightAt: new Date(Date.now() + 24*60*60*1000).toISOString(),
-    players: [
-      {
-        id: 'agent_001',
-        codename: 'LACEHUNTER',
-        realName: 'Valérie Marchand',
-        ...CHARACTERS[0]
-      },
-      {
-        id: 'agent_002', 
-        codename: 'SNOWBLIND',
-        realName: 'Kaimana Savai\'i',
-        ...CHARACTERS[1]
-      },
-      {
-        id: 'agent_003',
-        codename: 'FROSTBITE', 
-        realName: 'Bartosz Nowak',
-        ...CHARACTERS[2]
-      }
-    ],
-    gameLog: [
-      { ts: new Date().toISOString(), msg: 'Operation Alpine Debrief initiated.' },
-      { ts: new Date().toISOString(), msg: 'All agents checked in and briefed.' },
-      { ts: new Date().toISOString(), msg: 'Mission parameters loaded.' }
-    ],
-    murderer: {
-      id: 'agent_002',
-      act: 'Convince someone to drink from your glass while maintaining eye contact'
-    }
-  };
-  
-  // Set current player
-  playerId = 'agent_001';
-  me = gameState.players[0];
-  me.missions = { active: null, count: 0 };
-  me.abilityState = { usesLeft: 1, lastResetDay: dayKey() };
-  
-  // Store in localStorage to simulate real session
-  localStorage.setItem('session', gameState.id);
-  localStorage.setItem('playerId', playerId);
-  
-  renderAll();
-  console.log('Demo data loaded successfully');
+  $('actionDetails').value='';
+  $('actionTarget').value='';
 }
 
 /* ===== refresh / boot ===== */
 async function refresh(){
-  if(!sessionId) {
-    console.warn('No sessionId for refresh');
-    return;
-  }
-  try {
-    const res = await api('get', { id: sessionId });
-    if(!res?.ok){ 
-      console.error('Refresh failed:', res);
-      return; 
-    }
-    gameState = res.session;
-    me = (gameState.players||[]).find(p=>p.id===playerId) || me;
-    renderAll();
-  } catch(e) {
-    console.error('Refresh error:', e);
-  }
+  if(!sessionId) return;
+  const res = await api('get', { id: sessionId });
+  if(!res?.ok){ return; }
+  gameState = res.session;
+  me = (gameState.players||[]).find(p=>p.id===playerId) || me;
+  renderAll();
 }
 
 function leaveSeat(){
@@ -628,33 +473,25 @@ function leaveSeat(){
 document.addEventListener('DOMContentLoaded', async ()=>{
   sessionId = localStorage.getItem('session');
   playerId  = localStorage.getItem('playerId');
-  
-  // Wire buttons
-  const wireButton = (id, handler) => {
-    const btn = $(id);
-    if (btn) {
-      btn.onclick = handler;
-    } else {
-      console.warn(`Button ${id} not found`);
-    }
-  };
-  
-  wireButton('btnUseAbility', useAbility);
-  wireButton('btnReqMission', requestMission);
-  wireButton('btnCompleteMission', completeMission);
-  wireButton('btnFailMission', failMission);
-  wireButton('btnSubmitAction', submitAction);
-  wireButton('btnRefresh', refresh);
-  wireButton('btnLeave', leaveSeat);
-  wireButton('btnLoadDemo', loadDemoData);
-  
   if(!sessionId || !playerId){
-    console.log('No session/player stored, loading demo data instead');
-    loadDemoData();
+    // no seat stored → go back to login
+    location.href = './index.html';
     return;
   }
+
+  // wire buttons
+  $('btnUseAbility').onclick = useAbility;
+  $('btnReqMission').onclick = requestMission;
+  $('btnCompleteMission').onclick = completeMission;
+  $('btnFailMission').onclick = failMission;
+  $('btnSubmitAction').onclick = submitAction;
+  $('btnRefresh').onclick = refresh;
+  $('btnLeave').onclick = leaveSeat;
 
   await refresh();
   if(pollHandle) clearInterval(pollHandle);
   pollHandle = setInterval(refresh, 4000);
 });
+</script>
+</body>
+</html>
