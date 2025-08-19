@@ -2,762 +2,343 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dishonourable Discharge</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Courier New',monospace;background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh;padding:10px;overflow-x:hidden}
-    .container{max-width:980px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid #ff4757;border-radius:15px;padding:25px;box-shadow:0 0 40px rgba(255,71,87,.3);backdrop-filter:blur(10px);position:relative}
-    .classified-stamp{position:absolute;top:20px;right:20px;background:#ff4757;color:#000;padding:8px 15px;transform:rotate(15deg);font-weight:bold;font-size:.9em;border:3px solid #000}
-    .header{text-align:center;margin-bottom:30px;border-bottom:3px solid #ff4757;padding-bottom:20px}
-    .header h1{color:#ff4757;font-size:2.4em;text-shadow:0 0 20px rgba(255,71,87,.8);margin-bottom:10px;letter-spacing:3px}
-    .subtitle{color:#5f27cd;font-size:1.1em;font-style:italic;text-transform:uppercase;letter-spacing:1px}
-    .section{margin-bottom:24px;padding:18px;background:rgba(255,255,255,.03);border-radius:10px;border-left:4px solid #5f27cd}
-    .section-title{color:#ff4757;font-size:1.2em;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
-    .form-group{margin-bottom:12px}
-    label{display:block;margin-bottom:6px;color:#5f27cd;font-weight:bold;text-transform:uppercase;font-size:.85em}
-    input[type="text"],input[type="datetime-local"],select,textarea{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid #5f27cd;border-radius:8px;color:#e0e0e0;font-family:'Courier New',monospace;font-size:.95em}
-    .btn{background:linear-gradient(45deg,#ff4757,#ff6b7a);color:#000;border:none;padding:12px 16px;border-radius:8px;font-size:1em;font-weight:bold;cursor:pointer;transition:.2s;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px}
-    .btn.full{width:100%}
-    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,71,87,.5)}
-    .btn-secondary{background:linear-gradient(45deg,#5f27cd,#7c3aed);color:#fff}
-    .btn-danger{background:linear-gradient(45deg,#ff3838,#ff6b6b)}
-    .grid{display:grid;gap:12px}
+    :root { --pink:#ff4757; --violet:#5f27cd; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Courier New',monospace;background:linear-gradient(135deg,#0a0a0a,#1a1a2e,#16213e);color:#e0e0e0;min-height:100vh;padding:10px}
+    .container{max-width:900px;margin:0 auto;background:rgba(0,0,0,.9);border:2px solid var(--pink);border-radius:15px;padding:24px;box-shadow:0 0 40px rgba(255,71,87,.3);position:relative}
+    .classified{position:absolute;top:20px;right:20px;background:var(--pink);color:#000;padding:6px 12px;border:3px solid #000;transform:rotate(12deg);font-weight:700}
+    .header{text-align:center;margin-bottom:20px;border-bottom:3px solid var(--pink);padding-bottom:16px}
+    .header h1{color:var(--pink);letter-spacing:3px;text-shadow:0 0 20px rgba(255,71,87,.7);font-size:2rem}
+    .subtitle{color:var(--violet);font-style:italic;text-transform:uppercase;margin-top:4px}
+    .section{margin-top:18px;padding:16px;border-left:4px solid var(--violet);background:rgba(255,255,255,.03);border-radius:10px}
+    .section h3{color:var(--pink);text-transform:uppercase;font-size:1rem;margin-bottom:8px}
+    .grid{display:grid;gap:10px}
     .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .dossier{background:linear-gradient(135deg,rgba(255,71,87,.1),rgba(95,39,205,.1));border:2px solid #ff4757;padding:16px;margin:16px 0;border-radius:12px;position:relative}
-    .dossier::before{content:"CLASSIFIED";position:absolute;top:-10px;left:20px;background:#ff4757;color:#000;padding:4px 10px;font-size:.75em;font-weight:bold}
-    .codename{color:#ff4757;font-size:1.6em;margin-bottom:10px;text-align:center;text-shadow:0 0 10px rgba(255,71,87,.5)}
-    .dossier-field{margin-bottom:10px;display:flex;gap:10px;align-items:flex-start}
-    .field-label{color:#5f27cd;font-weight:bold;min-width:160px;text-transform:uppercase;font-size:.85em}
-    .field-value{color:#e0e0e0;flex:1;line-height:1.4}
-    .secret-section{background:rgba(255,71,87,.1);border:2px solid #ff4757;border-radius:8px;padding:12px;margin:12px 0;position:relative}
-    .secret-section::before{content:"🔒 EYES ONLY";position:absolute;top:-10px;left:12px;background:#ff4757;color:#000;padding:3px 8px;font-size:.7em;font-weight:bold}
-    .perk-box{background:linear-gradient(135deg,rgba(95,39,205,.2),rgba(116,185,255,.1));border:2px solid #5f27cd;border-radius:10px;padding:14px;margin:14px 0}
-    .quirk-box{background:linear-gradient(135deg,rgba(255,71,87,.2),rgba(255,107,122,.1));border:2px solid #ff4757;border-radius:10px;padding:14px;margin:14px 0}
-    .scanner-section{background:rgba(0,0,0,.7);padding:16px;border-radius:12px;margin:16px 0;border:2px solid #5f27cd}
-    .game-log{background:rgba(0,0,0,.5);border:2px solid #5f27cd;border-radius:10px;padding:14px;margin:16px 0;max-height:320px;overflow-y:auto}
-    .log-entry{margin-bottom:10px;font-size:.9em;padding:8px;border-left:3px solid #5f27cd;padding-left:12px;background:rgba(95,39,205,.1);border-radius:5px}
-    .vote-section{background:linear-gradient(135deg,rgba(231,76,60,.3),rgba(192,57,43,.2));border:3px solid #e74c3c;border-radius:15px;padding:16px;margin:18px 0;text-align:center}
-    .intel-panel{background:rgba(52,152,219,.1);border:2px solid #3498db;border-radius:10px;padding:14px;margin:14px 0}
-    .hidden{display:none}
-    .progress-bar{width:100%;height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin:10px 0}
-    .progress-fill{height:100%;background:linear-gradient(90deg,#5f27cd,#ff4757);border-radius:5px;transition:width .3s}
-    .roster-card{border:1px dashed #5f27cd;border-radius:10px;padding:10px;margin:8px 0}
-    .small{font-size:.85em;color:#9bbcff}
+    .btn{background:linear-gradient(45deg,#ff4757,#ff6b7a);color:#000;border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:linear-gradient(45deg,#5f27cd,#7c3aed);color:#fff}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    label{display:block;color:#9bbcff;margin:6px 0 4px;font-size:.85rem;text-transform:uppercase}
+    input,select{width:100%;padding:10px;border:2px solid var(--violet);border-radius:8px;background:rgba(0,0,0,.7);color:#e0e0e0}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
     .muted{opacity:.7}
-    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    @media(max-width:800px){.grid-2,.grid-3{grid-template-columns:1fr}}
+    .ok{color:#9bffaf}
+    .err{color:#ff9b9b}
+    .hidden{display:none}
+    .log{margin-top:12px;padding:10px;border:1px dashed var(--violet);border-radius:10px;max-height:260px;overflow:auto}
+    .log div{padding:6px;border-left:3px solid var(--violet);background:rgba(95,39,205,.12);border-radius:6px;margin-bottom:6px}
+    .divider{height:1px;background:rgba(255,255,255,.1);margin:14px 0}
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="classified-stamp">TOP SECRET</div>
+    <div class="classified">TOP SECRET</div>
     <div class="header">
       <h1>DISHONOURABLE DISCHARGE</h1>
       <div class="subtitle">Operation: Alpine Debrief</div>
     </div>
 
-    <!-- ================= GM CONSOLE ================= -->
-    <div id="gameSetup" class="section">
-      <div class="section-title">🎮 Game Master Control</div>
+    <!-- GAME MASTER -->
+    <div id="gmPanel" class="section">
+      <h3>🎮 Game Master</h3>
       <div class="grid grid-2">
-        <div class="form-group">
-          <label>Game ID</label>
-          <input type="text" id="gmGameId" placeholder="Leave blank to auto-generate">
+        <div>
+          <label>Final Night (unlock scans & accusations)</label>
+          <input id="finalNightAt" type="datetime-local">
         </div>
-        <div class="form-group">
-          <label>Number of Players</label>
-          <select id="gmPlayerLimit">
-            <option value="3">3 Players</option>
-            <option value="4">4 Players</option>
-            <option value="5">5 Players</option>
-            <option value="6" selected>6 Players</option>
-            <option value="12">12 Players (expanded)</option>
+        <div>
+          <label>Player Limit</label>
+          <select id="playerLimit">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6" selected>6</option>
+            <option value="8">8</option>
+            <option value="12">12</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Final Night (Scans/Vote unlock)</label>
-          <input type="datetime-local" id="gmFinalNightAt">
-        </div>
-        <div class="form-group">
-          <label>&nbsp;</label>
-          <button id="btnCreate" class="btn">Create Game</button>
-        </div>
       </div>
-
-      <div class="section" id="gmSeats" style="display:none;">
-        <div class="section-title">🎟️ Seat Keys (share one per player)</div>
-        <div id="seatList" class="small"></div>
-        <div class="small muted" style="margin-top:8px">Players join with: <em>Game ID</em> + <em>Seat Key</em> + <em>Name</em>.</div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnCreate" class="btn">Create Game</button>
+        <button id="btnLoad" class="btn secondary">Load Existing</button>
       </div>
-
-      <div class="grid grid-2" style="margin-top:10px">
-        <button id="btnGoJoin" class="btn btn-secondary">Player Join Page</button>
-        <button id="btnLoadExisting" class="btn btn-secondary">Load Existing Game</button>
-      </div>
-      <div id="gmHelp" class="small muted" style="margin-top:8px">
-        After creating, share the Game ID and individual Seat Keys. You can revisit this page any time.
-      </div>
-      <div id="gmStatus" class="small" style="margin-top:8px;"></div>
-    </div>
-
-    <!-- ================= PLAYER JOIN ================= -->
-    <div id="onboarding" class="hidden">
-      <div class="section">
-        <div class="section-title">🔐 Agent Recruitment</div>
-        <div style="background:#ff4757;color:#000;padding:12px;margin:14px 0;text-align:center;font-weight:bold;transform:rotate(-1deg);">
-          ⚠️ CLASSIFIED OPERATION - AUTHORIZED PERSONNEL ONLY ⚠️
+      <div id="gmStatus" class="muted" style="margin-top:8px"></div>
+      <div class="divider"></div>
+      <div id="shareBlock" class="hidden">
+        <div class="ok">✅ Game created.</div>
+        <div style="margin-top:6px">
+          <strong>Game Key: <span id="sessionOut" style="color:#fff"></span></strong>
         </div>
-        <div class="grid grid-3">
-          <div class="form-group">
-            <label>Game ID</label>
-            <input type="text" id="joinGameId" placeholder="e.g. ABC123">
-          </div>
-          <div class="form-group">
-            <label>Seat Key</label>
-            <input type="text" id="joinSeatKey" placeholder="e.g. A9XQ2">
-          </div>
-          <div class="form-group">
-            <label>Your Name</label>
-            <input type="text" id="joinName" placeholder="e.g. Kaleb">
-          </div>
-        </div>
-        <button id="btnJoin" type="button" class="btn full">Join Game</button>
-        <div id="joinStatus" class="small" style="margin-top:8px;"></div>
+        <div class="muted" style="margin-top:4px">Give this key to players. They’ll enter Name + Game Key below.</div>
       </div>
     </div>
 
-    <!-- ================= PLAYER DASH ================= -->
-    <div id="playerProfile" class="hidden">
-      <div class="dossier">
-        <div class="codename" id="playerCodename">LOADING...</div>
-        <div class="dossier-field"><span class="field-label">Agent Name:</span><span class="field-value" id="realName">-</span></div>
-        <div class="dossier-field"><span class="field-label">Agent Code:</span><span class="field-value" id="playerCode">-</span></div>
-        <div class="dossier-field"><span class="field-label">Adopted Name:</span><span class="field-value" id="adoptedName">-</span></div>
-        <div class="dossier-field"><span class="field-label">Cover Identity:</span><span class="field-value" id="coverIdentity">-</span></div>
-        <div class="dossier-field"><span class="field-label">Background:</span><span class="field-value" id="background">-</span></div>
-        <div class="dossier-field"><span class="field-label">Discharge:</span><span class="field-value" id="discharge">-</span></div>
-
-        <div class="secret-section">
-          <div class="field-label">Mission Objective:</div>
-          <div class="field-value" id="secret">-</div>
+    <!-- PLAYER JOIN -->
+    <div id="joinPanel" class="section">
+      <h3>🪪 Player Join</h3>
+      <div class="grid grid-2">
+        <div>
+          <label>Your Name</label>
+          <input id="joinName" placeholder="e.g. Kaleb">
         </div>
-
-        <div class="dossier-field"><span class="field-label">Behavioral Quirk:</span><span class="field-value" id="oddity">-</span></div>
-        <div class="dossier-field"><span class="field-label">Perks (real-world rules):</span><span class="field-value" id="perkList">-</span></div>
-        <div class="dossier-field"><span class="field-label">Con (always-on penalty on you):</span><span class="field-value" id="conText">-</span></div>
-      </div>
-
-      <div class="intel-panel" id="rolePanel">
-        <h4>🎯 OPERATIONAL ROLE</h4>
-        <div id="roleDescription">Classified pending mission briefing...</div>
-        <div id="roleObjective"></div>
-      </div>
-
-      <div id="murdererPanel" class="intel-panel hidden">
-        <h4>☠️ SECRET DIRECTIVE (Murderer)</h4>
-        <div id="murdererDirective"></div>
-      </div>
-
-      <div class="perk-box" id="abilityBox">
-        <h4>⚡ SPECIAL ABILITY</h4>
-        <div id="abilityDescription">—</div>
-        <div class="flex" style="margin-top:8px;align-items:flex-end">
-          <div style="min-width:220px">
-            <label class="small">Target (optional)</label>
-            <select id="abilityTargetSelect"></select>
-          </div>
-          <div>
-            <label class="small">…or type Agent Code</label>
-            <input type="text" id="abilityTargetId" placeholder="e.g. A9XQ2">
-          </div>
-          <button class="btn" id="btnUseAbility">Use Ability</button>
-          <span id="abilityStatus" class="small muted">READY</span>
+        <div>
+          <label>Game Key</label>
+          <input id="joinSession" placeholder="e.g. ABC123">
         </div>
       </div>
-
-      <div class="intel-panel">
-        <div class="flex" style="justify-content:space-between;align-items:center">
-          <h4>🗂️ Public Roster</h4>
-          <button class="btn btn-secondary" id="btnRefreshRoster">Refresh</button>
-        </div>
-        <div id="rosterList"></div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnJoin" class="btn">Join Game</button>
       </div>
+      <div id="joinStatus" class="muted" style="margin-top:8px"></div>
+    </div>
 
-      <div class="intel-panel">
-        <h4>📝 Submit Action / Penalty / Task</h4>
-        <div class="grid grid-3">
-          <div>
-            <label>Action Type</label>
-            <select id="actionType">
-              <option value="penalty">Report Penalty</option>
-              <option value="task_complete">Complete Task</option>
-              <option value="murderer_act">Report Murderer Act</option>
-              <option value="ability_note">Ability Note</option>
-            </select>
-          </div>
-          <div>
-            <label>Target Player</label>
-            <select id="actionTarget"></select>
-          </div>
-          <div>
-            <label>Details</label>
-            <input type="text" id="actionDetails" placeholder="What happened / instructions"/>
-          </div>
-        </div>
-        <div class="grid" style="margin-top:10px">
-          <button class="btn" id="btnSubmitAction">Submit</button>
-        </div>
+    <!-- PLAYER PROFILE (summary) -->
+    <div id="profilePanel" class="section hidden">
+      <h3>🧾 Player Profile</h3>
+      <div><strong>Codename:</strong> <span id="codename">—</span></div>
+      <div><strong>Agent ID:</strong> <span id="playerId">—</span></div>
+      <div><strong>Role:</strong> <span id="role">—</span></div>
+      <div class="divider"></div>
+      <div><strong>Cover:</strong> <span id="cover">—</span></div>
+      <div><strong>Quirk:</strong> <span id="quirk">—</span></div>
+      <div><strong>Perks:</strong> <span id="perks">—</span></div>
+      <div><strong>Con:</strong> <span id="con">—</span></div>
+      <div class="divider"></div>
+      <div><strong>Ability:</strong> <span id="ability">—</span></div>
+      <div class="divider"></div>
+      <div class="row">
+        <button id="btnRefresh" class="btn secondary">Refresh Roster</button>
+        <button id="btnLeave" class="btn">Leave (local)</button>
       </div>
+    </div>
 
-      <div class="intel-panel">
-        <div class="section-title" style="margin:0 0 8px 0">📋 ACTIVE MISSION</div>
-        <div id="challengeText">No active mission. Request new assignment below.</div>
-        <div class="progress-bar"><div class="progress-fill" id="challengeProgress" style="width:0%"></div></div>
-        <div id="challengeReward" class="intel-panel hidden" style="margin-top:10px"><strong>Mission Reward:</strong> <span id="rewardText"></span></div>
-        <div class="grid grid-2" style="margin-top:10px">
-          <button class="btn btn-secondary" id="btnDrawChallenge">Request Mission</button>
-          <button class="btn" id="btnCompleteMission" disabled>Complete Mission</button>
-        </div>
-      </div>
+    <!-- ROSTER -->
+    <div id="rosterPanel" class="section hidden">
+      <h3>🗂️ Public Roster</h3>
+      <div id="roster" class="muted">No players yet.</div>
+    </div>
 
-      <div class="scanner-section" id="scannerBlock">
-        <h4>🔍 OPERATIVE SCANNER (Final Night)</h4>
-        <div id="scanGateNotice" class="small muted"></div>
-        <div class="grid grid-3" style="margin-top:8px">
-          <div>
-            <label>Target (select)</label>
-            <select id="scanSelect"></select>
-          </div>
-          <div>
-            <label>…or Agent Code</label>
-            <input type="text" id="scanInput" placeholder="e.g. A9XQ2">
-          </div>
-          <div class="grid">
-            <button class="btn btn-secondary" id="btnScan">Scan Target</button>
-            <button class="btn btn-danger" id="btnAccuse">Make Accusation</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="vote-section" id="finalVote" style="display:none;">
-        <h3>🗳️ FINAL JUDGMENT</h3>
-        <p>The moment of truth has arrived. Who is the traitor among us?</p>
-        <select id="suspectSelect"><option value="">Select your suspect...</option></select>
-        <div class="grid" style="margin-top:10px"><button class="btn btn-danger" id="btnVote">Cast Vote</button></div>
-      </div>
-
-      <div class="intel-panel">
-        <h4>📨 Your Inbox</h4>
-        <div id="inboxList" class="small"></div>
-      </div>
-
-      <div class="game-log" id="gameLog">
-        <strong>📡 OPERATION LOG</strong>
-        <div class="log-entry">Agent deployment initiated. Secure channels established.</div>
-      </div>
-
-      <div class="intel-panel">
-        <div id="timers" class="small"></div>
-      </div>
+    <!-- LOG -->
+    <div id="logPanel" class="section">
+      <h3>📡 Log</h3>
+      <div id="log" class="log"></div>
     </div>
   </div>
 
 <script>
-/* =================== STATE & UTIL =================== */
-const $ = (id)=>document.getElementById(id);
-const now = ()=>Date.now();
-const safe = v => (v===undefined||v===null)?'':String(v);
-const toTs = v => { if(!v) return null; const t=new Date(v); const n=t.getTime(); return Number.isFinite(n)?n:null; };
-const fmt = ts => ts? new Date(ts).toLocaleString() : '—';
-
-let app = {
-  session: null,     // server session object
-  me: null,          // current player object
-  pollHandle: null,  // polling interval
+/* ========= tiny helpers ========= */
+const $ = id => document.getElementById(id);
+const log = (t,cls='') => {
+  const d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${t}`;
+  $('log').prepend(d);
 };
+const setHTML = (id, html) => { const el=$(id); if(el) el.innerHTML=html; };
+const setText = (id, txt) => { const el=$(id); if(el) el.textContent=txt; };
+const show = (id, on=true)=>{ const el=$(id); if(!el) return; el.classList[on?'remove':'add']('hidden'); };
 
-/* =================== API HELPERS =================== */
-async function apiCreateGame({ id, playerLimit, finalNightAt }){
-  const res = await fetch(`/api/game?create=1`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ id, playerLimit, finalNightAt })
+/* ========= state persisted locally (for refresh) ========= */
+const LS = {
+  session: 'dd_session',
+  player:  'dd_player'
+};
+function saveSession(id){ localStorage.setItem(LS.session, id||''); }
+function savePlayer(id){ localStorage.setItem(LS.player, id||''); }
+function getSession(){ return localStorage.getItem(LS.session) || ''; }
+function getPlayer(){ return localStorage.getItem(LS.player) || ''; }
+
+/* ========= API =========
+  Assumes these routes exist on your server:
+  - POST /api/game        { playerLimit:number, finalNightAt?:number } -> { ok, sessionId }
+  - GET  /api/session?id=SESSION_ID                                   -> { ok, session }
+  - POST /api/join       { sessionId:string, name:string }            -> { ok, player, session }
+*/
+async function apiCreateGame(playerLimit, finalNightAt) {
+  const body = { playerLimit: Number(playerLimit) };
+  // only send finalNightAt if valid number
+  const ts = Date.parse(finalNightAt || '');
+  if (!Number.isNaN(ts)) body.finalNightAt = ts;
+
+  const res = await fetch('/api/game', {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body: JSON.stringify(body)
   });
-  if(!res.ok){ throw new Error(`Create failed: HTTP ${res.status}`); }
-  const data = await res.json();
-  if(!data.ok) throw new Error(data.error||'Create failed');
-  return data;
+  const data = await res.json().catch(()=>({ok:false,error:'Bad JSON'}));
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  return data; // { ok:true, sessionId, ... }
 }
-async function apiGetGame(id){
-  const res = await fetch(`/api/game?id=${encodeURIComponent(id)}`, { method:'GET' });
-  if(!res.ok) throw new Error(`Get failed: HTTP ${res.status}`);
-  const data = await res.json();
-  if(!data.ok) throw new Error(data.error||'Get failed');
-  return data;
+
+async function apiLoadSession(sessionId) {
+  const res = await fetch(`/api/session?id=${encodeURIComponent(sessionId)}`, { cache: 'no-store' });
+  const data = await res.json().catch(()=>({ok:false,error:'Bad JSON'}));
+  if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data; // { ok:true, session:{...} }
 }
-async function apiJoinGame(id, seatKey, realName){
-  const res = await fetch(`/api/game?id=${encodeURIComponent(id)}&join=1`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ seatKey, realName })
+
+async function apiJoin(sessionId, name) {
+  const res = await fetch('/api/join', {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body: JSON.stringify({ sessionId, name })
   });
-  if(!res.ok) throw new Error(`Join failed: HTTP ${res.status}`);
-  const data = await res.json();
-  if(!data.ok) throw new Error(data.error||'Join failed');
-  return data;
-}
-async function apiEvent(id, type, payload){
-  try{
-    const res = await fetch(`/api/game?id=${encodeURIComponent(id)}&event=${encodeURIComponent(type)}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload||{})
-    });
-    // optional: backend may not implement; ignore errors silently for now
-  }catch(e){ /* ignore */ }
+  const data = await res.json().catch(()=>({ok:false,error:'Bad JSON'}));
+  if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data; // { ok:true, player:{...}, session:{...} }
 }
 
-/* =================== LOGGING & INBOX =================== */
-function addToLog(msg){
-  const log = $('gameLog'); if(!log) return;
-  const div = document.createElement('div');
-  div.className='log-entry';
-  div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${msg}`;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-}
-function pushInbox(playerId, message){
-  if(!app.session) return;
-  app.session.playerMessages = app.session.playerMessages || {};
-  const box = app.session.playerMessages[playerId] || [];
-  box.push({ ...message, ts: now() });
-  app.session.playerMessages[playerId] = box;
-}
-function renderInbox(){
-  const list = $('inboxList');
-  if(!list || !app.session || !app.me) return;
-  const messages = (app.session.playerMessages?.[app.me.id]) || [];
-  if(!messages.length){ list.innerHTML = '<div class="muted">No messages yet.</div>'; return; }
-  list.innerHTML = messages.slice().reverse().map(m=>{
-    const when = new Date(m.ts).toLocaleTimeString();
-    return `<div class="roster-card"><div class="small">${when} — <strong>${m.type||'Note'}</strong> from ${m.from||'System'}</div><div>${m.text||''}</div></div>`;
-  }).join('');
-}
-
-/* =================== GM FLOW =================== */
-async function gmCreate(){
-  const id = safe($('gmGameId').value).trim() || undefined;
-  const playerLimit = parseInt($('gmPlayerLimit').value,10)||6;
-  const finalNightAt = toTs($('gmFinalNightAt').value);
-  $('gmStatus').textContent = 'Creating...';
-  try{
-    const data = await apiCreateGame({ id, playerLimit, finalNightAt });
-    app.session = data.session;
-    $('gmStatus').textContent = `Game created: ${data.id}`;
-    $('onboarding').classList.remove('hidden');
-    $('gameSetup').classList.remove('hidden');
-    $('joinGameId').value = data.id;
-    // show seats
-    const seats = data.seats || app.session?.seats || [];
-    $('gmSeats').style.display = seats.length ? 'block' : 'none';
-    $('seatList').innerHTML = seats.map((s,i)=>`<div>${i+1}. <code>${s.token}</code> ${s.claimed?'<span class="small muted">(claimed)</span>':''}</div>`).join('');
-    // store last game id
-    localStorage.setItem('lastGameId', data.id);
-  }catch(err){
-    $('gmStatus').textContent = 'Error: '+(err.message||err);
+/* ========= UI glue ========= */
+function renderRoster(session){
+  if (!session || !Array.isArray(session.players) || !session.players.length){
+    setHTML('roster','<span class="muted">No players yet.</span>');
+    return;
   }
-}
-async function gmLoadExisting(){
-  const id = safe($('gmGameId').value).trim() || localStorage.getItem('lastGameId') || '';
-  if(!id){ $('gmStatus').textContent='Enter a Game ID or create one.'; return; }
-  $('gmStatus').textContent = 'Loading...';
-  try{
-    const data = await apiGetGame(id);
-    app.session = data.session;
-    $('gmStatus').textContent = `Loaded game ${id}`;
-    $('onboarding').classList.remove('hidden');
-    $('joinGameId').value = id;
-    // seats
-    const seats = app.session?.seats || [];
-    $('gmSeats').style.display = seats.length ? 'block' : 'none';
-    $('seatList').innerHTML = seats.map((s,i)=>`<div>${i+1}. <code>${s.token}</code> ${s.claimed?'<span class="small muted">(claimed)</span>':''}</div>`).join('');
-    localStorage.setItem('lastGameId', id);
-  }catch(err){
-    $('gmStatus').textContent='Error: '+(err.message||err);
-  }
-}
-
-/* =================== PLAYER JOIN =================== */
-async function joinGame(){
-  const gameId = safe($('joinGameId').value).trim();
-  const seatKey = safe($('joinSeatKey').value).trim();
-  const realName = safe($('joinName').value).trim();
-  const out = $('joinStatus');
-  if(!gameId || !seatKey || !realName){ out.textContent='Fill all fields.'; return; }
-  out.textContent='Joining...';
-  try{
-    const data = await apiJoinGame(gameId, seatKey, realName);
-    app.session = data.session;
-    app.me = data.player;
-    // persist for refresh/rejoin
-    localStorage.setItem(`current_${gameId}`, app.me.id);
-    localStorage.setItem(`seatkey_${gameId}`, seatKey);
-    localStorage.setItem('lastGameId', gameId);
-    // switch UI
-    $('gameSetup').classList.add('hidden');
-    $('onboarding').classList.add('hidden');
-    $('playerProfile').classList.remove('hidden');
-    // paint
-    displayMe();
-    renderRoster();
-    populateSelectors();
-    renderInbox();
-    addToLog(`🚁 Agent ${app.me.codename||app.me.alias||app.me.realName} deployed`);
-    // start polling
-    startPolling();
-  }catch(err){
-    out.textContent = 'Error: '+(err.message||err);
-  }
-}
-
-/* =================== REFRESH/REJOIN =================== */
-async function bootFromLocal(){
-  // prefer URL ?session=... else lastGameId
-  const params = new URLSearchParams(location.search);
-  const id = params.get('session') || localStorage.getItem('lastGameId');
-  if(!id) return; // stay on GM page
-  try{
-    const data = await apiGetGame(id);
-    app.session = data.session;
-    const storedPid = localStorage.getItem(`current_${id}`);
-    // try to attach to known player by id
-    let player = (storedPid && app.session.players?.find(p=>p.id===storedPid)) || null;
-    if(!player){
-      // attempt reclaim via seatKey (if server allows multi-join idempotent)
-      const seatKey = localStorage.getItem(`seatkey_${id}`);
-      const name = localStorage.getItem(`name_${id}`) || 'Agent';
-      if(seatKey){
-        try{
-          const j = await apiJoinGame(id, seatKey, name);
-          app.session = j.session;
-          player = j.player;
-        }catch(e){
-          // ignore; stay in join screen
-        }
-      }
-    }
-    if(player){
-      app.me = player;
-      $('gameSetup').classList.add('hidden');
-      $('onboarding').classList.add('hidden');
-      $('playerProfile').classList.remove('hidden');
-      displayMe();
-      renderRoster();
-      populateSelectors();
-      renderInbox();
-      updateFinalNightGate();
-      startPolling();
-    }else{
-      // show join with prefilled id
-      $('onboarding').classList.remove('hidden');
-      $('gameSetup').classList.add('hidden');
-      $('joinGameId').value = id;
-    }
-  }catch(err){
-    // stay on GM page but prefill
-    $('gmGameId').value = localStorage.getItem('lastGameId')||'';
-  }
-}
-
-/* =================== RENDER ME =================== */
-function displayMe(){
-  if(!app.me) return;
-  const p = app.me;
-  const set = (id,val)=>{ const el=$(id); if(el) el.innerHTML = val; };
-  $('playerCodename').textContent = p.codename || p.alias || (p.adoptedName? p.adoptedName.toUpperCase() : 'AGENT');
-  set('realName', safe(p.realName));
-  set('playerCode', safe(p.seatToken||p.id||'—'));
-  set('adoptedName', safe(p.adoptedName||p.alias||'—'));
-  set('coverIdentity', safe(p.cover||'—'));
-  set('background', safe(p.background||'—'));
-  set('discharge', safe(p.discharge||'—'));
-  set('secret', safe(p.secretMission||'—'));
-  set('oddity', safe(p.quirk||'—'));
-  // perks
-  const perksHtml = (p.perks||[]).length ? `<ul>${p.perks.map(x=>`<li>${x}</li>`).join('')}</ul>` : '—';
-  set('perkList', perksHtml);
-  set('conText', safe(p.con||'—'));
-  // role
-  const roleName = p.role || 'Innocent Operative';
-  const roleText = {
-    'flipped_agent': {name:'The Flipped Agent', obj:'Stay hidden while sowing chaos. Frame others or recruit allies.', win:'Survive final vote OR flip another player'},
-    'handler': {name:'The Handler', obj:'Identify the traitor through investigation and deduction.', win:'Correctly identify Flipped Agent in final vote'},
-    'wildcard': {name:'The Wildcard', obj:'Survive and adapt. Align with either side for victory.', win:'Align with winning side OR complete solo objectives'},
-    'innocent': {name:'Innocent Operative', obj:'Identify the traitor and survive the final vote.', win:'Vote out the Flipped Agent OR survive to the end'}
-  }[p.role||'innocent'];
-  $('roleDescription').innerHTML = `<strong>${roleText.name}</strong><br>${roleText.obj}`;
-  $('roleObjective').innerHTML = `<strong>Victory Condition:</strong> ${roleText.win}`;
-  // ability (always visible)
-  $('abilityDescription').textContent = p.ability?.desc || '—';
-  $('abilityStatus').textContent = (p.abilityState?.usesLeft ?? 1) > 0 ? 'READY' : 'USED';
-  updateFinalNightGate();
-}
-
-/* =================== ROSTER =================== */
-function renderRoster(){
-  const box = $('rosterList'); if(!box || !app.session) return;
-  const list = app.session.players||[];
-  if(!list.length){ box.innerHTML = '<div class="muted">No agents yet.</div>'; return; }
-  box.innerHTML = list.map(p=>{
-    const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
-    const bio = safe(p.publicBio || (p.background||'').slice(0,220) + (p.background?.length>220?'…':'')) || '—';
+  const html = session.players.map(p=>{
+    const perks = (p.perks && p.perks.length) ? `<ul>${p.perks.map(x=>`<li>${x}</li>`).join('')}</ul>` : '—';
+    const bio = p.publicBio || '—';
     return `
-      <div class="roster-card">
-        <div class="flex" style="justify-content:space-between">
-          <div><strong>${safe(p.codename||p.alias||'AGENT')}</strong> — ${safe(p.realName||'Unknown')}</div>
-          <div class="small muted">${safe(p.seatToken||p.id||'')}</div>
-        </div>
-        <div class="small"><em>${safe(p.cover||'—')}</em></div>
-        <div class="small" style="margin-top:4px">${bio}</div>
-        <div class="grid grid-3" style="margin-top:8px">
-          <div><strong>Quirk:</strong><br>${safe(p.quirk||'—')}</div>
-          <div><strong>Con:</strong><br>${safe(p.con||'—')}</div>
-          <div><strong>Perks:</strong><ul>${perks}</ul></div>
+      <div style="border:1px dashed #5f27cd;border-radius:8px;padding:8px;margin:6px 0">
+        <div><strong>${p.codename || '—'}</strong> — ${p.realName || 'Unknown'}</div>
+        <div class="muted">${p.cover || ''}</div>
+        <div style="margin-top:6px"><strong>Bio:</strong> ${bio}</div>
+        <div style="margin-top:6px;display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))">
+          <div><strong>Quirk:</strong><br>${p.quirk || '—'}</div>
+          <div><strong>Con:</strong><br>${p.con || '—'}</div>
+          <div><strong>Perks:</strong><br>${perks}</div>
         </div>
       </div>
     `;
   }).join('');
+  setHTML('roster', html);
 }
 
-/* =================== SELECTS =================== */
-function populateSelectors(){
-  const others = (app.session?.players||[]).filter(p=> !app.me || p.id!==app.me.id);
-  const fill = (id, allowSelf=false)=>{
-    const sel = $(id); if(!sel) return;
-    sel.innerHTML = '<option value="">— Select —</option>';
-    (allowSelf? (app.session?.players||[]) : others).forEach(p=>{
-      const opt=document.createElement('option');
-      opt.value=p.seatToken||p.id;
-      opt.textContent=`${p.codename||p.alias||'AGENT'} (${p.realName||'Unknown'})`;
-      sel.appendChild(opt);
-    });
-  };
-  fill('abilityTargetSelect');
-  fill('actionTarget');
-  fill('scanSelect');
-  const sus = $('suspectSelect');
-  if(sus){
-    sus.innerHTML = '<option value="">Select your suspect...</option>';
-    others.forEach(p=>{
-      const o=document.createElement('option');
-      o.value=p.seatToken||p.id;
-      o.textContent=`${p.codename||p.alias||'AGENT'} (${p.realName||'Unknown'})`;
-      sus.appendChild(o);
-    });
-  }
+function renderProfile(player){
+  if (!player) return;
+  setText('codename', player.codename || '—');
+  setText('playerId', player.id || '—');
+  setText('role', player.role || '—');
+  setText('cover', player.cover || '—');
+  setText('quirk', player.quirk || '—');
+  setHTML('perks', (player.perks && player.perks.length) ? `<ul>${player.perks.map(x=>`<li>${x}</li>`).join('')}</ul>` : '—');
+  setText('con', player.con || '—');
+  setText('ability', player.ability ? `${player.ability.name}: ${player.ability.desc}` : '—');
 }
 
-/* =================== ABILITY / ACTIONS =================== */
-function findByCode(code){
-  if(!code) return null;
-  return (app.session?.players||[]).find(p => (p.seatToken===code) || (p.id===code));
-}
-function abilityUse(){
-  if(!app.me) return;
-  const code = $('abilityTargetSelect').value || safe($('abilityTargetId').value).trim();
-  const target = findByCode(code);
-  const abilityName = app.me.ability?.name || 'Special Ability';
-  if(app.me.abilityState && app.me.abilityState.usesLeft<=0){ addToLog('⚠️ Ability already used today'); return; }
-  addToLog(`⚡ ${app.me.codename||app.me.realName} used "${abilityName}" on ${target? (target.codename||target.realName): '—'}`);
-  if(target){
-    pushInbox(target.id, { from: app.me.codename||app.me.realName, type:'Ability', text: app.me.ability?.desc || '' });
-    renderInbox();
-  }
-  // mark used locally; optionally inform server
-  app.me.abilityState = { usesLeft: 0, lastResetDay: new Date().toDateString() };
-  $('abilityStatus').textContent = 'USED';
-  apiEvent(app.session.id, 'ability_use', { from: app.me.id, target: target?.id||null, ability: app.me.ability?.name });
-}
-function submitAction(){
-  if(!app.me) return;
-  const type = $('actionType').value;
-  const targetCode = $('actionTarget').value;
-  const target = findByCode(targetCode);
-  const details = safe($('actionDetails').value).trim() || '(no details)';
-  const text =
-    type==='penalty'       ? `Penalty on ${target? (target.codename||target.realName):'—'} — ${details}` :
-    type==='task_complete' ? `Task complete by ${app.me.codename||app.me.realName} — ${details}` :
-    type==='murderer_act'  ? `Murderer act report by ${app.me.codename||app.me.realName} — ${details}` :
-                             `Ability note on ${target? (target.codename||target.realName):'—'} — ${details}`;
-  addToLog(`📝 ${text}`);
-  if(target){ pushInbox(target.id, { from: app.me.codename||app.me.realName, type: 'Report', text: details }); renderInbox(); }
-  apiEvent(app.session.id, 'action', { type, from: app.me.id, target: target?.id||null, details });
-  $('actionDetails').value=''; $('actionTarget').value='';
-}
-$('btnUseAbility')?.addEventListener('click', (e)=>{ e.preventDefault(); abilityUse(); });
-$('btnSubmitAction')?.addEventListener('click', (e)=>{ e.preventDefault(); submitAction(); });
-
-/* =================== MISSIONS =================== */
-const challengeDeck = [
-  { id:"goggle_dinner", text:"Wear ski goggles to dinner; never explain why", reward:"Perk refresh + basic intel" },
-  { id:"tactical_drinking", text:"Shotgun beer if called out for saying 'tactical'", reward:"Scan immunity for 2 hours" },
-  { id:"cia_inquiry", text:"Ask 3 strangers where the CIA safehouse is", reward:"Learn one player's role type" },
-  { id:"snowball_diplomacy", text:"Challenge someone to snowball duel; loser does shoey", reward:"Force challenge redraw" },
-  { id:"mystery_artifact", text:"Bring random item to bar; convince stranger it's priceless", reward:"Bonus ability usage" },
-  { id:"room_recon", text:"Gain legitimate access to someone else's room for 15 min", reward:"Deep scan ability" },
-  { id:"accent_acquisition", text:"Speak only in fake Russian accent for 3 hours", reward:"Counter-intel for 24h" },
-  { id:"fashion_police", text:"Critique outfits using military terminology", reward:"Learn Coil intel fragment" },
-  { id:"surveillance_photo", text:"Take candid photo of each player undetected", reward:"Identity protection" },
-  { id:"loyalty_test", text:"Get someone to break a minor rule for you", reward:"Recruitment ability" }
-];
-
-function drawChallenge(){
-  if(!app.me) return;
-  // If there is an active mission, re-draw = fail previous (group can penalize)
-  if(app.me.missions?.active){
-    addToLog(`⚠️ Previous mission auto-marked as failed by redraw: "${app.me.missions.active}"`);
-    apiEvent(app.session.id, 'mission_failed', { player: app.me.id, text: app.me.missions.active });
-  }
-  const available = challengeDeck.filter(c => !(app.me.completedChallenges||[]).includes(c.id));
-  const ch = available[Math.floor(Math.random()*available.length)] || challengeDeck[Math.floor(Math.random()*challengeDeck.length)];
-  app.me.missions = app.me.missions || { active:null, count:0 };
-  app.me.missions.active = ch.text;
-  $('challengeText').textContent = ch.text;
-  $('rewardText').textContent = ch.reward;
-  $('challengeReward').classList.remove('hidden');
-  $('btnCompleteMission').disabled = false;
-  addToLog(`📋 New mission: "${ch.text}"`);
-  apiEvent(app.session.id, 'mission_assign', { player: app.me.id, id: ch.id });
-}
-function completeChallenge(){
-  if(!app.me || !app.me.missions?.active) return;
-  const text = app.me.missions.active;
-  app.me.missions.count = (app.me.missions.count||0)+1;
-  app.me.missions.active = null;
-  $('challengeText').textContent = 'Mission completed! Request new assignment when ready.';
-  $('btnCompleteMission').disabled = true;
-  $('challengeReward').classList.add('hidden');
-  // progress UI
-  const pct = Math.min(100, (app.me.missions.count/10)*100);
-  $('challengeProgress').style.width = pct+'%';
-  addToLog(`✅ Mission completed: "${text}"`);
-  apiEvent(app.session.id, 'mission_complete', { player: app.me.id, text });
-}
-$('btnDrawChallenge')?.addEventListener('click', (e)=>{ e.preventDefault(); drawChallenge(); });
-$('btnCompleteMission')?.addEventListener('click', (e)=>{ e.preventDefault(); completeChallenge(); });
-
-/* =================== SCAN / ACCUSE =================== */
-function finalNightOpen(){
-  const ts = app.session?.finalNightAt;
-  return ts && now() >= ts;
-}
-function updateFinalNightGate(){
-  const gate = $('scannerBlock'), note = $('scanGateNotice');
-  if(!gate || !note) return;
-  if(!app.session?.finalNightAt){
-    gate.style.opacity = '.5';
-    Array.from(gate.querySelectorAll('button,input,select')).forEach(el=> el.disabled = true);
-    note.textContent='Set Final Night in GM console to unlock later.';
-    return;
-  }
-  const open = finalNightOpen();
-  gate.style.opacity = open ? '1' : '.5';
-  Array.from(gate.querySelectorAll('button,input,select')).forEach(el=> el.disabled = !open);
-  note.textContent = open ? '✅ Scans & accusations are UNLOCKED.' : `🔒 Locked until ${fmt(app.session.finalNightAt)}`;
-  const tDiv = $('timers');
-  if(tDiv) tDiv.textContent = `Final Night: ${fmt(app.session.finalNightAt)}`;
-}
-function performScan(target){
-  const lines = [
-    `Quirk check: ${target.quirk||'—'}`,
-    `Challenge status: ${(target.missions?.count||0)>0 ? 'Active recently' : 'No recent activity'}`,
-    `Behavioral read: ${target.role==='flipped_agent' ? 'deceptive cues' : 'standard stress markers'}`,
-    `Equipment: carrying ${Math.floor(Math.random()*5)+1} suspicious items`,
-    `Comms: ${target.role==='handler' ? 'encrypted chatter' : 'normal traffic'}`,
-    `Psyche: ${['High stress','Deceptive patterns','Loyalty normal','Paranoia elevated','Combat ready','Trust compromised'][Math.floor(Math.random()*6)]}`
-  ];
-  return lines[Math.floor(Math.random()*lines.length)];
-}
-function scanAgent(){
-  if(!finalNightOpen()){ addToLog('⛔ Scans locked until Final Night'); return; }
-  const code = $('scanSelect').value || safe($('scanInput').value).trim();
-  const tgt = findByCode(code);
-  if(!tgt){ alert('Pick a target or type a valid Agent Code'); return; }
-  const result = performScan(tgt);
-  addToLog(`🔍 Scanned ${tgt.codename||tgt.realName}: ${result}`);
-  apiEvent(app.session.id, 'scan', { from: app.me.id, target: tgt.id, result });
-}
-function accuseAgent(){
-  if(!finalNightOpen()){ addToLog('⛔ Accusations locked until Final Night'); return; }
-  const code = $('scanSelect').value || safe($('scanInput').value).trim();
-  const tgt = findByCode(code);
-  if(!tgt){ alert('Pick a target or type a valid Agent Code'); return; }
-  if(!confirm(`Accuse ${tgt.codename||tgt.realName}?`)) return;
-  addToLog(`🚨 FORMAL ACCUSATION: ${app.me.codename||app.me.realName} → ${tgt.codename||tgt.realName}`);
-  apiEvent(app.session.id, 'accuse', { from: app.me.id, target: tgt.id });
-  // optionally reveal voting block
-  triggerFinalVote();
-}
-function triggerFinalVote(){
-  $('finalVote').style.display = 'block';
-  const sel = $('suspectSelect');
-  sel.innerHTML = '<option value="">Select your suspect...</option>';
-  (app.session?.players||[]).filter(p=>p.id!==app.me.id).forEach(p=>{
-    const o=document.createElement('option');
-    o.value=p.seatToken||p.id; o.textContent=`${p.codename||p.alias||'AGENT'} (${p.realName||'Unknown'})`;
-    sel.appendChild(o);
-  });
-}
-function castFinalVote(){
-  const code = $('suspectSelect').value;
-  const tgt = findByCode(code);
-  if(!tgt){ alert('Select a suspect'); return; }
-  addToLog(`🗳️ Vote cast by ${app.me.codename||app.me.realName} → ${tgt.codename||tgt.realName}`);
-  apiEvent(app.session.id, 'vote', { from: app.me.id, target: tgt.id });
-  $('finalVote').innerHTML = '<h3>Vote Submitted</h3><p>Awaiting results from other operatives...</p>';
-}
-$('btnScan')?.addEventListener('click', (e)=>{ e.preventDefault(); scanAgent(); });
-$('btnAccuse')?.addEventListener('click', (e)=>{ e.preventDefault(); accuseAgent(); });
-$('btnVote')?.addEventListener('click', (e)=>{ e.preventDefault(); castFinalVote(); });
-
-/* =================== POLLING =================== */
-async function poll(){
-  if(!app.session?.id) return;
+/* ========= event handlers ========= */
+async function onCreate(){
+  $('btnCreate').disabled = true;
+  setText('gmStatus','Creating…');
   try{
-    const data = await apiGetGame(app.session.id);
-    app.session = data.session;
-    // keep my reference fresh
-    if(app.me){
-      const fresh = app.session.players?.find(p=>p.id===app.me.id);
-      if(fresh) app.me = fresh;
+    const limit = $('playerLimit').value;
+    const when  = $('finalNightAt').value; // optional
+    const out = await apiCreateGame(limit, when);
+    const sessionId = out.sessionId;
+    saveSession(sessionId);
+    savePlayer(''); // clear
+    setText('gmStatus','');
+    setText('sessionOut', sessionId);
+    show('shareBlock', true);
+    log(`Game created: ${sessionId}`, 'ok');
+  }catch(e){
+    setText('gmStatus','');
+    log(`Create failed: ${e.message}`, 'err');
+    alert(`Create Game failed: ${e.message}`);
+  }finally{
+    $('btnCreate').disabled = false;
+  }
+}
+
+async function onLoad(){
+  const s = prompt('Enter existing Game Key:');
+  if(!s) return;
+  try{
+    const out = await apiLoadSession(s);
+    saveSession(s);
+    savePlayer(''); // not joined yet
+    setText('sessionOut', s);
+    show('shareBlock', true);
+    renderRoster(out.session);
+    show('rosterPanel', true);
+    log(`Loaded session ${s}`, 'ok');
+  }catch(e){
+    log(`Load failed: ${e.message}`, 'err');
+    alert(`Load failed: ${e.message}`);
+  }
+}
+
+async function onJoin(){
+  $('btnJoin').disabled = true;
+  setText('joinStatus','Joining…');
+  try{
+    const name = $('joinName').value.trim();
+    const sess = $('joinSession').value.trim() || getSession();
+    if(!name || !sess){
+      setText('joinStatus',''); $('btnJoin').disabled = false;
+      return alert('Enter your name and the game key.');
     }
-    renderRoster();
-    populateSelectors();
-    renderInbox();
-    updateFinalNightGate();
-  }catch(e){ /* ignore transient errors */ }
-}
-function startPolling(){
-  if(app.pollHandle) clearInterval(app.pollHandle);
-  app.pollHandle = setInterval(poll, 6000);
-  poll();
+    const out = await apiJoin(sess, name);
+    saveSession(sess);
+    savePlayer(out.player.id);
+    // Show profile + roster
+    renderProfile(out.player);
+    renderRoster(out.session);
+    show('profilePanel', true);
+    show('rosterPanel', true);
+    setText('joinStatus','');
+    log(`Joined ${sess} as ${out.player.codename || name}`, 'ok');
+  }catch(e){
+    setText('joinStatus','');
+    log(`Join failed: ${e.message}`, 'err');
+    alert(`Join failed: ${e.message}`);
+  }finally{
+    $('btnJoin').disabled = false;
+  }
 }
 
-/* =================== WIRING / HOTFIX =================== */
+async function onRefreshRoster(){
+  const s = getSession();
+  if(!s){ return alert('No session to refresh.'); }
+  try{
+    const out = await apiLoadSession(s);
+    renderRoster(out.session);
+    show('rosterPanel', true);
+    log('Roster refreshed', 'ok');
+  }catch(e){
+    log(`Refresh failed: ${e.message}`, 'err');
+  }
+}
+
+function onLeaveLocal(){
+  // local-only clear (doesn't call server; keeps your central model intact)
+  savePlayer('');
+  log('Left locally (session remains active on server).','ok');
+  alert('Local data cleared. You can join again with your Name + Game Key.');
+}
+
+/* ========= boot ========= */
 document.addEventListener('DOMContentLoaded', ()=>{
-  // GM
-  $('btnCreate')?.addEventListener('click', (e)=>{ e.preventDefault(); gmCreate(); });
-  $('btnLoadExisting')?.addEventListener('click', (e)=>{ e.preventDefault(); gmLoadExisting(); });
-  $('btnGoJoin')?.addEventListener('click', (e)=>{ e.preventDefault(); $('onboarding').classList.remove('hidden'); $('gameSetup').classList.add('hidden'); });
+  $('btnCreate').addEventListener('click', onCreate);
+  $('btnLoad').addEventListener('click', onLoad);
+  $('btnJoin').addEventListener('click', onJoin);
+  $('btnRefresh').addEventListener('click', onRefreshRoster);
+  $('btnLeave').addEventListener('click', onLeaveLocal);
 
-  // Join wiring (HOTFIX)
-  $('btnJoin')?.addEventListener('click', (e)=>{ e.preventDefault(); joinGame(); });
-  window.joinGame = joinGame; // expose globally in case inline handlers exist
-
-  // Roster refresh
-  $('btnRefreshRoster')?.addEventListener('click', (e)=>{ e.preventDefault(); poll(); });
-
-  // Try boot from local/session
-  bootFromLocal();
+  // Try to resume minimal state
+  const s = getSession();
+  if (s){
+    apiLoadSession(s).then(out=>{
+      setText('sessionOut', s);
+      show('shareBlock', true);
+      renderRoster(out.session);
+      show('rosterPanel', true);
+      log(`Session ${s} loaded (resume)`, 'ok');
+    }).catch(()=>{ /* ignore */ });
+  }
 });
 </script>
 </body>
