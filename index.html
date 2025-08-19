@@ -462,4 +462,538 @@ const CHARACTERS = [
 /* ========== derived character from seat ========== */
 function pickCharacterForSeat(seatKey){
   let h = 0; for(const c of seatKey) h = (h*31 + c.charCodeAt(0)) >>> 0;
-  const base =
+  const base = CHARACTERS[h % CHARACTERS.length];
+  return JSON.parse(JSON.stringify(base));
+}
+
+/* ========== role assignment ========== */
+function assignRoles(players) {
+  const roles = ['flipped_agent']; // Ensure one murderer
+  const otherRoles = ['handler', 'wildcard', 'innocent'];
+  
+  // Fill remaining slots
+  while (roles.length < players.length) {
+    roles.push(pick(otherRoles));
+  }
+  
+  // Shuffle roles
+  for (let i = roles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [roles[i], roles[j]] = [roles[j], roles[i]];
+  }
+  
+  return roles;
+}
+
+/* ========== state ========== */
+let gameState = {};
+let currentPlayer = null;
+
+/* ========== Mock API for testing ========== */
+// This is a simple in-memory storage for testing purposes
+// Replace this with your actual backend API calls
+let mockGameData = {};
+
+async function api(op, body={}){
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  if(op === 'get'){
+    const game = mockGameData[body.id];
+    if(!game) return { ok: false, error: 'Game not found' };
+    return { ok: true, session: game };
+  }
+  
+  if(op === 'create'){
+    const { sessionId, playerLimit, finalNightAt } = body;
+    if(!sessionId) return { ok: false, error: 'Session ID required' };
+    
+    // Generate seats
+    const seats = [];
+    for(let i = 0; i < playerLimit; i++){
+      seats.push({
+        token: generateSeatToken(),
+        claimed: false
+      });
+    }
+    
+    const game = {
+      id: sessionId,
+      playerLimit,
+      finalNightAt,
+      players: [],
+      gameLog: [{ ts: Date.now(), msg: `Game ${sessionId} created with ${playerLimit} seats.` }],
+      seats
+    };
+    
+    mockGameData[sessionId] = game;
+    return { ok: true, session: game, seats };
+  }
+  
+  if(op === 'join'){
+    const { sessionId, seatToken, playerName, character } = body;
+    const game = mockGameData[sessionId];
+    if(!game) return { ok: false, error: 'Game not found' };
+    
+    // Check if seat exists and is available
+    const seat = game.seats?.find(s => s.token === seatToken);
+    if(!seat) return { ok: false, error: 'Invalid seat token' };
+    if(seat.claimed) return { ok: false, error: 'Seat already taken' };
+    
+    // Check if game is full
+    if(game.players.length >= game.playerLimit) {
+      return { ok: false, error: 'Game is full' };
+    }
+    
+    // Create player
+    const player = {
+      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      realName: playerName || 'Anonymous Agent',
+      seatToken,
+      ...character,
+      missions: { active: null, count: 0 },
+      abilityState: { usesLeft: character.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }
+    };
+    
+    // Assign roles if this is the last player
+    if(game.players.length === game.playerLimit - 1) {
+      const allPlayers = [...game.players, player];
+      const roles = assignRoles(allPlayers);
+      allPlayers.forEach((p, i) => p.role = roles[i]);
+    }
+    
+    game.players.push(player);
+    seat.claimed = true;
+    
+    game.gameLog.push({ 
+      ts: Date.now(), 
+      msg: `🎭 ${player.codename} (${player.realName}) joined the operation.` 
+    });
+    
+    return { ok: true, session: game, player };
+  }
+  
+  if(op === 'event'){
+    const { sessionId, msg } = body;
+    const game = mockGameData[sessionId];
+    if(!game) return { ok: false, error: 'Game not found' };
+    
+    game.gameLog.push({ ts: Date.now(), msg });
+    return { ok: true };
+  }
+  
+  if(op === 'update_player'){
+    const { sessionId, playerId, patch } = body;
+    const game = mockGameData[sessionId];
+    if(!game) return { ok: false, error: 'Game not found' };
+    
+    const player = game.players.find(p => p.id === playerId);
+    if(!player) return { ok: false, error: 'Player not found' };
+    
+    Object.assign(player, patch);
+    return { ok: true, player };
+  }
+  
+  return { ok: false, error: 'Unknown operation' };
+}
+
+function generateSeatToken() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let token = '';
+  for(let i = 0; i < 4; i++) {
+    token += chars[Math.floor(Math.random() * chars.length)];
+  }
+  token += '-';
+  for(let i = 0; i < 4; i++) {
+    token += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return token;
+}
+
+async function postEvent(msg){
+  const id = gameState.id || localStorage.getItem('session');
+  if(!id) return;
+  try{ 
+    await api('event', { sessionId: id, msg }); 
+    await refreshState(); // Refresh to show the new event
+  } catch(e) {
+    console.error('Failed to post event:', e);
+  }
+}
+
+async function updateMe(patch){
+  const sessionId = gameState.id || localStorage.getItem('session');
+  const playerId = currentPlayer?.id || localStorage.getItem('playerId');
+  if(!sessionId || !playerId) return;
+  try{
+    const res = await api('update_player', { sessionId, playerId, patch });
+    if(res?.ok && res.player){ 
+      currentPlayer = res.player; 
+      renderDossier(); // Update UI immediately
+    }
+  } catch(e) {
+    console.error('Failed to update player:', e);
+  }
+}
+
+/* ========== GM actions ========== */
+async function createGame(){
+  const sessionId = ($('sessionId').value||'').toUpperCase().trim();
+  const playerLimit = Number($('playerCount').value||6);
+  const finalNightAt = $('finalNightAt').value ? new Date($('finalNightAt').value).getTime() : null;
+
+  if(!sessionId) {
+    uiMsg('gmMsg', '❌ Please enter a game key');
+    return;
+  }
+
+  const res = await api('create', { sessionId, playerLimit, finalNightAt });
+  if(!res.ok){ 
+    uiMsg('gmMsg','❌ '+(res.error||'Create failed')); 
+    return; 
+  }
+
+  localStorage.setItem('gm_session', res.session.id);
+  uiMsg('gmMsg', `✅ Game ${res.session.id} created with ${res.session.playerLimit} seats`);
+  $('gameKeyLogin').value = res.session.id;
+  renderSeats(res.seats||[]);
+  await refreshState();
+}
+
+function renderSeats(seats){
+  if(!seats || seats.length === 0) return;
+  $('seatList').innerHTML = seats.map(s=>`
+    <div class="card">
+      <div><strong>${s.token}</strong></div>
+      <div class="small muted">${s.claimed ? 'Claimed' : 'Open'}</div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn sec" style="padding:6px 10px" onclick="copyText('${s.token}')">Copy</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copyGameLink(){
+  const id = $('sessionId').value || localStorage.getItem('gm_session') || '';
+  if(!id){ 
+    uiMsg('gmMsg','No game key yet.'); 
+    return; 
+  }
+  const url = `${location.origin}${location.pathname}?session=${encodeURIComponent(id)}`;
+  copyText(url);
+  uiMsg('gmMsg','Copied join link (key only).');
+}
+
+/* ========== Player actions ========== */
+async function joinGame(){
+  const sessionId = ($('gameKeyLogin').value||'').toUpperCase().trim();
+  const seatToken = ($('seatKey').value||'').toUpperCase().trim();
+  const playerName = ($('playerName').value||'').trim();
+  
+  if(!sessionId || !seatToken){ 
+    uiMsg('loginMsg','Enter game key and seat key'); 
+    return; 
+  }
+
+  const char = pickCharacterForSeat(seatToken);
+  char.adoptedName = char.alias;
+
+  const res = await api('join', { sessionId, seatToken, playerName, character: char });
+  if(!res.ok){ 
+    uiMsg('loginMsg','❌ '+(res.error||'Join failed')); 
+    return; 
+  }
+
+  localStorage.setItem('session', res.session.id);
+  localStorage.setItem('seatToken', seatToken);
+  localStorage.setItem('playerId', res.player.id);
+
+  currentPlayer = res.player;
+  gameState = res.session;
+  await refreshState();
+  showDashboard();
+  uiMsg('loginMsg', '✅ Successfully joined the operation!');
+}
+
+async function refreshState(){
+  const id = localStorage.getItem('session') || localStorage.getItem('gm_session') || ($('sessionId').value||'').toUpperCase();
+  if(!id) return;
+  
+  const res = await api('get', { id });
+  if(!res.ok) {
+    console.error('Failed to refresh state:', res.error);
+    return;
+  }
+  
+  gameState = res.session || {};
+
+  const myId = localStorage.getItem('playerId');
+  if(myId) {
+    currentPlayer = (gameState.players||[]).find(p=>p.id===myId) || currentPlayer;
+  }
+
+  renderRoster();
+  renderLog();
+  if(currentPlayer) renderDossier();
+  populateTargets();
+  if(res.seats) renderSeats(res.seats);
+}
+
+function showDashboard(){
+  $('gmPanel').classList.add('hidden');
+  $('loginPanel').classList.add('hidden');
+  $('dashPanel').classList.remove('hidden');
+  $('gameKeyText').textContent = gameState.id || localStorage.getItem('session') || '—';
+  $('finalNightText').textContent = gameState.finalNightAt ? new Date(gameState.finalNightAt).toLocaleString() : '—';
+}
+
+function leaveSeat(){
+  localStorage.removeItem('session');
+  localStorage.removeItem('seatToken');
+  localStorage.removeItem('playerId');
+  currentPlayer = null;
+  gameState = {};
+  location.reload();
+}
+
+/* ========== Renderers ========== */
+function renderDossier(){
+  if(!currentPlayer) return;
+  const p = currentPlayer;
+  $('codenameText').textContent = p.codename || 'OPERATIVE';
+  $('agentIdText').textContent = p.id || '—';
+  $('realNameText').textContent = p.realName || '—';
+  $('aliasText').textContent = p.adoptedName || p.alias || '—';
+  $('coverText').textContent = p.cover || '—';
+  $('backgroundText').textContent = p.background || '—';
+  $('dischargeText').textContent = p.discharge || '—';
+  $('secretMissionText').textContent = p.secretMission || '—';
+  $('quirkText').textContent = p.quirk || '—';
+  $('conText').textContent = p.con || '—';
+
+  const role = ROLES[p.role] || {name:p.role||'—', obj:'—', win:'—'};
+  $('roleText').textContent = role.name;
+  $('roleObjective').textContent = role.obj;
+  $('roleWin').textContent = role.win;
+
+  const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+  $('perkList').innerHTML = perks;
+
+  $('abilityName').innerHTML = `<strong>${p.ability?.name||'—'}</strong>`;
+  $('abilityDesc').textContent = p.ability?.desc || '—';
+
+  const usesLeft = abilityUsesLeft();
+  $('abilityUsesLeft').textContent = usesLeft;
+  const b = $('abilityBadge');
+  b.className = 'badge ' + (usesLeft>0 ? 'b-ready':'b-used');
+  b.textContent = usesLeft>0 ? 'READY':'USED';
+
+  // Update mission display
+  const missions = p.missions || { active: null, count: 0 };
+  $('missionText').textContent = missions.active || 'None. Request one below.';
+  $('missionCount').textContent = missions.count || 0;
+}
+
+function renderRoster(){
+  const list = gameState.players || [];
+  $('rosterList').innerHTML = list.length ? list.map(p=>{
+    const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+    const me = (currentPlayer && p.id===currentPlayer.id) ? ' (you)' : '';
+    return `
+      <div class="card" style="margin:8px 0">
+        <div class="row" style="justify-content:space-between">
+          <div><strong class="code">${p.codename}</strong> — ${p.realName}${me}</div>
+          <div class="small muted">${p.id}</div>
+        </div>
+        <div class="small">${p.cover||''}</div>
+        <div class="grid g3" style="margin-top:8px">
+          <div><div class="small muted">Public Bio</div>${p.publicBio||'—'}</div>
+          <div><div class="small muted">Quirk</div>${p.quirk||'—'}</div>
+          <div><div class="small muted">Con</div>${p.con||'—'}</div>
+        </div>
+        <div style="margin-top:6px"><div class="small muted">Perks</div><ul style="margin:6px 0 0 18px">${perks}</ul></div>
+      </div>
+    `;
+  }).join('') : '<div class="muted">No agents yet.</div>';
+}
+
+function renderLog(){
+  const log = gameState.gameLog || [];
+  const recent = log.slice(-50); // Show last 50 events
+  $('logView').innerHTML = recent.length ? recent.map(l=>
+    `<div class="line"><strong>[${new Date(l.ts).toLocaleTimeString()}]</strong> ${l.msg}</div>`
+  ).join('') : '<div class="muted">No events yet.</div>';
+  
+  // Auto-scroll to bottom
+  const el = $('logView'); 
+  if(el) el.scrollTop = el.scrollHeight;
+}
+
+function populateTargets(){
+  const others = (gameState.players||[]).filter(p=>!currentPlayer || p.id!==currentPlayer.id);
+  const fill = (id)=>{ 
+    const sel=$(id); 
+    if(!sel) return;
+    sel.innerHTML = '<option value="">— Select —</option>';
+    others.forEach(p=>{
+      const o=document.createElement('option'); 
+      o.value=p.id; 
+      o.textContent=`${p.codename} (${p.realName})`; 
+      sel.appendChild(o); 
+    });
+  };
+  fill('abilityTargetSelect'); 
+  fill('actionTarget');
+}
+
+/* ========== Ability logic ========== */
+function dayKey(){ 
+  const d=new Date(); 
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; 
+}
+
+function abilityUsesLeft(){
+  if(!currentPlayer) return 0;
+  const st = currentPlayer.abilityState || {
+    usesLeft: (currentPlayer.ability?.usesPerDay ?? 1), 
+    lastResetDay: dayKey()
+  };
+  
+  if(st.lastResetDay !== dayKey()){
+    st.lastResetDay = dayKey();
+    st.usesLeft = currentPlayer.ability?.usesPerDay ?? 1;
+    currentPlayer.abilityState = st;
+    updateMe({abilityState: st});
+  }
+  return st.usesLeft ?? 0;
+}
+
+async function useAbility(){
+  if(!currentPlayer?.ability) return;
+  const left = abilityUsesLeft();
+  if(left <= 0){ 
+    await postEvent(`⚠️ ${currentPlayer.codename} tried to use ability but has no uses left.`); 
+    return; 
+  }
+
+  const selId = $('abilityTargetSelect').value || '';
+  const typed = ($('abilityTargetId').value||'').trim();
+  const target = (gameState.players||[]).find(p=> p.id === (selId||typed));
+  const tLabel = target ? `${target.codename} (${target.realName})` : '—';
+
+  const st = currentPlayer.abilityState || {usesLeft:1,lastResetDay:dayKey()};
+  st.usesLeft = Math.max(0, (st.usesLeft??1)-1);
+  currentPlayer.abilityState = st;
+  
+  await updateMe({abilityState:st});
+  await postEvent(`⚡ ${currentPlayer.codename} used "${currentPlayer.ability.name}" on ${tLabel}.`);
+  
+  $('abilityTargetId').value='';
+  $('abilityTargetSelect').value='';
+}
+
+/* ========== Missions ========== */
+function ensureMissionState(){
+  if(!currentPlayer.missions) {
+    currentPlayer.missions = {active:null, count:0};
+  }
+  return currentPlayer.missions;
+}
+
+async function requestMission(){
+  const ms = ensureMissionState();
+  if(ms.active){ 
+    await postEvent(`${currentPlayer.codename} requested new mission without completing previous → group consensus penalty?`); 
+  }
+  ms.active = pick(MISSIONS);
+  await updateMe({missions:ms});
+  await postEvent(`📋 ${currentPlayer.codename} drew a mission: "${ms.active}"`);
+}
+
+async function completeMission(){
+  const ms = ensureMissionState();
+  if(!ms.active){ 
+    await postEvent(`${currentPlayer.codename} tried to complete a mission but has none active.`);
+    return; 
+  }
+  await postEvent(`✅ ${currentPlayer.codename} completed mission: "${ms.active}"`);
+  ms.active = null; 
+  ms.count = (ms.count||0)+1;
+  await updateMe({missions:ms});
+}
+
+async function failMission(){
+  const ms = ensureMissionState();
+  if(!ms.active){ 
+    await requestMission(); 
+    return; 
+  }
+  await postEvent(`❌ ${currentPlayer.codename} failed mission: "${ms.active}" — new mission requested.`);
+  ms.active = pick(MISSIONS);
+  await updateMe({missions:ms});
+}
+
+/* ========== Actions ========== */
+function labelFor(id){ 
+  const p=(gameState.players||[]).find(x=>x.id===id); 
+  return p ? `${p.codename} (${p.realName})` : (id||'—'); 
+}
+
+async function submitAction(){
+  if(!currentPlayer) return;
+  
+  const type = $('actionType').value;
+  const target = $('actionTarget').value;
+  const details = ($('actionDetails').value||'(no details)').trim();
+  let text = '';
+  
+  if(type==='penalty') {
+    text = `🔍 Penalty on ${labelFor(target)} — ${details}`;
+  } else if(type==='task_complete') {
+    text = `🔍 Task complete by ${currentPlayer.codename} — ${details}`;
+  } else if(type==='murderer_act') {
+    text = `🔍 Murderer act report by ${currentPlayer.codename} — ${details}`;
+  } else {
+    text = `🔍 Ability use by ${currentPlayer.codename} on ${labelFor(target)} — ${details}`;
+  }
+  
+  await postEvent(text);
+  $('actionDetails').value=''; 
+  $('actionTarget').value='';
+}
+
+/* ========== boot / auto-rejoin ========== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  const qs = new URLSearchParams(location.search);
+  const urlSession = (qs.get('session')||'').toUpperCase();
+  if(urlSession){
+    $('sessionId').value = urlSession;
+    $('gameKeyLogin').value = urlSession;
+    localStorage.setItem('gm_session', urlSession);
+  }
+
+  const session = localStorage.getItem('session');
+  const seatToken = localStorage.getItem('seatToken');
+  const playerId = localStorage.getItem('playerId');
+  
+  if(session && seatToken && playerId){
+    try{
+      await refreshState();
+      if(gameState.players?.find(p => p.id === playerId)) {
+        showDashboard();
+      }
+    } catch(e) { 
+      console.error('Auto-rejoin failed:', e);
+    }
+  } else {
+    const gm = localStorage.getItem('gm_session');
+    if(gm){ 
+      $('sessionId').value = gm; 
+      $('gameKeyLogin').value = gm; 
+      await refreshState(); 
+    }
+  }
+});
+</script>
+</body>
+</html>
