@@ -46,6 +46,29 @@
 </head>
 <body>
 <div class="wrap">
+  <!-- Add just below <div class="wrap"> -->
+<div id="quickJoin" class="section" style="display:none; border-left-color:#f39c12">
+  <h3 class="title">Quick Join</h3>
+  <div class="grid g3">
+    <div>
+      <label class="small">Game Key</label>
+      <input id="qj_session" placeholder="e.g. QT1">
+    </div>
+    <div>
+      <label class="small">Seat Key</label>
+      <input id="qj_seat" placeholder="ABCD-1234">
+    </div>
+    <div>
+      <label class="small">Your Name</label>
+      <input id="qj_name" placeholder="Your name">
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn" id="qj_btn">Claim Seat</button>
+  </div>
+  <div class="muted" id="qj_msg" style="margin-top:6px"></div>
+</div>
+
   <h2 class="title">🧾 AGENT DASHBOARD</h2>
 
   <!-- dossier -->
@@ -548,6 +571,54 @@ async function submitAction(){
   else text=`📝 Ability use by ${me.codename} on ${labelFor(target)} — ${details}`;
   await postEvent(text); $('actionDetails').value=''; $('actionTarget').value='';
 }
+<script>
+  // show overlay if there’s no seat in localStorage
+  function showQuickJoinIfNeeded(){
+    const seat = localStorage.getItem('seatToken');
+    const session = localStorage.getItem('session') || new URLSearchParams(location.search).get('session') || '';
+    if(!seat){
+      document.getElementById('quickJoin').style.display = '';
+      document.getElementById('qj_session').value = (session||'').toUpperCase();
+    }
+  }
+
+  async function quickJoin(){
+    const sessionId = (document.getElementById('qj_session').value||'').toUpperCase().trim();
+    const seatToken  = (document.getElementById('qj_seat').value||'').toUpperCase().trim();
+    const playerName = (document.getElementById('qj_name').value||'').trim();
+    const msg = t => document.getElementById('qj_msg').textContent = t;
+
+    if(!sessionId || !seatToken){ msg('Enter game key + seat key'); return; }
+
+    // same deterministic character pack as index.html
+    function pickChar(seat){
+      let h=0; for(const c of seat) h=(h*31 + c.charCodeAt(0))>>>0;
+      return JSON.parse(JSON.stringify(CHARACTERS[h % CHARACTERS.length]));
+    }
+    const ch = pickChar(seatToken); ch.adoptedName = ch.alias;
+
+    const res = await api('join', {
+      sessionId, seatToken, playerName,
+      character: ch,
+      abilityState: { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }
+    });
+
+    if(!res.ok){ msg('Join failed: '+(res.error||'')); return; }
+
+    localStorage.setItem('session', res.session.id);
+    localStorage.setItem('seatToken', seatToken);
+    localStorage.setItem('playerId', res.player.id);
+    localStorage.setItem('playerName', playerName||'');
+    document.getElementById('quickJoin').style.display='none';
+    await refreshState(); startPoll();
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    showQuickJoinIfNeeded();
+    const btn = document.getElementById('qj_btn');
+    if(btn) btn.onclick = quickJoin;
+  });
+</script>
 
 /* ===== refresh/poll ===== */
 async function refreshState(){
