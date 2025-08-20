@@ -195,12 +195,19 @@ export default async function handler(req, res) {
       const p = (sess.players || []).find(x => x.id === playerId);
       if (!p) return res.status(404).json({ ok: false, error: 'player not found' });
 
-      const allowed = new Set([
-        'abilityState', 'missions',
-        'challengesCompleted', 'completedChallenges', 'activeChallenge',
-        'abilityUsed', 'scanImmunityUntil',
-        'realName', 'adoptedName'
-      ]);
+const allowed = new Set([
+  // state
+  'abilityState', 'missions',
+  'challengesCompleted', 'completedChallenges', 'activeChallenge',
+  'abilityUsed', 'scanImmunityUntil',
+
+  // identity / display
+  'realName', 'adoptedName', 'alias', 'codename',
+
+  // character pack
+  'cover', 'publicBio', 'privateBio', 'background', 'discharge',
+  'secretMission', 'perks', 'quirk', 'con', 'ability', 'role'
+]);
       for (const k of Object.keys(patch)) if (allowed.has(k)) p[k] = patch[k];
 
       await putSession(sess);
