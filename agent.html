@@ -1,142 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Agent Dashboard · Dishonourable Discharge</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agent Console — Dishonourable Discharge</title>
   <style>
     :root{
       --bg:#0a0a0a; --bg2:#1a1a2e; --bg3:#16213e;
-      --red:#ff4757; --vio:#5f27cd; --vio2:#7c3aed; --ora:#ffa500; --blue:#3498db; --green:#27ae60;
-      --fg:#e0e0e0; --muted:#9bbcff;
+      --red:#ff4757; --vio:#5f27cd; --vio2:#7c3aed; --ora:#ffa500;
+      --blue:#3498db; --green:#27ae60; --fg:#e9e9ef; --muted:#9bbcff;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:'Courier New',monospace;color:var(--fg);min-height:100vh;
+    body{margin:0;font-family:'Courier New',monospace;color:var(--fg);
       background:linear-gradient(135deg,var(--bg),var(--bg2),var(--bg3));padding:18px}
-    .wrap{max-width:1100px;margin:0 auto;background:rgba(0,0,0,.92);border:2px solid var(--red);
-      border-radius:16px;padding:22px;box-shadow:0 0 40px rgba(255,71,87,.25);position:relative}
-    .stamp{position:absolute;top:20px;right:20px;background:var(--red);color:#000;
-      padding:7px 14px;border:3px solid #000;transform:rotate(10deg);font-weight:bold}
-    h1{margin:0 0 6px;color:var(--red);text-shadow:0 0 18px rgba(255,71,87,.7);letter-spacing:3px}
-    .small{color:var(--muted);font-size:.88em}
+    .wrap{max-width:1100px;margin:0 auto;background:rgba(0,0,0,.9);
+      border:2px solid var(--red);border-radius:16px;padding:22px;box-shadow:0 0 40px rgba(255,71,87,.25)}
+    .title{color:var(--red);text-transform:uppercase;letter-spacing:1px;margin:0 0 12px}
     .section{background:rgba(255,255,255,.03);border-left:4px solid var(--vio);border-radius:10px;padding:18px;margin:14px 0}
-    .title{color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+    .section.orange{border-left-color:var(--ora)}
+    .section.blue{border-left-color:var(--blue)}
     .grid{display:grid;gap:12px}
     .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
     .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    @media(max-width:920px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
-    .card{border:1px dashed var(--vio);border-radius:10px;padding:10px}
+    @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+    label.small{display:block;color:var(--muted);font-size:.86em;margin-bottom:4px}
+    .box{border:1px dashed var(--vio);border-radius:10px;padding:10px;min-height:58px}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,var(--vio),transparent);margin:12px 0}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .code{color:var(--red);font-weight:bold}
-    .btn{background:linear-gradient(45deg,var(--blue),#78a9ff);color:#000;border:none;padding:10px 14px;border-radius:8px;
-      font-weight:bold;cursor:pointer}
-    .btn.alt{background:linear-gradient(45deg,var(--vio),var(--vio2));color:#fff}
-    .btn.warn{background:linear-gradient(45deg,var(--red),#ff6b7a);color:#000}
+    .btn{background:linear-gradient(45deg,var(--red),#ff6b7a);color:#000;border:none;padding:10px 14px;border-radius:8px;
+      font-weight:bold;cursor:pointer;transition:.15s;text-transform:uppercase;letter-spacing:1px}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(255,71,87,.45)}
+    .btn.sec{background:linear-gradient(45deg,var(--vio),var(--vio2));color:#fff}
+    .btn.alt{background:linear-gradient(45deg,var(--blue),#78a9ff);color:#000}
     .btn.ghost{background:transparent;border:2px dashed var(--vio);color:var(--muted)}
-    select,input{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid var(--vio);border-radius:8px;color:var(--fg)}
+    input,select{width:100%;padding:10px;background:rgba(0,0,0,.7);border:2px solid var(--vio);border-radius:8px;color:var(--fg)}
+    ul{margin:6px 0 0 18px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:bold}
+    .b-ready{background:var(--green);color:#fff}.b-used{background:#e74c3c;color:#fff}
+    .code{color:var(--red);font-weight:bold}
     .log{max-height:280px;overflow:auto;background:rgba(0,0,0,.45);border:2px solid var(--vio);border-radius:10px;padding:12px}
     .line{border-left:3px solid var(--vio);padding-left:10px;margin:8px 0;background:rgba(95,39,205,.12);border-radius:4px}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;font-weight:bold}
-    .b-ready{background:#27ae60;color:#fff}.b-used{background:#e74c3c;color:#fff}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
+    .muted{opacity:.75}
+    .hidden{display:none}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="stamp">CLASSIFIED</div>
-  <h1>AGENT DASHBOARD</h1>
-  <div class="small">Game: <span id="gameId">—</span> · Final Night: <span id="finalNight">—</span> · You: <span id="agentId">—</span></div>
+  <h2 class="title">🧾 AGENT DASHBOARD</h2>
 
-  <div class="controls">
-    <button class="btn" id="btnRefresh">Refresh</button>
-    <button class="btn ghost" id="btnBack">Back to Login</button>
-    <button class="btn warn" id="btnLeave">Leave Seat</button>
-  </div>
-
+  <!-- dossier -->
   <div class="section">
-    <div class="title">Dossier</div>
+    <div class="row" style="justify-content:space-between">
+      <div><span class="code" id="codenameText">OPERATIVE</span> <span class="muted">(Agent ID <span id="agentIdText">—</span>)</span></div>
+      <div class="muted">Game: <span id="gameKeyText">—</span> · Final Night: <span id="finalNightText">—</span></div>
+    </div>
+    <div class="hr"></div>
+
     <div class="grid g3">
-      <div class="card">
-        <div class="small">Your Name</div><div id="realName">—</div>
-        <div class="small" style="margin-top:6px">Adopted Character Name</div><div id="adopted">—</div>
-        <div class="small" style="margin-top:6px">Cover Identity</div><div id="cover">—</div>
+      <div class="box">
+        <label class="small">Your Name</label><div id="realNameText">—</div>
+        <label class="small" style="margin-top:6px">Adopted Character Name</label><div id="aliasText">—</div>
+        <label class="small" style="margin-top:6px">Cover Identity</label><div id="coverText">—</div>
       </div>
-      <div class="card">
-        <div class="small">Operative Codename</div><div class="code" id="codename">—</div>
-        <div class="small" style="margin-top:6px">Operational Role</div><div id="role">—</div>
-        <div class="small" style="margin-top:6px">Role Objective</div><div id="roleObj">—</div>
-        <div class="small" style="margin-top:6px">Win Condition</div><div id="roleWin">—</div>
+      <div class="box">
+        <label class="small">Operational Role</label><div id="roleText">—</div>
+        <label class="small" style="margin-top:6px">Role Objective</label><div id="roleObjective">—</div>
+        <label class="small" style="margin-top:6px">Win Condition</label><div id="roleWin">—</div>
       </div>
-      <div class="card">
-        <div class="small">Secret Mission (you only)</div><div id="secret">—</div>
+      <div class="box">
+        <label class="small">Secret Mission (you only)</label><div id="secretMissionText">—</div>
       </div>
     </div>
 
     <div class="grid g2" style="margin-top:10px">
-      <div class="card"><div class="small">Background</div><div id="background">—</div></div>
-      <div class="card"><div class="small">Discharge</div><div id="discharge">—</div></div>
+      <div class="box"><label class="small">Background</label><div id="backgroundText">—</div></div>
+      <div class="box"><label class="small">Discharge</label><div id="dischargeText">—</div></div>
     </div>
 
     <div class="grid g3" style="margin-top:10px">
-      <div class="card"><div class="small">Perks</div><ul id="perks" style="margin:6px 0 0 18px"></ul></div>
-      <div class="card"><div class="small">Behavioral Quirk</div><div id="quirk">—</div></div>
-      <div class="card"><div class="small">Con</div><div id="con">—</div></div>
+      <div class="box"><label class="small">Perks (table rules)</label><ul id="perkList"><li>&mdash;</li></ul></div>
+      <div class="box"><label class="small">Behavioral Quirk</label><div id="quirkText">—</div></div>
+      <div class="box"><label class="small">Con</label><div id="conText">—</div></div>
     </div>
 
-    <div class="card" style="margin-top:10px">
+    <div class="box" style="margin-top:10px">
       <div class="row" style="justify-content:space-between">
         <div>
-          <div class="small">Special Ability</div>
+          <label class="small">Special Ability</label>
           <div id="abilityName"><strong>—</strong></div>
           <div class="small" id="abilityDesc">—</div>
         </div>
         <div>
           <span id="abilityBadge" class="badge b-ready">READY</span>
-          <div class="small">Uses Left Today: <span id="usesLeft">1</span></div>
+          <div class="small">Uses Left Today: <span id="abilityUsesLeft">1</span></div>
         </div>
       </div>
       <div class="grid g3" style="margin-top:10px">
-        <div>
-          <div class="small">Target (optional)</div>
-          <select id="abilityTarget"></select>
-        </div>
-        <div>
-          <div class="small">…or type Agent ID</div>
-          <input id="abilityTargetId" placeholder="agent_xxx"/>
-        </div>
-        <div style="align-self:end">
-          <button class="btn alt" id="useAbilityBtn">Use Ability</button>
-        </div>
+        <div><label class="small">Target (optional)</label><select id="abilityTargetSelect"></select></div>
+        <div><label class="small">…or type Agent ID</label><input id="abilityTargetId" placeholder="agent_xxx"/></div>
+        <div style="align-self:end"><button class="btn alt" id="btnUseAbility">Use Ability</button></div>
       </div>
     </div>
   </div>
 
-  <div class="section" style="border-left-color:var(--ora)">
-    <div class="title">Missions</div>
-    <div class="card">
-      <div class="small">Active Mission</div>
+  <!-- Missions -->
+  <div class="section orange">
+    <h3 class="title">📋 Missions</h3>
+    <div class="box">
+      <label class="small">Active Mission</label>
       <div id="missionText">None. Request one below.</div>
       <div class="row" style="margin-top:8px">
-        <button class="btn alt" id="reqMission">Request Mission</button>
-        <button class="btn" id="completeMission">Complete Mission</button>
-        <button class="btn warn" id="failMission">Fail & Redraw</button>
+        <button class="btn sec" id="btnReqMission">Request Mission</button>
+        <button class="btn" id="btnCompleteMission">Complete Mission</button>
+        <button class="btn ghost" id="btnFailMission">Fail & Redraw</button>
       </div>
       <div class="small" style="margin-top:6px">Completed: <span id="missionCount">0</span></div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="title">🗂️ Public Roster (bios + perks/quirks/cons)</div>
-    <div id="roster" class="grid g2"></div>
-  </div>
-
-  <div class="section" style="border-left-color:var(--blue)">
-    <div class="title">Submit Action / Penalty / Task</div>
+  <!-- Actions -->
+  <div class="section blue">
+    <h3 class="title">📝 Submit Action / Penalty / Task</h3>
     <div class="grid g3">
       <div>
-        <div class="small">Action Type</div>
+        <label class="small">Action Type</label>
         <select id="actionType">
           <option value="penalty">Report Penalty</option>
           <option value="task_complete">Task Complete</option>
@@ -145,48 +132,47 @@
         </select>
       </div>
       <div>
-        <div class="small">Target Player</div>
+        <label class="small">Target Player</label>
         <select id="actionTarget"></select>
       </div>
       <div>
-        <div class="small">Details</div>
+        <label class="small">Details</label>
         <input id="actionDetails" placeholder="What happened / instructions"/>
       </div>
     </div>
     <div class="row" style="margin-top:10px">
-      <button class="btn" id="submitAction">Submit</button>
+      <button class="btn alt" id="btnSubmitAction">Submit</button>
     </div>
   </div>
 
-  <div class="section" style="border-left-color:var(--vio2)">
-    <div class="title">📡 Operation Log</div>
-    <div id="log" class="log"></div>
+  <!-- Public roster -->
+  <div class="section">
+    <h3 class="title">🗂️ Public Roster (bios + perks/quirks/cons)</h3>
+    <div id="rosterList" class="box">—</div>
+  </div>
+
+  <!-- Log -->
+  <div class="section">
+    <h3 class="title">📡 Operation Log</h3>
+    <div id="logView" class="log">—</div>
+  </div>
+
+  <div class="row" style="justify-content:space-between">
+    <div class="row">
+      <button class="btn sec" id="btnRefresh">Refresh</button>
+      <button class="btn ghost" id="btnLeave">Leave Seat</button>
+    </div>
+    <a class="btn" href="./index.html">Back to Login</a>
   </div>
 </div>
 
 <script>
-/* ===== core session plumbing ===== */
+/* ===== helpers ===== */
 const $ = id => document.getElementById(id);
-const qs = new URLSearchParams(location.search);
-const sessionId = (qs.get('session') || localStorage.getItem('session') || '').toUpperCase();
-if(sessionId) localStorage.setItem('session', sessionId);
-const playerId = localStorage.getItem('playerId') || '';
-const seatToken = (localStorage.getItem('seatToken') || qs.get('seat') || '').toUpperCase();
-
-async function apiGet(id){
-  const r = await fetch(`/api/game?id=${encodeURIComponent(id)}`);
-  try{ return await r.json(); }catch{ return { ok:false }; }
-}
-async function postEventToServer(msg){
-  // Optional op; if backend lacks 'event', this silently no-ops.
-  try{
-    const r = await fetch('/api/game', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ op:'event', sessionId, msg })
-    });
-    // ignore response; best-effort
-  }catch(e){}
-}
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const dayKey = () => { const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
+const ui = (id, html) => { const el=$(id); if(el) el.innerHTML = html; };
+function option(v,t){const o=document.createElement('option');o.value=v;o.textContent=t;return o;}
 
 /* ===== roles ===== */
 const ROLES = {
@@ -210,212 +196,412 @@ const MISSIONS = [
   "Teach a stranger a codeword and use it later."
 ];
 
-/* ===== local ability+mission state (until server adds update op) ===== */
-function dayKey(){ const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
-function getAbilityState(defUses){
-  let st = JSON.parse(localStorage.getItem('abilityState')||'null');
-  if(!st){ st = { usesLeft:defUses, lastResetDay:dayKey() }; }
-  if(st.lastResetDay !== dayKey()){
-    st.lastResetDay = dayKey();
-    st.usesLeft = defUses;
-    localStorage.setItem('abilityState', JSON.stringify(st));
+/* ===== characters (12) — same set used on index ===== */
+const CHARACTERS = [
+  { alias:"Valérie “Val” Marchand", codename:"LACEHUNTER", cover:"Luxury Skiwear Designer",
+    publicBio:"French AF comms → NATO PSYOPS ‘tactical glam’. Gives unsolicited runway checks.",
+    privateBio:"Trans man. Busted tailoring a general’s thermals. Can’t pass a mirror without preening.",
+    background:"Former French Air Force comms; reassigned to NATO PSYOPS for ‘morale optimization’.",
+    discharge:"Non-disciplinary separation after a glitter-related morale incident.",
+    secretMission:"Track down the mystery ghoster from a classified Alpine affair and collect 3 clues.",
+    perks:["Honorific Lock: others must call you “Monsieur Val”.","Style Verdict: on 'Runway check', target holds an awkward 10-sec pose."],
+    quirk:"Silk cravat; lip balm mid-sentence; says “Lieutenant Thirsttrap”.",
+    con:"If he catches his reflection he must stop & preen for 3s.",
+    ability:{ name:"Fashion Emergency", desc:"Force any two players to swap one visible clothing item immediately.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Kaimana “Kai” Savai'i", codename:"SNOWBLIND", cover:"Extreme Sports Photographer",
+    publicBio:"RFMF (Fiji) recon tracker; can find happy hour with GPS accuracy.",
+    privateBio:"Refused to hunt an innocent defector (his brother). Collects slang like shell casings.",
+    background:"Reconnaissance & tracking specialist; humanitarian ops liaison.",
+    discharge:"Honourable discharge after family conflict.",
+    secretMission:"Collect 3 strangers’ hometown slang and compile a 'tracking lexicon'.",
+    perks:["Breadcrumb Command: choose a trigger word; speakers owe a clue or take penalty for 10 min.","Switchback: say 'First tracks' → rotate seats; last seated owes you a favour."],
+    quirk:"Whispers intel and ends with 'copy?'.",
+    con:"If someone says 'family'/'ohana', must deliver a 1-sentence heartfelt lesson.",
+    ability:{ name:"Hire a Tail", desc:"Recruit one player to shadow you 10–30 min; deliver intel every 5 min or take penalties.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Bartosz “Bas” Nowak", codename:"FROSTBITE", cover:"Adventure Safety Coordinator",
+    publicBio:"Polish GROM cold-weather specialist. Loves lists & laminated check cards.",
+    privateBio:"Interrogation ‘cultural differences’. Considers silence a confession.",
+    background:"SERE instructor, polar training cadre.",
+    discharge:"Honourable; opted out after ‘communication’ feedback.",
+    secretMission:"Convince a stranger to wear your gloves and pose like a crime-scene silhouette.",
+    perks:["Interrogator’s Pause: on 'Answer the question', reply in ≤5 words.","Cold Protocol: greetings become fist-bump only until cleared."],
+    quirk:"Over-enunciates like radio checks; NATO phonetic for numbers.",
+    con:"When asked 'what’s the plan?' must show a checklist or salute 'I am improvising.'",
+    ability:{ name:"Coerce an Asset", desc:"Designate a player your Asset for 15 min; complete 2 simple tasks or take penalties.", usesPerDay:1 },
+    role:"handler"
+  },
+  { alias:"Ira “Iris” Khatri", codename:"BLACKRUN", cover:"Avalanche Risk Specialist",
+    publicBio:"Para (SF) mountain warfare; predicts disasters in people as easily as in snow.",
+    privateBio:"Trans man. The avalanche that saved lives also hid sins; won’t say whose.",
+    background:"High-altitude demo team; SAR & explosives.",
+    discharge:"Medical after surviving a unit-ending avalanche.",
+    secretMission:"Run a spontaneous 'safety briefing' with strangers and redistribute props they must wear.",
+    perks:["Beacon Check: phones face-down 5 min; touching = penalty.","Disaster Brief: two table taps resets topic & assigns next speaker."],
+    quirk:"Adds 'allegedly' to claims if alcohol is present.",
+    con:"On triangles/angles must estimate degrees aloud; off by >10° → draw a napkin protractor.",
+    ability:{ name:"Avalanche Protocol", desc:"Clap twice: 30-sec evac drill. Everyone swaps seats & surrenders a small item; you redistribute.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Pilar “Pili” Castaño", codename:"POWDER KEG", cover:"Luxury Lodge Event Coordinator",
+    publicBio:"Spanish social engineer; diplomacy with a splash of chaos.",
+    privateBio:"Trans man. Ran weapons through receptions. Still RSVP’s 'maybe' to Interpol.",
+    background:"Human terrain ops; embassy events fixer.",
+    discharge:"Dishonourable (creative import/export).",
+    secretMission:"Get a stranger to announce you as 'His Excellency the Ambassador of Après'.",
+    perks:["VIP Gate: others must introduce you with a flamboyant invented title.","Guest List: 'You’re on the list' → 2-min private chat to assign a micro-task."],
+    quirk:"Refuses real names; assigns callsigns.",
+    con:"On any rumour he must add 'exclusive source' + wink; if asked later 'source?' must admit 'It was me.'",
+    ability:{ name:"Task the Mark", desc:"Nominate any player to get a phone #, key/card, or selfie with anyone within 20 min. Failure = penalty.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Dmitri “Dima” Volkov", codename:"ICEPICK", cover:"Artisanal Spirits Consultant",
+    publicBio:"Ex-Spetsnaz (allegedly). Measures every drink. Speaks in Celsius.",
+    privateBio:"Defected—or didn’t. Awaits a signal only he’d recognize.",
+    background:"Urban recon & counter-human intel.",
+    discharge:"‘Special transfer’ during the Sochi Olympics.",
+    secretMission:"Learn a new vodka toast and perform it with the group.",
+    perks:["Cold Stare: on eye contact the other must break first or penalty.","Vodka Toast Override: on 'Na zdorovye', all must toast within 30s or penalty."],
+    quirk:"Answers 'roger' instead of 'yes' and ends sentences with 'over.'",
+    con:"When a new person arrives, pat pockets: 'ID, keys, exit—roger'; skipping → 10-sec bug sweep.",
+    ability:{ name:"Charm Offensive (vodka-only)", desc:"Before midnight compel 3 people to buy you vodka drinks. Refusal/wrong drink = penalty.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Rowan “Ro” Hart", codename:"WOLFTRAP", cover:"Night Security Analyst",
+    publicBio:"Ex-infantry turned nightclub perimeter whisperer. Hears bouncers before the bass.",
+    privateBio:"Trans man. Thinks velvet ropes are guidelines. Once dated a smoke machine.",
+    background:"Perimeter defense & crowd control.",
+    discharge:"Honourable.",
+    secretMission:"Convince a venue staffer to radio-check you using a callsign you invent.",
+    perks:["Line Cutter: insert into any group; someone must introduce you within 20s.","Bouncer’s Choice: point to the door; one person must accompany you for a 60s perimeter check."],
+    quirk:"Counts exits (quietly) when entering a room.",
+    con:"If music changes, freeze for 3s like a motion sensor.",
+    ability:{ name:"Angle Check (10-sec hold)", desc:"Command a target to hold a dramatic pose facing a 'camera' for 10s.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Asher “Ash” Del Mar", codename:"SEALEVEL", cover:"Hydro Logistics Planner",
+    publicBio:"Special forces boat guy who gets altitude sickness looking at menus.",
+    privateBio:"Smuggled a jet-ski into a hotel fountain. Twice.",
+    background:"Riverine logistics & insertions.",
+    discharge:"Honourable (but wet).",
+    secretMission:"Collect three coasters from different venues and arrange a 'map' on the table.",
+    perks:["High-Water Mark: pick a 'shoreline' on the table; items crossing it owe you a sip.","Docking Fee: anyone returning to the group pays a one-word status update."],
+    quirk:"Adds boat metaphors to everything.",
+    con:"If someone says 'wave', salute like a lifeguard.",
+    ability:{ name:"Harbour Master", desc:"Declare the current table 'Port'. Anyone joining owes you a status report + cheers.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Noah “Knox” Keegan", codename:"SWITCHBACK", cover:"Mountain Bike Guide",
+    publicBio:"Downhill brain, uphill charm. Always plotting the next corner.",
+    privateBio:"Claims a scar for each Greek letter he remembers. Suspicious count.",
+    background:"Bike-mounted patrol & courier.",
+    discharge:"Honourable.",
+    secretMission:"Borrow a helmet from someone not in your group and wear it for 2 minutes.",
+    perks:["Gear Check: on 'Drop a gear', everyone lowers voice one notch for 2 min.","Trail Marshal: you decide who speaks next for 60s."],
+    quirk:"Claps once when he stands up.",
+    con:"If someone says 'brake', freeze mid-gesture for 2s.",
+    ability:{ name:"Trail Tax (chaos)", desc:"Pick two people to swap seats & share a 'route apology'.", usesPerDay:1 },
+    role:"innocent"
+  },
+  { alias:"Jamie “Harrow” Quinn", codename:"BONESAW", cover:"Field Medic (Former)",
+    publicBio:"Good with stitches; terrible with boundaries. Brings tape to conversations.",
+    privateBio:"Kept a toe tag as a bookmark. It fell out at a funeral.",
+    background:"Combat medic; mass-casualty triage.",
+    discharge:"Honourable; 'bedside manner incompatible with brass'.",
+    secretMission:"Bandage (real or improvised) a non-player and get them to rate your care /10.",
+    perks:["Triage: you may interrupt any chat to ask 'Vitals?'—answer must be a number.","Sterile Field: designate a 30 cm zone around your drink; violators owe an apology shot."],
+    quirk:"Calls snacks 'oral medication'.",
+    con:"If someone says 'owie', produce a bandage.",
+    ability:{ name:"Scrub In", desc:"Declare an emergency consult; target must whisper their last snack & biggest fear.", usesPerDay:1 },
+    role:"wildcard"
+  },
+  { alias:"Elliot “Ledger” Vance", codename:"COUNTERSIGN", cover:"Casino Surveillance",
+    publicBio:"Counts cards, people, and regrets. Mostly people.",
+    privateBio:"Wears mirrored sunglasses at night because 'math is bright'.",
+    background:"Surveillance, pattern analysis.",
+    discharge:"Honourable; banned from three casinos.",
+    secretMission:"Convince someone to speak only in numbers with you for 30 seconds.",
+    perks:["Tell Read: you may ask someone to repeat a sentence slower.","Double Down: once, force a yes/no commitment from the table."],
+    quirk:"Murmurs odds to himself.",
+    con:"If anyone says a number >10, whisper a different random number.",
+    ability:{ name:"Background Count", desc:"Ask the GM for a one-line statistical hint about any player.", usesPerDay:1 },
+    role:"handler"
+  },
+  { alias:"Rafe “Static” Moretti", codename:"JAMMER", cover:"RF Tech",
+    publicBio:"Carries more antennas than personality. Still… weirdly charming.",
+    privateBio:"Blocked a wedding livestream so the bride’s ex couldn’t watch. She thanked him.",
+    background:"Signals intelligence & EW.",
+    discharge:"Honourable; requested more batteries than the army owned.",
+    secretMission:"Get a stranger to say 'Say again?' twice in one conversation.",
+    perks:["Signal Check: say 'Bars?' → everyone must show lock screen for 3s.","Dead Zone: pick a corner where nobody may use phones for 5 min."],
+    quirk:"Says 'Copy' to compliments.",
+    con:"If someone says 'loud', turn an imaginary knob.",
+    ability:{ name:"Static Burst", desc:"Declare a 30-sec 'comms outage': everyone speaks in whispers only.", usesPerDay:1 },
+    role:"innocent"
   }
-  return st;
-}
-function setAbilityState(st){ localStorage.setItem('abilityState', JSON.stringify(st)); }
+];
 
-function getMissionState(){
-  return JSON.parse(localStorage.getItem('missions')||'{"active":null,"count":0}');
+/* ===== deterministic character from seat ===== */
+function charFromSeat(seat){
+  let h=0; for(const c of seat) h=(h*31 + c.charCodeAt(0))>>>0;
+  return JSON.parse(JSON.stringify(CHARACTERS[h % CHARACTERS.length]));
 }
-function setMissionState(ms){ localStorage.setItem('missions', JSON.stringify(ms)); }
+
+/* ===== API ===== */
+async function api(op, body={}){
+  if(op==='get'){ const r=await fetch(`/api/game?id=${encodeURIComponent(body.id)}`); return r.json(); }
+  const r = await fetch('/api/game', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({op, ...body})
+  });
+  return r.json();
+}
+
+/* ===== state ===== */
+let gameState = {};
+let me = null;
+let pollHandle = null;
+
+/* ===== small helpers that talk to server ===== */
+async function postEvent(msg){
+  const id = gameState.id || localStorage.getItem('session');
+  if(!id) return;
+  try{ await api('event', { sessionId:id, msg }); }catch(e){}
+}
+async function updateMe(patch){
+  const sessionId = gameState.id || localStorage.getItem('session');
+  const playerId = me?.id || localStorage.getItem('playerId');
+  if(!sessionId || !playerId) return;
+  const res = await api('update_player', { sessionId, playerId, patch });
+  if(res?.ok && res.player){ me = res.player; }
+}
+
+/* ===== ability uses/day ===== */
+function usesLeft(){
+  const st = me?.abilityState || {usesLeft:(me?.ability?.usesPerDay??1), lastResetDay:dayKey()};
+  if(st.lastResetDay!==dayKey()){
+    st.lastResetDay=dayKey(); st.usesLeft = me?.ability?.usesPerDay ?? 1; me.abilityState=st;
+    updateMe({abilityState:st});
+  }
+  return st.usesLeft ?? 0;
+}
+
+/* ===== ensure character data exists server-side ===== */
+async function ensureCharacterPatched(){
+  const seat = localStorage.getItem('seatToken') || '';
+  if(!me || !seat) return;
+
+  const need = () => (!me.codename || !me.cover || !me.background || !me.discharge ||
+                      !me.secretMission || !me.quirk || !me.con ||
+                      !me.perks || !me.perks.length || !me.ability || !me.ability.name);
+
+  if(!need()) return;
+
+  const ch = charFromSeat(seat);
+  const patch = {};
+  const setIfMissing = (k,v)=>{ if(me[k]==null || (Array.isArray(me[k]) && me[k].length===0) || me[k]===''){ patch[k]=v; } };
+  setIfMissing('codename', ch.codename);
+  setIfMissing('alias', ch.alias);
+  setIfMissing('adoptedName', ch.alias);
+  setIfMissing('cover', ch.cover);
+  setIfMissing('publicBio', ch.publicBio);
+  setIfMissing('privateBio', ch.privateBio);
+  setIfMissing('background', ch.background);
+  setIfMissing('discharge', ch.discharge);
+  setIfMissing('secretMission', ch.secretMission);
+  setIfMissing('perks', ch.perks);
+  setIfMissing('quirk', ch.quirk);
+  setIfMissing('con', ch.con);
+  setIfMissing('ability', ch.ability);
+  setIfMissing('role', ch.role || 'wildcard');
+  // ability state boot
+  if(!me.abilityState){ patch.abilityState = { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }; }
+
+  if(Object.keys(patch).length){
+    await updateMe(patch);
+    await postEvent(`🆔 ${patch.codename || me.codename || 'OPERATIVE'} character profile synced from seat.`);
+    await refreshState(); // pull everyone fresh
+  }
+}
 
 /* ===== renderers ===== */
-let gameState=null, me=null, lastLogLen=0;
-
-function renderTop(){
-  $('gameId').textContent = gameState?.id || '—';
-  $('finalNight').textContent = gameState?.finalNightAt ? new Date(gameState.finalNightAt).toLocaleString() : '—';
-  $('agentId').textContent = me?.id || '—';
-}
-
 function renderDossier(){
   if(!me) return;
-  $('realName').textContent = me.realName || '—';
-  $('adopted').textContent = me.adoptedName || me.alias || '—';
-  $('cover').textContent = me.cover || '—';
-  $('codename').textContent = me.codename || 'OPERATIVE';
+  ui('codenameText', me.codename || 'OPERATIVE');
+  ui('agentIdText', me.id || '—');
+  ui('realNameText', me.realName || '—');
+  ui('aliasText', me.adoptedName || me.alias || '—');
+  ui('coverText', me.cover || '—');
+  ui('backgroundText', me.background || '—');
+  ui('dischargeText', me.discharge || '—');
+  ui('secretMissionText', me.secretMission || '—');
 
-  const role = ROLES[me.role] || {name: me.role||'—', obj:'—', win:'—'};
-  $('role').textContent = role.name; $('roleObj').textContent = role.obj; $('roleWin').textContent = role.win;
+  const role = ROLES[me.role] || {name:me.role||'—', obj:'—', win:'—'};
+  ui('roleText', role.name); ui('roleObjective', role.obj); ui('roleWin', role.win);
 
-  $('secret').textContent = me.secretMission || '—';
-  $('background').textContent = me.background || '—';
-  $('discharge').textContent = me.discharge || '—';
+  const perks = (me.perks||[]).map(p=>`<li>${p}</li>`).join('') || '<li>&mdash;</li>';
+  ui('perkList', perks);
+  ui('quirkText', me.quirk || '—');
+  ui('conText', me.con || '—');
 
-  $('quirk').textContent = me.quirk || '—';
-  $('con').textContent = me.con || '—';
-  $('perks').innerHTML = (me.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+  ui('abilityName', `<strong>${me.ability?.name||'—'}</strong>`);
+  ui('abilityDesc', me.ability?.desc || '—');
 
-  $('abilityName').innerHTML = `<strong>${me.ability?.name || '—'}</strong>`;
-  $('abilityDesc').textContent = me.ability?.desc || '—';
+  const left = usesLeft();
+  ui('abilityUsesLeft', left);
+  const b = $('abilityBadge'); b.className = 'badge ' + (left>0?'b-ready':'b-used'); b.textContent = (left>0?'READY':'USED');
+}
 
-  const defUses = me.ability?.usesPerDay ?? 1;
-  const st = getAbilityState(defUses);
-  $('usesLeft').textContent = st.usesLeft ?? 0;
-  const b = $('abilityBadge');
-  b.className = 'badge ' + ((st.usesLeft??0)>0 ? 'b-ready' : 'b-used');
-  b.textContent = (st.usesLeft??0)>0 ? 'READY' : 'USED';
+function populateTargets(){
+  const others = (gameState.players||[]).filter(p=>!me || p.id!==me.id);
+  const ids = ['abilityTargetSelect','actionTarget'];
+  ids.forEach(id=>{
+    const sel=$(id); if(!sel) return;
+    sel.innerHTML=''; sel.appendChild(option('','— Select —'));
+    others.forEach(p=> sel.appendChild(option(p.id, `${p.codename} (${p.realName})`)));
+  });
 }
 
 function renderRoster(){
-  const others = (gameState?.players||[]).filter(p=>!me || p.id!==me.id);
-  if(!others.length){ $('roster').innerHTML = '<div class="small">No other agents yet.</div>'; return; }
-  $('roster').innerHTML = others.map(p=>{
-    const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>—</li>';
+  const list = gameState.players||[];
+  const html = list.length ? list.map(p=>{
+    const perks = (p.perks||[]).map(x=>`<li>${x}</li>`).join('') || '<li>&mdash;</li>';
+    const meTag = (me && p.id===me.id) ? ' (you)' : '';
     return `
-      <div class="card">
+      <div class="box" style="margin:10px 0">
         <div class="row" style="justify-content:space-between">
-          <div><strong class="code">${p.codename||'OPERATIVE'}</strong> — ${p.realName||'Agent'}</div>
-          <div class="small">${p.id}</div>
+          <div><strong class="code">${p.codename||'OPERATIVE'}</strong> — ${p.realName||'Agent'}${meTag}</div>
+          <div class="muted">${p.id}</div>
         </div>
-        <div class="small" style="margin-top:4px"><em>${p.cover||''}</em></div>
-        <div class="grid g2" style="margin-top:8px">
-          <div><div class="small">Public Bio</div>${p.publicBio||'—'}</div>
-          <div><div class="small">Behavioral Quirk</div>${p.quirk||'—'}</div>
+        <div class="muted">${p.cover||''}</div>
+        <div class="grid g3" style="margin-top:8px">
+          <div><label class="small">Public Bio</label>${p.publicBio||'—'}</div>
+          <div><label class="small">Quirk</label>${p.quirk||'—'}</div>
+          <div><label class="small">Con</label>${p.con||'—'}</div>
         </div>
-        <div class="grid g2" style="margin-top:8px">
-          <div><div class="small">Con</div>${p.con||'—'}</div>
-          <div>
-            <div class="small">Perks</div>
-            <ul style="margin:6px 0 0 18px">${perks}</ul>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // target selectors
-  const fillSel = (id)=>{
-    const sel=$(id); if(!sel) return;
-    sel.innerHTML = '<option value="">— Select —</option>';
-    others.forEach(p=>{
-      const o=document.createElement('option');
-      o.value=p.id; o.textContent=`${p.codename||'OPERATIVE'} (${p.realName||'Agent'})`;
-      sel.appendChild(o);
-    });
-  };
-  fillSel('abilityTarget'); fillSel('actionTarget');
+        <div style="margin-top:6px"><label class="small">Perks</label><ul>${perks}</ul></div>
+      </div>`;
+  }).join('') : '—';
+  ui('rosterList', html);
 }
 
 function renderLog(){
-  const rows = (gameState?.gameLog||[]).map(l=>`<div class="line"><strong>[${new Date(l.ts).toLocaleTimeString()}]</strong> ${l.msg}</div>`);
-  $('log').innerHTML = rows.join('') || '<div class="small">No events yet.</div>';
-  if((gameState?.gameLog||[]).length !== lastLogLen){
-    $('log').scrollTop = $('log').scrollHeight;
-    lastLogLen = (gameState?.gameLog||[]).length;
-  }
+  const log = gameState.gameLog || [];
+  const html = log.slice(-400).map(l=>`<div class="line"><strong>[${new Date(l.ts).toLocaleTimeString()}]</strong> ${l.msg}</div>`).join('');
+  ui('logView', html || '—');
+  const el=$('logView'); el.scrollTop = el.scrollHeight;
 }
 
-/* ===== actions (client + optional server log) ===== */
-function useAbility(){
+/* ===== actions ===== */
+async function useAbility(){
   if(!me?.ability) return;
-  const defUses = me.ability?.usesPerDay ?? 1;
-  const st = getAbilityState(defUses);
-  if((st.usesLeft??0)<=0){
-    postEventToServer(`⚠️ ${me.codename} tried to use ability but has no uses left.`);
-    return;
-  }
-  const targetId = $('abilityTarget').value || ($('abilityTargetId').value||'').trim();
-  const target = (gameState?.players||[]).find(p=>p.id===targetId);
-  const tLabel = target? `${target.codename||'OPERATIVE'} (${target.realName||'Agent'})` : '—';
+  let st = me.abilityState || {usesLeft:1,lastResetDay:dayKey()};
+  if(st.usesLeft<=0){ await postEvent(`⚠️ ${me.codename} tried to use ability but has no uses left.`); return; }
+  const selId = $('abilityTargetSelect').value || '';
+  const typed = ($('abilityTargetId').value||'').trim();
+  const target = (gameState.players||[]).find(p=> p.id === (selId||typed));
+  const tLabel = target ? `${target.codename} (${target.realName})` : '—';
 
-  st.usesLeft = Math.max(0,(st.usesLeft??1)-1); setAbilityState(st);
-  $('abilityTargetId').value=''; renderDossier();
-
-  postEventToServer(`⚡ ${me.codename} used "${me.ability.name}" on ${tLabel}.`);
+  st.usesLeft = Math.max(0,(st.usesLeft??1)-1); me.abilityState = st;
+  await updateMe({abilityState:st});
+  renderDossier();
+  await postEvent(`⚡ ${me.codename} used "${me.ability.name}" on ${tLabel}.`);
+  $('abilityTargetId').value='';
 }
 
-function requestMission(){
-  const ms = getMissionState();
-  if(ms.active){
-    postEventToServer(`${me.codename} requested a new mission without completing previous → group consensus penalty?`);
-  }
-  ms.active = MISSIONS[Math.floor(Math.random()*MISSIONS.length)];
-  setMissionState(ms);
-  $('missionText').textContent = ms.active;
-  postEventToServer(`📋 ${me.codename} drew a mission: "${ms.active}"`);
+function ensureMission(){
+  me.missions = me.missions || {active:null,count:0};
+  return me.missions;
 }
-function completeMission(){
-  const ms = getMissionState(); if(!ms.active) return;
-  postEventToServer(`✅ ${me.codename} completed mission: "${ms.active}"`);
-  ms.active=null; ms.count=(ms.count||0)+1; setMissionState(ms);
-  $('missionText').textContent = 'None. Request one below.'; $('missionCount').textContent = ms.count;
+async function reqMission(){
+  const m = ensureMission();
+  if(m.active){ await postEvent(`${me.codename} requested new mission without completing previous → group consensus penalty?`); }
+  m.active = pick(MISSIONS); ui('missionText', m.active);
+  await updateMe({missions:m}); await postEvent(`📋 ${me.codename} drew a mission: "${m.active}"`);
 }
-function failMission(){
-  const ms = getMissionState();
-  if(ms.active){ postEventToServer(`❌ ${me.codename} failed mission: "${ms.active}" — new mission requested.`); }
-  ms.active = MISSIONS[Math.floor(Math.random()*MISSIONS.length)];
-  setMissionState(ms);
-  $('missionText').textContent = ms.active;
+async function completeMission(){
+  const m = ensureMission(); if(!m.active) return;
+  await postEvent(`✅ ${me.codename} completed mission: "${m.active}"`);
+  m.active=null; m.count=(m.count||0)+1; ui('missionText','None. Request one below.'); ui('missionCount', m.count);
+  await updateMe({missions:m});
 }
-function submitAction(){
+async function failMission(){
+  const m = ensureMission();
+  if(!m.active){ await reqMission(); return; }
+  await postEvent(`❌ ${me.codename} failed mission: "${m.active}" — new mission requested.`);
+  m.active = pick(MISSIONS); ui('missionText', m.active);
+  await updateMe({missions:m});
+}
+
+function labelFor(id){ const p=(gameState.players||[]).find(x=>x.id===id); return p? `${p.codename} (${p.realName})` : (id||'—'); }
+async function submitAction(){
   const type = $('actionType').value;
   const target = $('actionTarget').value;
-  const details = ($('actionDetails').value || '(no details)').trim();
-  const p = (gameState?.players||[]).find(x=>x.id===target);
-  const label = p? `${p.codename||'OPERATIVE'} (${p.realName||'Agent'})` : (target||'—');
-  let text = '';
-  if(type==='penalty') text = `📝 Penalty on ${label} — ${details}`;
-  else if(type==='task_complete') text = `📝 Task complete by ${me.codename} — ${details}`;
-  else if(type==='murderer_act') text = `📝 Murderer act report by ${me.codename} — ${details}`;
-  else text = `📝 Ability use by ${me.codename} on ${label} — ${details}`;
-  $('actionDetails').value=''; $('actionTarget').value='';
-  postEventToServer(text);
+  const details = ($('actionDetails').value||'(no details)').trim();
+  let text='';
+  if(type==='penalty') text=`📝 Penalty on ${labelFor(target)} — ${details}`;
+  else if(type==='task_complete') text=`📝 Task complete by ${me.codename} — ${details}`;
+  else if(type==='murderer_act') text=`📝 Murderer act report by ${me.codename} — ${details}`;
+  else text=`📝 Ability use by ${me.codename} on ${labelFor(target)} — ${details}`;
+  await postEvent(text); $('actionDetails').value=''; $('actionTarget').value='';
 }
 
-/* ===== boot & polling ===== */
-async function refresh(){
-  if(!sessionId){ $('log').innerHTML = '<div class="small">Open via the join flow — no session id.</div>'; return; }
-  const r = await apiGet(sessionId);
-  if(!r?.ok){ $('log').innerHTML = '<div class="small">Session not found.</div>'; return; }
-  gameState = r.session;
+/* ===== refresh/poll ===== */
+async function refreshState(){
+  const id = localStorage.getItem('session') || (new URLSearchParams(location.search).get('session')||'').toUpperCase();
+  if(!id) return;
+  const res = await api('get',{id}); if(!res.ok) return;
+  gameState = res.session || {};
+  const myId = localStorage.getItem('playerId');
+  if(myId) me = (gameState.players||[]).find(p=>p.id===myId) || me;
 
-  // who am I?
-  me = (gameState.players||[]).find(p=>p.id===playerId) || null;
-  if(!me && seatToken){
-    const seat = (gameState.seats||[]).find(s=>(s.token||'').toUpperCase()===seatToken);
-    if(seat?.playerId) me = (gameState.players||[]).find(p=>p.id===seat.playerId) || null;
+  ui('gameKeyText', gameState.id || '—');
+  ui('finalNightText', gameState.finalNightAt ? new Date(gameState.finalNightAt).toLocaleString() : '—');
+
+  await ensureCharacterPatched(); // fills perks/quirk/con/etc if missing
+  renderDossier(); populateTargets(); renderRoster(); renderLog();
+}
+
+function startPoll(){
+  if(pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(refreshState, 4000);
+}
+
+/* ===== boot ===== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  const qs = new URLSearchParams(location.search);
+  const session = (qs.get('session')||'').toUpperCase();
+  if(session){ localStorage.setItem('session', session); }
+
+  // Try to keep the seat warm (safe even if already joined)
+  const seat = localStorage.getItem('seatToken');
+  const name = localStorage.getItem('playerName') || '';
+  if(session && seat){
+    const ch = charFromSeat(seat);
+    ch.adoptedName = ch.alias;
+    // Join (or rejoin) — server will ignore duplicate seat claim and return existing player
+    try{
+      const res = await api('join',{ sessionId:session, seatToken:seat, playerName:name, character:ch,
+        abilityState:{usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey()} });
+      if(res?.player){ localStorage.setItem('playerId', res.player.id); }
+    }catch(e){}
   }
-  if(!me){ $('log').innerHTML = '<div class="small">Player not found in this session.</div>'; return; }
 
-  renderTop();
-  renderDossier();
-  renderRoster();
-  renderLog();
+  await refreshState(); startPoll();
 
-  // load mission local state to UI
-  const ms = getMissionState();
-  $('missionText').textContent = ms.active || 'None. Request one below.';
-  $('missionCount').textContent = ms.count || 0;
-}
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  $('useAbilityBtn').onclick = useAbility;
-  $('reqMission').onclick = requestMission;
-  $('completeMission').onclick = completeMission;
-  $('failMission').onclick = failMission;
-  $('submitAction').onclick = submitAction;
-
-  $('btnRefresh').onclick = refresh;
-  $('btnBack').onclick = ()=>{ location.href = `index.html?session=${encodeURIComponent(sessionId)}`; };
+  // controls
+  $('btnUseAbility').onclick = useAbility;
+  $('btnReqMission').onclick = reqMission;
+  $('btnCompleteMission').onclick = completeMission;
+  $('btnFailMission').onclick = failMission;
+  $('btnSubmitAction').onclick = submitAction;
+  $('btnRefresh').onclick = refreshState;
   $('btnLeave').onclick = ()=>{
-    localStorage.removeItem('playerId');
-    localStorage.removeItem('seatToken');
-    location.href = `index.html?session=${encodeURIComponent(sessionId)}`;
+    localStorage.removeItem('session'); localStorage.removeItem('seatToken'); localStorage.removeItem('playerId'); window.location.href='./index.html';
   };
-
-  refresh();
-  setInterval(refresh, 4000);
 });
 </script>
 </body>
