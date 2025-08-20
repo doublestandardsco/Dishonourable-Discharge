@@ -41,31 +41,19 @@
     .log{max-height:280px;overflow:auto;background:rgba(0,0,0,.45);border:2px solid var(--vio);border-radius:10px;padding:12px}
     .line{border-left:3px solid var(--vio);padding-left:10px;margin:8px 0;background:rgba(95,39,205,.12);border-radius:4px}
     .muted{opacity:.75}
-    .hidden{display:none}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <!-- Quick Join overlay (shown when there's no seat in localStorage) -->
+  <!-- Quick Join overlay if seat/session not in localStorage -->
   <div id="quickJoin" class="section" style="display:none; border-left-color:#f39c12">
     <h3 class="title">Quick Join</h3>
     <div class="grid g3">
-      <div>
-        <label class="small">Game Key</label>
-        <input id="qj_session" placeholder="e.g. QT1">
-      </div>
-      <div>
-        <label class="small">Seat Key</label>
-        <input id="qj_seat" placeholder="ABCD-1234">
-      </div>
-      <div>
-        <label class="small">Your Name</label>
-        <input id="qj_name" placeholder="Your name">
-      </div>
+      <div><label class="small">Game Key</label><input id="qj_session" placeholder="e.g. QT1"></div>
+      <div><label class="small">Seat Key</label><input id="qj_seat" placeholder="ABCD-1234"></div>
+      <div><label class="small">Your Name</label><input id="qj_name" placeholder="Your name"></div>
     </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn" id="qj_btn">Claim Seat</button>
-    </div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="qj_btn">Claim Seat</button></div>
     <div class="muted" id="qj_msg" style="margin-top:6px"></div>
   </div>
 
@@ -196,6 +184,7 @@ const pick = a => a[Math.floor(Math.random()*a.length)];
 const dayKey = () => { const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
 const ui = (id, html) => { const el=$(id); if(el) el.innerHTML = html; };
 function option(v,t){const o=document.createElement('option');o.value=v;o.textContent=t;return o;}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 /* ===== roles ===== */
 const ROLES = {
@@ -219,7 +208,7 @@ const MISSIONS = [
   "Teach a stranger a codeword and use it later."
 ];
 
-/* ===== characters (12) — same set used on index ===== */
+/* ===== characters (12) ===== */
 const CHARACTERS = [
   { alias:"Valérie “Val” Marchand", codename:"LACEHUNTER", cover:"Luxury Skiwear Designer",
     publicBio:"French AF comms → NATO PSYOPS ‘tactical glam’. Gives unsolicited runway checks.",
@@ -376,10 +365,7 @@ function charFromSeat(seat){
 /* ===== API ===== */
 async function api(op, body={}){
   if(op==='get'){ const r=await fetch(`/api/game?id=${encodeURIComponent(body.id)}`); return r.json(); }
-  const r = await fetch('/api/game', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({op, ...body})
-  });
+  const r = await fetch('/api/game', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({op, ...body}) });
   return r.json();
 }
 
@@ -388,10 +374,9 @@ let gameState = {};
 let me = null;
 let pollHandle = null;
 
-/* ===== small helpers that talk to server ===== */
+/* ===== server helpers ===== */
 async function postEvent(msg){
-  const id = gameState.id || localStorage.getItem('session');
-  if(!id) return;
+  const id = gameState.id || localStorage.getItem('session'); if(!id) return;
   try{ await api('event', { sessionId:id, msg }); }catch(e){}
 }
 async function updateMe(patch){
@@ -410,6 +395,40 @@ function usesLeft(){
     updateMe({abilityState:st});
   }
   return st.usesLeft ?? 0;
+}
+
+/* ===== self-heal reseed if profile incomplete ===== */
+function profileMissing(p){
+  return !p || !p.codename || !p.cover || !p.background || !p.discharge ||
+         !p.secretMission || !p.ability || !p.ability.name ||
+         !Array.isArray(p.perks) || p.perks.length===0 || !p.quirk || !p.con;
+}
+async function reseedIfNeeded(){
+  if(!me) return;
+  const seat = localStorage.getItem('seatToken');
+  const session = localStorage.getItem('session') || '';
+  const name = localStorage.getItem('playerName') || me.realName || 'Agent';
+  if(!seat || !session) return;
+  if(!profileMissing(me)) return;
+
+  // Build complete character, free the seat, then re-join to replace the player
+  const ch = charFromSeat(seat); ch.adoptedName = ch.alias;
+  // free seat
+  await api('kick', { sessionId: session, seatToken: seat });
+  await sleep(150); // small pause for KV write
+  // re-join with full pack
+  const res = await api('join', {
+    sessionId: session,
+    seatToken: seat,
+    playerName: name,
+    character: ch,
+    abilityState: { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }
+  });
+  if(res?.ok && res.player){
+    localStorage.setItem('playerId', res.player.id);
+    me = res.player;
+    await postEvent(`🆔 ${me.codename} character profile re-seeded from seat.`);
+  }
 }
 
 /* ===== renderers ===== */
@@ -442,10 +461,11 @@ function renderDossier(){
 
 function populateTargets(){
   const others = (gameState.players||[]).filter(p=>!me || p.id!==me.id);
-  ['abilityTargetSelect','actionTarget'].forEach(id=>{
+  const ids = ['abilityTargetSelect','actionTarget'];
+  ids.forEach(id=>{
     const sel=$(id); if(!sel) return;
     sel.innerHTML=''; sel.appendChild(option('','— Select —'));
-    others.forEach(p=> sel.appendChild(option(p.id, `${p.codename} (${p.realName})`)));
+    others.forEach(p=> sel.appendChild(option(p.id, `${p.codename||'OPERATIVE'} (${p.realName||'Agent'})`)));
   });
 }
 
@@ -496,10 +516,7 @@ async function useAbility(){
   $('abilityTargetId').value='';
 }
 
-function ensureMission(){
-  me.missions = me.missions || {active:null,count:0};
-  return me.missions;
-}
+function ensureMission(){ me.missions = me.missions || {active:null,count:0}; return me.missions; }
 async function reqMission(){
   const m = ensureMission();
   if(m.active){ await postEvent(`${me.codename} requested new mission without completing previous → group consensus penalty?`); }
@@ -533,41 +550,6 @@ async function submitAction(){
   await postEvent(text); $('actionDetails').value=''; $('actionTarget').value='';
 }
 
-/* ===== quick-join overlay logic ===== */
-function showQuickJoinIfNeeded(){
-  const seat = localStorage.getItem('seatToken');
-  const session = localStorage.getItem('session') || new URLSearchParams(location.search).get('session') || '';
-  if(!seat){
-    $('quickJoin').style.display = '';
-    $('qj_session').value = (session||'').toUpperCase();
-  }
-}
-async function quickJoin(){
-  const sessionId = ($('qj_session').value||'').toUpperCase().trim();
-  const seatToken  = ($('qj_seat').value||'').toUpperCase().trim();
-  const playerName = ($('qj_name').value||'').trim();
-  const msg = t => $('qj_msg').textContent = t;
-
-  if(!sessionId || !seatToken){ msg('Enter game key + seat key'); return; }
-
-  const ch = charFromSeat(seatToken); ch.adoptedName = ch.alias;
-
-  const res = await api('join', {
-    sessionId, seatToken, playerName,
-    character: ch,
-    abilityState: { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }
-  });
-
-  if(!res.ok){ msg('Join failed: '+(res.error||'')); return; }
-
-  localStorage.setItem('session', res.session.id);
-  localStorage.setItem('seatToken', seatToken);
-  localStorage.setItem('playerId', res.player.id);
-  localStorage.setItem('playerName', playerName||'');
-  $('quickJoin').style.display='none';
-  await refreshState(); startPoll();
-}
-
 /* ===== refresh/poll ===== */
 async function refreshState(){
   const id = localStorage.getItem('session') || (new URLSearchParams(location.search).get('session')||'').toUpperCase();
@@ -580,36 +562,58 @@ async function refreshState(){
   ui('gameKeyText', gameState.id || '—');
   ui('finalNightText', gameState.finalNightAt ? new Date(gameState.finalNightAt).toLocaleString() : '—');
 
+  // If profile is incomplete (because backend blocked updates), reseed seat now.
+  if(profileMissing(me)){ await reseedIfNeeded(); }
+
   renderDossier(); populateTargets(); renderRoster(); renderLog();
 }
-function startPoll(){
-  if(pollHandle) clearInterval(pollHandle);
-  pollHandle = setInterval(refreshState, 4000);
-}
+function startPoll(){ if(pollHandle) clearInterval(pollHandle); pollHandle = setInterval(refreshState, 4000); }
 
 /* ===== boot ===== */
 document.addEventListener('DOMContentLoaded', async ()=>{
-  showQuickJoinIfNeeded();
+  // pick up ?session= from link
   const qs = new URLSearchParams(location.search);
   const session = (qs.get('session')||'').toUpperCase();
   if(session){ localStorage.setItem('session', session); }
 
-  // Try to keep the seat warm (safe even if already joined)
+  // Show Quick Join if no seat
   const seat = localStorage.getItem('seatToken');
-  const name = localStorage.getItem('playerName') || '';
-  if(session && seat){
+  if(!seat){
+    $('quickJoin').style.display = '';
+    $('qj_session').value = session || '';
+    const msg = t => $('qj_msg').textContent = t;
+    $('qj_btn').onclick = async ()=>{
+      const sessionId = ($('qj_session').value||'').toUpperCase().trim();
+      const seatToken  = ($('qj_seat').value||'').toUpperCase().trim();
+      const playerName = ($('qj_name').value||'').trim();
+      if(!sessionId || !seatToken){ msg('Enter game key + seat key'); return; }
+      const ch = charFromSeat(seatToken); ch.adoptedName = ch.alias;
+      const res = await api('join',{
+        sessionId, seatToken, playerName,
+        character: ch,
+        abilityState: { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }
+      });
+      if(!res.ok){ msg('Join failed: '+(res.error||'')); return; }
+      localStorage.setItem('session', res.session.id);
+      localStorage.setItem('seatToken', seatToken);
+      localStorage.setItem('playerId', res.player.id);
+      localStorage.setItem('playerName', playerName||'');
+      $('quickJoin').style.display='none';
+      await refreshState(); startPoll();
+    };
+  }else{
+    // If we already have a seat, try to re-join to keep it warm (server is idempotent)
+    const name = localStorage.getItem('playerName') || '';
     const ch = charFromSeat(seat); ch.adoptedName = ch.alias;
     try{
-      const res = await api('join',{ sessionId:session, seatToken:seat, playerName:name, character:ch,
-        abilityState:{usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey()} });
+      const res = await api('join',{ sessionId: (session||localStorage.getItem('session')||'').toUpperCase(), seatToken: seat, playerName: name,
+        character: ch, abilityState:{usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey()} });
       if(res?.player){ localStorage.setItem('playerId', res.player.id); }
     }catch(e){}
+    await refreshState(); startPoll();
   }
 
-  await refreshState(); startPoll();
-
   // controls
-  $('qj_btn')?.addEventListener('click', quickJoin);
   $('btnUseAbility').onclick = useAbility;
   $('btnReqMission').onclick = reqMission;
   $('btnCompleteMission').onclick = completeMission;
@@ -617,7 +621,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   $('btnSubmitAction').onclick = submitAction;
   $('btnRefresh').onclick = refreshState;
   $('btnLeave').onclick = ()=>{
-    localStorage.removeItem('session'); localStorage.removeItem('seatToken'); localStorage.removeItem('playerId');
+    localStorage.removeItem('session'); localStorage.removeItem('seatToken'); localStorage.removeItem('playerId'); localStorage.removeItem('playerName');
     window.location.href='./index.html';
   };
 });
