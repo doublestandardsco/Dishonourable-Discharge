@@ -46,28 +46,28 @@
 </head>
 <body>
 <div class="wrap">
-  <!-- Add just below <div class="wrap"> -->
-<div id="quickJoin" class="section" style="display:none; border-left-color:#f39c12">
-  <h3 class="title">Quick Join</h3>
-  <div class="grid g3">
-    <div>
-      <label class="small">Game Key</label>
-      <input id="qj_session" placeholder="e.g. QT1">
+  <!-- Quick Join overlay (shown when there's no seat in localStorage) -->
+  <div id="quickJoin" class="section" style="display:none; border-left-color:#f39c12">
+    <h3 class="title">Quick Join</h3>
+    <div class="grid g3">
+      <div>
+        <label class="small">Game Key</label>
+        <input id="qj_session" placeholder="e.g. QT1">
+      </div>
+      <div>
+        <label class="small">Seat Key</label>
+        <input id="qj_seat" placeholder="ABCD-1234">
+      </div>
+      <div>
+        <label class="small">Your Name</label>
+        <input id="qj_name" placeholder="Your name">
+      </div>
     </div>
-    <div>
-      <label class="small">Seat Key</label>
-      <input id="qj_seat" placeholder="ABCD-1234">
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="qj_btn">Claim Seat</button>
     </div>
-    <div>
-      <label class="small">Your Name</label>
-      <input id="qj_name" placeholder="Your name">
-    </div>
+    <div class="muted" id="qj_msg" style="margin-top:6px"></div>
   </div>
-  <div class="row" style="margin-top:10px">
-    <button class="btn" id="qj_btn">Claim Seat</button>
-  </div>
-  <div class="muted" id="qj_msg" style="margin-top:6px"></div>
-</div>
 
   <h2 class="title">🧾 AGENT DASHBOARD</h2>
 
@@ -412,44 +412,6 @@ function usesLeft(){
   return st.usesLeft ?? 0;
 }
 
-/* ===== ensure character data exists server-side ===== */
-async function ensureCharacterPatched(){
-  const seat = localStorage.getItem('seatToken') || '';
-  if(!me || !seat) return;
-
-  const need = () => (!me.codename || !me.cover || !me.background || !me.discharge ||
-                      !me.secretMission || !me.quirk || !me.con ||
-                      !me.perks || !me.perks.length || !me.ability || !me.ability.name);
-
-  if(!need()) return;
-
-  const ch = charFromSeat(seat);
-  const patch = {};
-  const setIfMissing = (k,v)=>{ if(me[k]==null || (Array.isArray(me[k]) && me[k].length===0) || me[k]===''){ patch[k]=v; } };
-  setIfMissing('codename', ch.codename);
-  setIfMissing('alias', ch.alias);
-  setIfMissing('adoptedName', ch.alias);
-  setIfMissing('cover', ch.cover);
-  setIfMissing('publicBio', ch.publicBio);
-  setIfMissing('privateBio', ch.privateBio);
-  setIfMissing('background', ch.background);
-  setIfMissing('discharge', ch.discharge);
-  setIfMissing('secretMission', ch.secretMission);
-  setIfMissing('perks', ch.perks);
-  setIfMissing('quirk', ch.quirk);
-  setIfMissing('con', ch.con);
-  setIfMissing('ability', ch.ability);
-  setIfMissing('role', ch.role || 'wildcard');
-  // ability state boot
-  if(!me.abilityState){ patch.abilityState = { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }; }
-
-  if(Object.keys(patch).length){
-    await updateMe(patch);
-    await postEvent(`🆔 ${patch.codename || me.codename || 'OPERATIVE'} character profile synced from seat.`);
-    await refreshState(); // pull everyone fresh
-  }
-}
-
 /* ===== renderers ===== */
 function renderDossier(){
   if(!me) return;
@@ -480,8 +442,7 @@ function renderDossier(){
 
 function populateTargets(){
   const others = (gameState.players||[]).filter(p=>!me || p.id!==me.id);
-  const ids = ['abilityTargetSelect','actionTarget'];
-  ids.forEach(id=>{
+  ['abilityTargetSelect','actionTarget'].forEach(id=>{
     const sel=$(id); if(!sel) return;
     sel.innerHTML=''; sel.appendChild(option('','— Select —'));
     others.forEach(p=> sel.appendChild(option(p.id, `${p.codename} (${p.realName})`)));
@@ -571,54 +532,41 @@ async function submitAction(){
   else text=`📝 Ability use by ${me.codename} on ${labelFor(target)} — ${details}`;
   await postEvent(text); $('actionDetails').value=''; $('actionTarget').value='';
 }
-<script>
-  // show overlay if there’s no seat in localStorage
-  function showQuickJoinIfNeeded(){
-    const seat = localStorage.getItem('seatToken');
-    const session = localStorage.getItem('session') || new URLSearchParams(location.search).get('session') || '';
-    if(!seat){
-      document.getElementById('quickJoin').style.display = '';
-      document.getElementById('qj_session').value = (session||'').toUpperCase();
-    }
+
+/* ===== quick-join overlay logic ===== */
+function showQuickJoinIfNeeded(){
+  const seat = localStorage.getItem('seatToken');
+  const session = localStorage.getItem('session') || new URLSearchParams(location.search).get('session') || '';
+  if(!seat){
+    $('quickJoin').style.display = '';
+    $('qj_session').value = (session||'').toUpperCase();
   }
+}
+async function quickJoin(){
+  const sessionId = ($('qj_session').value||'').toUpperCase().trim();
+  const seatToken  = ($('qj_seat').value||'').toUpperCase().trim();
+  const playerName = ($('qj_name').value||'').trim();
+  const msg = t => $('qj_msg').textContent = t;
 
-  async function quickJoin(){
-    const sessionId = (document.getElementById('qj_session').value||'').toUpperCase().trim();
-    const seatToken  = (document.getElementById('qj_seat').value||'').toUpperCase().trim();
-    const playerName = (document.getElementById('qj_name').value||'').trim();
-    const msg = t => document.getElementById('qj_msg').textContent = t;
+  if(!sessionId || !seatToken){ msg('Enter game key + seat key'); return; }
 
-    if(!sessionId || !seatToken){ msg('Enter game key + seat key'); return; }
+  const ch = charFromSeat(seatToken); ch.adoptedName = ch.alias;
 
-    // same deterministic character pack as index.html
-    function pickChar(seat){
-      let h=0; for(const c of seat) h=(h*31 + c.charCodeAt(0))>>>0;
-      return JSON.parse(JSON.stringify(CHARACTERS[h % CHARACTERS.length]));
-    }
-    const ch = pickChar(seatToken); ch.adoptedName = ch.alias;
-
-    const res = await api('join', {
-      sessionId, seatToken, playerName,
-      character: ch,
-      abilityState: { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }
-    });
-
-    if(!res.ok){ msg('Join failed: '+(res.error||'')); return; }
-
-    localStorage.setItem('session', res.session.id);
-    localStorage.setItem('seatToken', seatToken);
-    localStorage.setItem('playerId', res.player.id);
-    localStorage.setItem('playerName', playerName||'');
-    document.getElementById('quickJoin').style.display='none';
-    await refreshState(); startPoll();
-  }
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    showQuickJoinIfNeeded();
-    const btn = document.getElementById('qj_btn');
-    if(btn) btn.onclick = quickJoin;
+  const res = await api('join', {
+    sessionId, seatToken, playerName,
+    character: ch,
+    abilityState: { usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey() }
   });
-</script>
+
+  if(!res.ok){ msg('Join failed: '+(res.error||'')); return; }
+
+  localStorage.setItem('session', res.session.id);
+  localStorage.setItem('seatToken', seatToken);
+  localStorage.setItem('playerId', res.player.id);
+  localStorage.setItem('playerName', playerName||'');
+  $('quickJoin').style.display='none';
+  await refreshState(); startPoll();
+}
 
 /* ===== refresh/poll ===== */
 async function refreshState(){
@@ -632,10 +580,8 @@ async function refreshState(){
   ui('gameKeyText', gameState.id || '—');
   ui('finalNightText', gameState.finalNightAt ? new Date(gameState.finalNightAt).toLocaleString() : '—');
 
-  await ensureCharacterPatched(); // fills perks/quirk/con/etc if missing
   renderDossier(); populateTargets(); renderRoster(); renderLog();
 }
-
 function startPoll(){
   if(pollHandle) clearInterval(pollHandle);
   pollHandle = setInterval(refreshState, 4000);
@@ -643,6 +589,7 @@ function startPoll(){
 
 /* ===== boot ===== */
 document.addEventListener('DOMContentLoaded', async ()=>{
+  showQuickJoinIfNeeded();
   const qs = new URLSearchParams(location.search);
   const session = (qs.get('session')||'').toUpperCase();
   if(session){ localStorage.setItem('session', session); }
@@ -651,9 +598,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const seat = localStorage.getItem('seatToken');
   const name = localStorage.getItem('playerName') || '';
   if(session && seat){
-    const ch = charFromSeat(seat);
-    ch.adoptedName = ch.alias;
-    // Join (or rejoin) — server will ignore duplicate seat claim and return existing player
+    const ch = charFromSeat(seat); ch.adoptedName = ch.alias;
     try{
       const res = await api('join',{ sessionId:session, seatToken:seat, playerName:name, character:ch,
         abilityState:{usesLeft: ch.ability?.usesPerDay ?? 1, lastResetDay: dayKey()} });
@@ -664,6 +609,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await refreshState(); startPoll();
 
   // controls
+  $('qj_btn')?.addEventListener('click', quickJoin);
   $('btnUseAbility').onclick = useAbility;
   $('btnReqMission').onclick = reqMission;
   $('btnCompleteMission').onclick = completeMission;
@@ -671,7 +617,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   $('btnSubmitAction').onclick = submitAction;
   $('btnRefresh').onclick = refreshState;
   $('btnLeave').onclick = ()=>{
-    localStorage.removeItem('session'); localStorage.removeItem('seatToken'); localStorage.removeItem('playerId'); window.location.href='./index.html';
+    localStorage.removeItem('session'); localStorage.removeItem('seatToken'); localStorage.removeItem('playerId');
+    window.location.href='./index.html';
   };
 });
 </script>
